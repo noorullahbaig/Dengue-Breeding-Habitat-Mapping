@@ -1,0 +1,19 @@
+:root {
+  color-scheme: light;
+  --font-heading: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-body: 'Public Sans', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --color-ink: #163528;
+  --color-ink-soft: #335346;
+  --color-accent: #af6831;
+  --color-accent-soft: #f0d5bf;
+  --color-surface: #f5f2eb;
+  --color-surface-strong: #ffffff;
+  --color-surface-muted: #e6ece6;
+  --color-border: rgba(22, 53, 40, 0.14);
+  --color-warning: #8e4a19;
+  --color-success: #2a6f4f;
+  --shadow-soft: 0 18px 50px rgba(22, 53, 40, 0.08);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+}

@@ -1,0 +1,53 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "Kuala Lumpur prototype Breeding Habitat Watch" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]: Kuala Lumpur prototype
+        - strong [ref=e8]: Breeding Habitat Watch
+      - navigation "Primary" [ref=e9]:
+        - link "Start" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: Start
+        - link "Report" [ref=e12] [cursor=pointer]:
+          - /url: /report
+          - generic [ref=e13]: Report
+        - link "Status" [ref=e14] [cursor=pointer]:
+          - /url: /status
+          - generic [ref=e15]: Status
+        - link "Public Map" [ref=e16] [cursor=pointer]:
+          - /url: /map
+          - generic [ref=e17]: Public Map
+        - link "Officer Coming soon" [ref=e18] [cursor=pointer]:
+          - /url: /officer
+          - generic [ref=e19]: Officer
+          - generic [ref=e20]: Coming soon
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Anonymous status lookup
+        - heading "Check a report without signing in." [level=1] [ref=e25]
+        - paragraph [ref=e26]: "This page is intentionally simple: residents can paste a reference and see progress without exposing submitted photos or officer-only review data."
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: Report reference
+              - textbox "Report reference" [ref=e32]:
+                - /placeholder: KL-ABCD-1234
+            - button "Check status" [ref=e33] [cursor=pointer]
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - text: Seeded laptop test reference
+                - paragraph [ref=e37]: Use a guaranteed demo lookup before you submit a new report.
+              - button "KL-CHERAS-2410" [ref=e38] [cursor=pointer]
+            - paragraph [ref=e39]: New submissions are stored locally in this browser for the current demo flow.
+        - generic [ref=e40]:
+          - heading "Status meanings" [level=2] [ref=e41]
+          - list [ref=e42]:
+            - listitem [ref=e43]: "Submitted: the evidence bundle reached the system."
+            - listitem [ref=e44]: "Under Review: an officer can examine the report details."
+            - listitem [ref=e45]: "Prioritized: area-level hotspot context may justify quicker follow-up."
+            - listitem [ref=e46]: "Action Recorded: some form of officer action was logged."
+            - listitem [ref=e47]: "Closed: the report lifecycle has been completed for this prototype."

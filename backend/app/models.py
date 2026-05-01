@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from datetime import datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    parent_report_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("reports.id"),
+        nullable=True,
+        index=True,
+    )
+    reference: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    accuracy_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    location_source: Mapped[str] = mapped_column(String(32), nullable=False)
+    public_latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    public_longitude: Mapped[float] = mapped_column(Float, nullable=False)
+
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="submitted")
+    neighborhood: Mapped[str] = mapped_column(String(80), nullable=False)
+    status_message: Mapped[str] = mapped_column(Text, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    image_original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_mime_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    image_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    image_sha256: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    image_path: Mapped[str] = mapped_column(Text, nullable=False)
+    thumbnail_path: Mapped[str] = mapped_column(Text, nullable=False)
+
+    prediction_label: Mapped[str] = mapped_column(String(64), nullable=False)
+    prediction_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    prediction_confidence_band: Mapped[str] = mapped_column(String(32), nullable=False)
+    prediction_top_raw_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    prediction_advisory_text: Mapped[str] = mapped_column(Text, nullable=False)
+    detections: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+
+    parent_report: Mapped["Report | None"] = relationship(
+        "Report",
+        remote_side="Report.id",
+        back_populates="stacked_reports",
+    )
+    stacked_reports: Mapped[list["Report"]] = relationship(
+        "Report",
+        back_populates="parent_report",
+    )
+
+
+Index("ix_reports_public_location", Report.public_latitude, Report.public_longitude)
+Index("ix_reports_status_prediction", Report.status, Report.prediction_label)

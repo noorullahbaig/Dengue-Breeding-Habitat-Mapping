@@ -1,0 +1,84 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "Kuala Lumpur prototype Breeding Habitat Watch" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]: Kuala Lumpur prototype
+        - strong [ref=e8]: Breeding Habitat Watch
+      - navigation "Primary" [ref=e9]:
+        - link "Start" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: Start
+        - link "Report" [ref=e12] [cursor=pointer]:
+          - /url: /report
+          - generic [ref=e13]: Report
+        - link "Status" [ref=e14] [cursor=pointer]:
+          - /url: /status
+          - generic [ref=e15]: Status
+        - link "Public Map" [ref=e16] [cursor=pointer]:
+          - /url: /map
+          - generic [ref=e17]: Public Map
+        - link "Officer Coming soon" [ref=e18] [cursor=pointer]:
+          - /url: /officer
+          - generic [ref=e19]: Officer
+          - generic [ref=e20]: Coming soon
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Resident submission
+        - heading "Capture the minimum evidence bundle." [level=1] [ref=e25]
+        - paragraph [ref=e26]: One photo and one location unlock the review screen. You can still correct the map pin before anything is submitted.
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: Step 1 of 2
+              - heading "Capture a clear image" [level=2] [ref=e32]
+              - paragraph [ref=e33]: Use the live camera if permissions are available, or upload a photo from the device fallback.
+            - generic [ref=e35]:
+              - button "Enable live camera" [ref=e37] [cursor=pointer]
+              - generic [ref=e39]:
+                - paragraph [ref=e40]: Capture one clear photo of the suspected habitat.
+                - paragraph [ref=e41]: Focus on the container or drain opening, not people or house numbers.
+              - generic [ref=e42] [cursor=pointer]:
+                - generic [ref=e43]: Browser fallback
+                - strong [ref=e44]: Upload a photo from this device
+                - generic [ref=e45]: Use this if camera access is blocked or the evidence image is already saved on the laptop.
+                - generic [ref=e46]: Choose image
+                - button "Upload a photo instead" [ref=e47]
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - generic [ref=e50]: Step 2 of 2
+              - heading "Capture a reviewable location" [level=2] [ref=e51]
+              - paragraph [ref=e52]: Location is requested so the report can be reviewed on the map. Exact public display stays generalized.
+            - generic [ref=e54]:
+              - generic [ref=e55]:
+                - button "Use my current location" [ref=e56] [cursor=pointer]
+                - button "Use demo Kuala Lumpur location" [ref=e57] [cursor=pointer]
+              - generic [ref=e58]: Use your current location or continue with the demo Kuala Lumpur location.
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]: Step 2 of 2
+              - heading "Optional context" [level=2] [ref=e62]
+              - paragraph [ref=e63]: Typing is optional. Add a short note only if it helps distinguish the habitat.
+            - generic [ref=e64]:
+              - generic [ref=e65]: Optional note
+              - textbox "Optional note" [ref=e66]:
+                - /placeholder: "Example: drain inlet outside Block C, stagnant water after rain."
+          - generic [ref=e67]: No identity is required in this first version. Residents only see a public-safe map after submission.
+        - complementary [ref=e68]:
+          - generic [ref=e69]: Ready for review
+          - heading "Check the essentials before you continue." [level=2] [ref=e70]
+          - generic [ref=e71]: "Still needed: Photo evidence added and Location captured or demo point loaded."
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - text: ○
+              - strong [ref=e74]: Photo evidence added
+            - generic [ref=e75]:
+              - text: ○
+              - strong [ref=e76]: Location captured or demo point loaded
+            - generic [ref=e77]:
+              - text: ●
+              - strong [ref=e78]: Optional note can stay blank in this demo
+          - paragraph [ref=e79]: New submissions stay in local browser storage for this demo flow until a real backend is wired in.
+          - button "Review before submitting" [disabled] [ref=e80]

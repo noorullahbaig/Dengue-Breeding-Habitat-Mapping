@@ -1,0 +1,11 @@
+alembic==1.17.2
+fastapi==0.128.0
+httpx==0.28.1
+pillow==11.2.1
+psycopg[binary]==3.3.2
+pytest==9.0.2
+python-dotenv==1.2.1
+python-multipart==0.0.20
+SQLAlchemy==2.0.45
+ultralytics==8.4.8
+uvicorn[standard]==0.38.0

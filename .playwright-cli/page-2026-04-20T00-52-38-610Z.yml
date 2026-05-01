@@ -1,0 +1,70 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "Kuala Lumpur prototype Breeding Habitat Watch" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]: Kuala Lumpur prototype
+        - strong [ref=e8]: Breeding Habitat Watch
+      - navigation "Primary" [ref=e9]:
+        - link "Start" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: Start
+        - link "Report" [ref=e12] [cursor=pointer]:
+          - /url: /report
+          - generic [ref=e13]: Report
+        - link "Status" [ref=e14] [cursor=pointer]:
+          - /url: /status
+          - generic [ref=e15]: Status
+        - link "Public Map" [ref=e16] [cursor=pointer]:
+          - /url: /map
+          - generic [ref=e17]: Public Map
+        - link "Officer Coming soon" [ref=e18] [cursor=pointer]:
+          - /url: /officer
+          - generic [ref=e19]: Officer
+          - generic [ref=e20]: Coming soon
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Privacy-aware public map
+        - heading "Show area-level report awareness without exposing evidence." [level=1] [ref=e25]
+        - paragraph [ref=e26]: Filters stay lightweight so the map is visible immediately on a laptop. Photos, exact coordinates, and officer-side review fields stay out of this surface.
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: Status filter
+            - combobox "Status filter" [ref=e31]:
+              - option "All statuses" [selected]
+              - option "Submitted"
+              - option "Under Review"
+              - option "Prioritized"
+              - option "Action Recorded"
+              - option "Closed"
+          - generic [ref=e32]:
+            - generic [ref=e33]: Habitat filter
+            - combobox "Habitat filter" [ref=e34]:
+              - option "All classes" [selected]
+              - option "Tire"
+              - option "Drain / Drain Inlet"
+              - option "Artificial Container"
+        - generic [ref=e35]:
+          - text: Privacy note
+          - paragraph [ref=e36]: Markers are generalized for public viewing. Submitted photos and exact pins stay restricted.
+      - generic [ref=e38]:
+        - generic:
+          - generic:
+            - button [ref=e39] [cursor=pointer]
+            - button [ref=e41] [cursor=pointer]
+            - button [ref=e43] [cursor=pointer]
+        - generic:
+          - generic [ref=e45]:
+            - button "Zoom in" [ref=e46] [cursor=pointer]: +
+            - button "Zoom out" [ref=e47] [cursor=pointer]: −
+          - generic [ref=e48]:
+            - link "Leaflet" [ref=e49] [cursor=pointer]:
+              - /url: https://leafletjs.com
+              - img [ref=e50]
+              - text: Leaflet
+            - text: "| ©"
+            - link "OpenStreetMap" [ref=e54] [cursor=pointer]:
+              - /url: https://www.openstreetmap.org/copyright
+            - text: contributors
