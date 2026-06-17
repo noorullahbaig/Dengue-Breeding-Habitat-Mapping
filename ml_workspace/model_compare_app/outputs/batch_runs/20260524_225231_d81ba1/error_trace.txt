@@ -1,0 +1,33 @@
+Traceback (most recent call last):
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/app.py", line 256, in worker
+    result = run_batch_eval(
+             ^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/batch_eval.py", line 112, in run_batch_eval
+    new_runner = YoloRunner(new_model_path)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/core.py", line 79, in __init__
+    self.model = YOLO(str(model_path))
+                 ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/models/yolo/model.py", line 76, in __init__
+    super().__init__(model=model, task=task, verbose=verbose)
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/engine/model.py", line 144, in __init__
+    self._load(model, task=task)
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/engine/model.py", line 283, in _load
+    self.model, self.ckpt = load_checkpoint(weights)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/nn/tasks.py", line 1507, in load_checkpoint
+    ckpt, weight = torch_safe_load(weight)  # load ckpt
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/nn/tasks.py", line 1455, in torch_safe_load
+    ckpt = torch_load(file, map_location="cpu")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/ultralytics/utils/patches.py", line 158, in torch_load
+    return torch.load(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/torch/serialization.py", line 1554, in load
+    return _legacy_load(
+           ^^^^^^^^^^^^^
+  File "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/.venv/lib/python3.11/site-packages/torch/serialization.py", line 1802, in _legacy_load
+    magic_number = pickle_module.load(f, **pickle_load_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: Ran out of input

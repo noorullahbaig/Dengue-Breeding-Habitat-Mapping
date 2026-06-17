@@ -48,6 +48,7 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 3.11121,
         longitude: 101.65218,
+        accuracyMeters: 42,
         source: 'browser',
       },
       correctedLocation: {
@@ -58,7 +59,9 @@ describe('mock services', () => {
       notes: 'Old tire with stagnant water',
     }
 
-    const created = await services.reportsService.createReport(draft)
+    const created = await services.reportsService.createReport(draft, {
+      publicConsentAccepted: true,
+    })
     const statusLookup = await services.reportsService.getReportStatus(created.reference)
     const publicReports = await services.mapService.listPublicReports()
     const publicDetail = await services.reportsService.getPublicReport(created.reference)
@@ -86,6 +89,7 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 3.11121,
         longitude: 101.65218,
+        accuracyMeters: 42,
         source: 'browser',
       },
     }
@@ -101,14 +105,18 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 3.11123,
         longitude: 101.6522,
+        accuracyMeters: 42,
         source: 'browser',
       },
     }
 
-    const parent = await services.reportsService.createReport(parentDraft)
+    const parent = await services.reportsService.createReport(parentDraft, {
+      publicConsentAccepted: true,
+    })
     const nearbyCheck = await services.reportsService.findNearbyReportCandidates(childDraft)
     const child = await services.reportsService.createReport(childDraft, {
       stackParentReference: nearbyCheck.candidates[0]?.reference,
+      publicConsentAccepted: true,
     })
     const publicDetail = await services.reportsService.getPublicReport(child.reference)
     const publicReports = await services.mapService.listPublicReports()
@@ -134,6 +142,7 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 3.11121,
         longitude: 101.65218,
+        accuracyMeters: 42,
         source: 'browser',
       },
     }
@@ -149,11 +158,14 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 3.11123,
         longitude: 101.6522,
+        accuracyMeters: 42,
         source: 'browser',
       },
     }
 
-    await services.reportsService.createReport(parentDraft)
+    await services.reportsService.createReport(parentDraft, {
+      publicConsentAccepted: true,
+    })
     const nearbyCheck = await services.reportsService.findNearbyReportCandidates(drainDraft)
 
     expect(nearbyCheck.prediction.label).toBe('drain_inlet')
@@ -173,11 +185,14 @@ describe('mock services', () => {
       detectedLocation: {
         latitude: 2.9264,
         longitude: 101.6964,
+        accuracyMeters: 42,
         source: 'browser',
       },
     }
 
-    await expect(services.reportsService.createReport(draft)).rejects.toThrow(
+    await expect(
+      services.reportsService.createReport(draft, { publicConsentAccepted: true }),
+    ).rejects.toThrow(
       /only be submitted within Kuala Lumpur/i,
     )
     await expect(services.reportsService.findNearbyReportCandidates(draft)).rejects.toThrow(

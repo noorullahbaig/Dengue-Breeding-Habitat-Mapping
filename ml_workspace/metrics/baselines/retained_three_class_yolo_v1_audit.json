@@ -1,0 +1,118 @@
+{
+  "class_mapping_audit_csv": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/prepared/retained_three_class_yolo_v1/class_mapping_audit.csv",
+  "dataset_manifest_csv": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/prepared/retained_three_class_yolo_v1/dataset_manifest.csv",
+  "excluded_source_classes": [
+    "Coconut-Exocarp"
+  ],
+  "image_mode": "mixed-reference-symlink-and-test-copy",
+  "image_mode_note": "Label files were regenerated locally after polygon conversion. Train and validation image folders are source-directory symlinks for reference; test images are real local copies so Ultralytics test evaluation resolves prepared three-class labels. Do not use the train/valid symlink folders for local training unless image placement is converted to real files or hardlinks.",
+  "output_root": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/prepared/retained_three_class_yolo_v1",
+  "source_class_names": {
+    "0": "Bottle",
+    "1": "Coconut-Exocarp",
+    "2": "Drain-Inlet",
+    "3": "Tire",
+    "4": "Vase"
+  },
+  "source_root": "/Users/noorullah/Desktop/FYP/Mosquito_Breeding_Detection/Breeding Place Detection",
+  "source_to_target_mapping": {
+    "Bottle": "artificial_container",
+    "Drain-Inlet": "drain_inlet",
+    "Tire": "tire",
+    "Vase": "artificial_container"
+  },
+  "splits": [
+    {
+      "background_label_count": 944,
+      "excluded_instances_by_class": {
+        "Coconut-Exocarp": 1939
+      },
+      "excluded_line_count": 1939,
+      "image_count": 3871,
+      "invalid_row_count": 0,
+      "invalid_rows": [],
+      "label_file_count": 3871,
+      "mapped_instances_by_class": {
+        "artificial_container": 3387,
+        "drain_inlet": 1164,
+        "tire": 1635
+      },
+      "missing_source_label_count": 0,
+      "missing_source_labels": [],
+      "original_instances_by_class": {
+        "Bottle": 1194,
+        "Coconut-Exocarp": 1939,
+        "Drain-Inlet": 1164,
+        "Tire": 1635,
+        "Vase": 2193
+      },
+      "original_line_count": 8125,
+      "polygon_converted_count": 150,
+      "retained_line_count": 6186,
+      "split": "train"
+    },
+    {
+      "background_label_count": 81,
+      "excluded_instances_by_class": {
+        "Coconut-Exocarp": 171
+      },
+      "excluded_line_count": 171,
+      "image_count": 371,
+      "invalid_row_count": 0,
+      "invalid_rows": [],
+      "label_file_count": 371,
+      "mapped_instances_by_class": {
+        "artificial_container": 306,
+        "drain_inlet": 135,
+        "tire": 119
+      },
+      "missing_source_label_count": 0,
+      "missing_source_labels": [],
+      "original_instances_by_class": {
+        "Bottle": 100,
+        "Coconut-Exocarp": 171,
+        "Drain-Inlet": 135,
+        "Tire": 119,
+        "Vase": 206
+      },
+      "original_line_count": 731,
+      "polygon_converted_count": 7,
+      "retained_line_count": 560,
+      "split": "valid"
+    },
+    {
+      "background_label_count": 48,
+      "excluded_instances_by_class": {
+        "Coconut-Exocarp": 101
+      },
+      "excluded_line_count": 101,
+      "image_count": 183,
+      "invalid_row_count": 0,
+      "invalid_rows": [],
+      "label_file_count": 183,
+      "mapped_instances_by_class": {
+        "artificial_container": 154,
+        "drain_inlet": 54,
+        "tire": 115
+      },
+      "missing_source_label_count": 0,
+      "missing_source_labels": [],
+      "original_instances_by_class": {
+        "Bottle": 50,
+        "Coconut-Exocarp": 101,
+        "Drain-Inlet": 54,
+        "Tire": 115,
+        "Vase": 104
+      },
+      "original_line_count": 424,
+      "polygon_converted_count": 4,
+      "retained_line_count": 323,
+      "split": "test"
+    }
+  ],
+  "target_class_names": {
+    "0": "artificial_container",
+    "1": "drain_inlet",
+    "2": "tire"
+  }
+}

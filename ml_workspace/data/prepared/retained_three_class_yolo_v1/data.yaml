@@ -1,0 +1,9 @@
+path: ml_workspace/data/prepared/retained_three_class_yolo_v1
+train: train/images
+val: valid/images
+test: test/images
+nc: 3
+names:
+- artificial_container
+- drain_inlet
+- tire

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +17,9 @@ class DetectionOut(BaseModel):
     rawLabel: str
     confidence: float
     bbox: list[float]
+    bboxNormalized: list[float] | None = None
+    imageWidth: int | None = None
+    imageHeight: int | None = None
 
 
 class PredictionSummaryOut(BaseModel):
@@ -25,6 +29,22 @@ class PredictionSummaryOut(BaseModel):
     topRawLabel: str | None = None
     detections: list[DetectionOut] = Field(default_factory=list)
     advisoryText: str
+
+
+class HotspotPriorityOut(BaseModel):
+    snapshotDate: datetime | None = None
+    nearestHotspotId: str | None = None
+    nearestHotspotLocality: str | None = None
+    nearestHotspotDistrict: str | None = None
+    nearestHotspotDistanceMeters: float | None = None
+    priorityLevel: str
+    priorityReason: str
+
+
+class PublicConsentOut(BaseModel):
+    accepted: bool
+    acceptedAt: datetime | None = None
+    version: str | None = None
 
 
 class StatusPredictionOut(BaseModel):
@@ -46,6 +66,8 @@ class SubmittedReportOut(BaseModel):
     statusMessage: str
     notes: str | None = None
     stackedOnReference: str | None = None
+    publicConsent: PublicConsentOut
+    hotspotPriority: HotspotPriorityOut
 
 
 class StatusReportOut(BaseModel):
@@ -53,7 +75,7 @@ class StatusReportOut(BaseModel):
     reference: str
     createdAt: datetime
     status: str
-    prediction: StatusPredictionOut
+    prediction: PredictionSummaryOut
     neighborhood: str
     statusMessage: str
     stackedOnReference: str | None = None
@@ -64,6 +86,7 @@ class PublicMapReportOut(BaseModel):
     reference: str
     publicLocation: LocationPoint
     habitatClass: str
+    prediction: PredictionSummaryOut
     status: str
     neighborhood: str
     reportedAt: datetime
@@ -90,6 +113,7 @@ class NearbyReportOut(BaseModel):
 class NearbyCandidatesOut(BaseModel):
     prediction: PredictionSummaryOut
     candidates: list[NearbyReportOut] = Field(default_factory=list)
+    imageUrl: str | None = None
 
 
 class PublicReportObservationOut(BaseModel):
@@ -101,6 +125,7 @@ class PublicReportObservationOut(BaseModel):
     thumbnailUrl: str
     habitatClass: str
     confidenceBand: str
+    prediction: PredictionSummaryOut
 
 
 class PublicReportDetailOut(BaseModel):
@@ -108,6 +133,7 @@ class PublicReportDetailOut(BaseModel):
     reference: str
     publicLocation: LocationPoint
     habitatClass: str
+    prediction: PredictionSummaryOut
     status: str
     neighborhood: str
     reportedAt: datetime
@@ -115,7 +141,79 @@ class PublicReportDetailOut(BaseModel):
     reportCount: int
     thumbnailUrl: str
     imageUrl: str
+    privacyNote: str
+    hotspotPriority: HotspotPriorityOut
     observations: list[PublicReportObservationOut]
+
+
+class PublicHotspotOut(BaseModel):
+    id: str
+    locality: str
+    district: str
+    center: LocationPoint
+    radiusMeters: int
+    cumulativeCases: int | None = None
+    outbreakDurationDays: int | None = None
+    outbreakStartDate: datetime
+    weekNumber: int
+    year: int
+    snapshotDate: datetime
+    sourceLabel: str
+    reportCountWithinWarning: int | None = None
+
+
+class StackParentSummaryOut(BaseModel):
+    reference: str
+    createdAt: datetime
+    status: str
+    prediction: PredictionSummaryOut
+    imageUrl: str
+    thumbnailUrl: str
+
+
+class HotspotMirrorStatusOut(BaseModel):
+    hotspotCount: int
+    latestSnapshotDate: datetime | None = None
+    lastSyncedAt: datetime | None = None
+    sourceLabel: str
+
+
+class HotspotSyncOut(BaseModel):
+    syncedCount: int
+    snapshotDate: datetime | None = None
+    sourceLabel: str
+    syncedAt: datetime
+
+
+class OfficerReportOut(BaseModel):
+    id: str
+    reference: str
+    createdAt: datetime
+    capturedAt: datetime
+    reportLocation: LocationPoint
+    publicLocation: LocationPoint
+    status: str
+    prediction: PredictionSummaryOut
+    neighborhood: str
+    statusMessage: str
+    notes: str | None = None
+    imageUrl: str
+    thumbnailUrl: str
+    stackedOnReference: str | None = None
+    publicConsent: PublicConsentOut
+    hotspotPriority: HotspotPriorityOut
+    officerNotes: str | None = None
+    followUpAction: str | None = None
+    reviewedAt: datetime | None = None
+    reviewedBy: str | None = None
+    stackParent: StackParentSummaryOut | None = None
+
+
+class OfficerReportUpdateIn(BaseModel):
+    status: Literal["submitted", "under_review", "prioritized", "action_recorded", "closed"]
+    officerNotes: str | None = None
+    followUpAction: str | None = None
+    reviewedBy: str | None = None
 
 
 class HealthOut(BaseModel):
@@ -124,4 +222,5 @@ class HealthOut(BaseModel):
     model: bool
     uploadRoot: str
     modelPath: str
+    postgis: bool = False
     details: dict[str, str] = Field(default_factory=dict)

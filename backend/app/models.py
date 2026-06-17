@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -40,6 +40,8 @@ class Report(Base):
     image_sha256: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     image_path: Mapped[str] = mapped_column(Text, nullable=False)
     thumbnail_path: Mapped[str] = mapped_column(Text, nullable=False)
+    image_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    thumbnail_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     prediction_label: Mapped[str] = mapped_column(String(64), nullable=False)
     prediction_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -47,6 +49,28 @@ class Report(Base):
     prediction_top_raw_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
     prediction_advisory_text: Mapped[str] = mapped_column(Text, nullable=False)
     detections: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+
+    public_consent_accepted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    public_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    public_consent_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    public_consent_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    hotspot_snapshot_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    nearest_hotspot_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    nearest_hotspot_locality: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    nearest_hotspot_district: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    nearest_hotspot_distance_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hotspot_priority_level: Mapped[str] = mapped_column(String(32), nullable=False, default="unassessed")
+    hotspot_priority_reason: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="Hotspot priority has not been assessed yet.",
+    )
+
+    officer_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follow_up_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     parent_report: Mapped["Report | None"] = relationship(
         "Report",
@@ -61,3 +85,29 @@ class Report(Base):
 
 Index("ix_reports_public_location", Report.public_latitude, Report.public_longitude)
 Index("ix_reports_status_prediction", Report.status, Report.prediction_label)
+
+
+class Hotspot(Base):
+    __tablename__ = "hotspots"
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    locality: Mapped[str] = mapped_column(String(255), nullable=False)
+    district: Mapped[str] = mapped_column(String(120), nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    radius_meters: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
+    cumulative_cases: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    outbreak_duration_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    outbreak_start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    week_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    source_label: Mapped[str] = mapped_column(
+        String(120),
+        nullable=False,
+        default="iDengue hotspot context",
+    )
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+Index("ix_hotspots_snapshot_date", Hotspot.snapshot_date)

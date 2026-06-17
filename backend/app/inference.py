@@ -11,6 +11,9 @@ RAW_TO_PUBLIC_LABEL = {
     "Vase": "artificial_container",
     "Drain-Inlet": "drain_inlet",
     "Tire": "tire",
+    "artificial_container": "artificial_container",
+    "drain_inlet": "drain_inlet",
+    "tire": "tire",
 }
 
 
@@ -19,6 +22,9 @@ class Detection:
     raw_label: str
     confidence: float
     bbox: list[float]
+    bbox_normalized: list[float] | None = None
+    image_width: int | None = None
+    image_height: int | None = None
 
 
 @dataclass(frozen=True)
@@ -39,6 +45,28 @@ def confidence_band(confidence: float | None) -> str:
     if confidence >= 0.40:
         return "moderate"
     return "low"
+
+
+def normalize_bbox(
+    bbox: list[float],
+    *,
+    image_width: int | None,
+    image_height: int | None,
+) -> list[float] | None:
+    if not image_width or not image_height or len(bbox) < 4:
+        return None
+
+    left, top, right, bottom = bbox[:4]
+
+    def clamp(value: float) -> float:
+        return min(max(value, 0.0), 1.0)
+
+    return [
+        clamp(left / image_width),
+        clamp(top / image_height),
+        clamp(right / image_width),
+        clamp(bottom / image_height),
+    ]
 
 
 def summarize_detections(detections: list[Detection]) -> PredictionSummary:
@@ -99,6 +127,13 @@ class ModelInference:
         detections: list[Detection] = []
 
         for result in results:
+            image_height = None
+            image_width = None
+            orig_shape = getattr(result, "orig_shape", None)
+            if orig_shape and len(orig_shape) >= 2:
+                image_height = int(orig_shape[0])
+                image_width = int(orig_shape[1])
+
             boxes = getattr(result, "boxes", None)
             if boxes is None:
                 continue
@@ -112,6 +147,13 @@ class ModelInference:
                         raw_label=self.names.get(class_id, str(class_id)),
                         confidence=confidence,
                         bbox=xyxy,
+                        bbox_normalized=normalize_bbox(
+                            xyxy,
+                            image_width=image_width,
+                            image_height=image_height,
+                        ),
+                        image_width=image_width,
+                        image_height=image_height,
                     )
                 )
 

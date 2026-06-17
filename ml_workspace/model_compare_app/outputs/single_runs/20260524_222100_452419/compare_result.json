@@ -1,0 +1,49 @@
+{
+  "sessionId": "20260524_222100_452419",
+  "old": {
+    "label": "drain_inlet",
+    "confidence": 0.88,
+    "confidenceBand": "high",
+    "topRawLabel": "Drain-Inlet",
+    "latencyMs": 11.2,
+    "detections": [
+      {
+        "rawLabel": "Drain-Inlet",
+        "mappedLabel": "drain_inlet",
+        "confidence": 0.88,
+        "bbox": [
+          10,
+          10,
+          50,
+          50
+        ]
+      }
+    ]
+  },
+  "new": {
+    "label": "artificial_container",
+    "confidence": 0.88,
+    "confidenceBand": "high",
+    "topRawLabel": "Drain-Inlet",
+    "latencyMs": 11.2,
+    "detections": [
+      {
+        "rawLabel": "Drain-Inlet",
+        "mappedLabel": "drain_inlet",
+        "confidence": 0.88,
+        "bbox": [
+          10,
+          10,
+          50,
+          50
+        ]
+      }
+    ]
+  },
+  "images": {
+    "source": "/outputs/single_runs/20260524_222100_452419/source.jpg",
+    "oldOverlay": "/outputs/single_runs/20260524_222100_452419/old_overlay.jpg",
+    "newOverlay": "/outputs/single_runs/20260524_222100_452419/new_overlay.jpg",
+    "sideBySide": "/outputs/single_runs/20260524_222100_452419/side_by_side.jpg"
+  }
+}

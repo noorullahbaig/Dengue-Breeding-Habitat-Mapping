@@ -27,6 +27,7 @@ const serviceAreaPolygons = boundary.features.flatMap((feature) =>
     ? [feature.geometry.coordinates]
     : feature.geometry.coordinates,
 )
+const allBoundaryCoordinates = serviceAreaPolygons.flat(2)
 
 function isPointOnSegment(
   longitude: number,
@@ -113,3 +114,29 @@ export const serviceAreaBoundaryPolygons = serviceAreaPolygons.map((polygon) => 
     ),
   }
 })
+
+const worldMaskRing: [number, number][] = [
+  [90, -180],
+  [90, 180],
+  [-90, 180],
+  [-90, -180],
+]
+
+export const serviceAreaMaskPositions = [
+  worldMaskRing,
+  ...serviceAreaPolygons
+    .map((polygon) => polygon[0])
+    .filter((ring): ring is Ring => Boolean(ring))
+    .map((ring) =>
+      ring.map(([longitude, latitude]) => [latitude, longitude] as [number, number]),
+    ),
+]
+
+const longitudes = allBoundaryCoordinates.map(([longitude]) => longitude)
+const latitudes = allBoundaryCoordinates.map(([, latitude]) => latitude)
+const boundsPadding = 0.025
+
+export const serviceAreaMapBounds: [[number, number], [number, number]] = [
+  [Math.min(...latitudes) - boundsPadding, Math.min(...longitudes) - boundsPadding],
+  [Math.max(...latitudes) + boundsPadding, Math.max(...longitudes) + boundsPadding],
+]

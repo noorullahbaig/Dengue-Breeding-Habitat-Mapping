@@ -8,11 +8,14 @@
     "build": "tsc -b && vite build",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "playwright test",
     "lint": "biome lint src vite.config.ts scripts",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rolldown/pluginutils": "^1.0.0-rc.3",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.17.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",
@@ -21,6 +24,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
     "@eslint/js": "^8.57.1",
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

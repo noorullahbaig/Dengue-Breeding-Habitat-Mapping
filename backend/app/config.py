@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-load_dotenv(BASE_DIR / ".env")
+for env_file in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
+    load_dotenv(env_file, override=False)
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,8 @@ class Settings:
     model_path: Path
     upload_root: Path
     cors_origins: list[str]
+    officer_api_token: str
+    idengue_hotspot_endpoint: str
     max_upload_bytes: int = 10 * 1024 * 1024
 
 
@@ -30,7 +33,10 @@ def _resolve_path(value: str) -> Path:
 def get_settings() -> Settings:
     cors_origins = [
         origin.strip()
-        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173",
+        ).split(",")
         if origin.strip()
     ]
 
@@ -39,9 +45,19 @@ def get_settings() -> Settings:
             "DATABASE_URL",
             "postgresql+psycopg://noorullah@localhost:5432/codex_fyp",
         ),
-        model_path=_resolve_path(os.getenv("MODEL_PATH", "/Users/noorullah/Downloads/best.pt")),
+        model_path=_resolve_path(
+            os.getenv(
+                "MODEL_PATH",
+                "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt",
+            )
+        ),
         upload_root=_resolve_path(os.getenv("UPLOAD_ROOT", "./uploads")),
         cors_origins=cors_origins,
+        officer_api_token=os.getenv("OFFICER_API_TOKEN", "local-officer-demo-token"),
+        idengue_hotspot_endpoint=os.getenv(
+            "IDENGUE_HOTSPOT_ENDPOINT",
+            "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query",
+        ),
     )
 
 

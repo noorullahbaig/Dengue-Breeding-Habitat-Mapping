@@ -1,13 +1,21 @@
 import { STORAGE_KEY } from '@/lib/constants'
+import {
+  MAX_DETECTED_ACCURACY_METERS,
+  allowedCorrectionRadiusMeters,
+  hasTrustedDetectedLocation,
+} from '@/lib/locationTrust'
 import { predictHabitatForDraft } from '@/lib/prediction'
 import { isWithinServiceArea, SERVICE_AREA_ERROR } from '@/lib/serviceArea'
 import { fetchCurrentIdengueHotspots } from '@/services/idengueHotspots'
 import { pointInBounds } from '@/services/mapBounds'
 import type { AppServices, PublicReportFilters } from '@/services/contracts'
 import type {
+  HotspotMirrorStatus,
   LocationPoint,
   NearbyReportCheck,
   NearbyReportCandidate,
+  OfficerReport,
+  OfficerReportUpdate,
   PublicReportDetail,
   PublicReportObservation,
   PublicMapReport,
@@ -168,6 +176,7 @@ function toPublicReport(report: SubmittedReport): PublicMapReport {
     reference: report.reference,
     publicLocation: report.publicLocation,
     habitatClass: report.prediction.label,
+    prediction: report.prediction,
     status: report.status,
     neighborhood: report.neighborhood,
     reportedAt: report.createdAt,
@@ -190,6 +199,7 @@ function toObservation(report: SubmittedReport): PublicReportObservation {
     thumbnailUrl: report.thumbnailUrl ?? placeholderEvidenceImage,
     habitatClass: report.prediction.label,
     confidenceBand: report.prediction.confidenceBand,
+    prediction: report.prediction,
   }
 }
 
@@ -205,6 +215,7 @@ function toPublicReportDetail(report: SubmittedReport, reports: SubmittedReport[
     reference: rootReport.reference,
     publicLocation: rootReport.publicLocation,
     habitatClass: rootReport.prediction.label,
+    prediction: rootReport.prediction,
     status: rootReport.status,
     neighborhood: rootReport.neighborhood,
     reportedAt: rootReport.createdAt,
@@ -235,6 +246,29 @@ function toNearbyCandidate(
     latestReportedAt: latestReport.createdAt,
     reportCount: Math.max(members.length, 1),
     thumbnailUrl: latestReport.thumbnailUrl ?? placeholderEvidenceImage,
+  }
+}
+
+function defaultHotspotPriority(location: LocationPoint) {
+  const centerDistance = distanceMeters(location, {
+    latitude: 3.139,
+    longitude: 101.6869,
+    source: 'public',
+  })
+  const priorityLevel =
+    centerDistance <= 200 ? 'core' : centerDistance <= 400 ? 'warning' : 'routine'
+
+  return {
+    snapshotDate: new Date().toISOString(),
+    nearestHotspotId: 'mock-idengue-hotspot',
+    nearestHotspotLocality: 'Demo Kuala Lumpur hotspot',
+    nearestHotspotDistrict: 'Wilayah Persekutuan',
+    nearestHotspotDistanceMeters: Math.round(centerDistance * 10) / 10,
+    priorityLevel,
+    priorityReason:
+      priorityLevel === 'routine'
+        ? 'No current iDengue hotspot is within the 400 m warning buffer.'
+        : 'Near demo hotspot context for local prototype testing.',
   }
 }
 
@@ -271,6 +305,12 @@ function createSubmittedReport(
     stackedOnReference: stackParentReference,
     thumbnailUrl: draft.photoPreviewUrl ?? placeholderEvidenceImage,
     imageUrl: draft.photoPreviewUrl ?? placeholderEvidenceImage,
+    publicConsent: {
+      accepted: true,
+      acceptedAt: new Date().toISOString(),
+      version: 'public-image-pin-ai-v2',
+    },
+    hotspotPriority: defaultHotspotPriority(reportLocation),
   }
 }
 
@@ -309,13 +349,99 @@ function validateStackParent(
   }
 }
 
+function validateTrustedLocationDraft(draft: ReportDraft) {
+  const detectedLocation = draft.detectedLocation
+  const selectedLocation = draft.correctedLocation ?? draft.detectedLocation
+
+  if (!detectedLocation || !selectedLocation) {
+    throw new Error('The report draft is incomplete.')
+  }
+
+  if (!hasTrustedDetectedLocation(detectedLocation)) {
+    throw new Error(
+      `A verified device location within ${MAX_DETECTED_ACCURACY_METERS}m accuracy is required.`,
+    )
+  }
+
+  if (!isWithinServiceArea(selectedLocation)) {
+    throw new Error(SERVICE_AREA_ERROR)
+  }
+
+  const allowedRadius = allowedCorrectionRadiusMeters(detectedLocation.accuracyMeters)
+  if (allowedRadius === null || distanceMeters(detectedLocation, selectedLocation) > allowedRadius) {
+    throw new Error('The selected site must stay within the allowed device-location correction area.')
+  }
+}
+
 export function createMockAppServices(
   options: MockServicesOptions = {},
 ): AppServices {
+  let hotspotMirrorStatus: HotspotMirrorStatus = {
+    hotspotCount: 0,
+    latestSnapshotDate: null,
+    lastSyncedAt: null,
+    sourceLabel: 'iDengue hotspot context',
+  }
+
+  function toOfficerReport(report: SubmittedReport): OfficerReport {
+    return {
+      id: report.id,
+      reference: report.reference,
+      createdAt: report.createdAt,
+      capturedAt: report.createdAt,
+      reportLocation: report.reportLocation,
+      publicLocation: report.publicLocation,
+      status: report.status,
+      prediction: report.prediction,
+      neighborhood: report.neighborhood,
+      statusMessage: report.statusMessage,
+      notes: report.notes,
+      imageUrl: report.imageUrl ?? placeholderEvidenceImage,
+      thumbnailUrl: report.thumbnailUrl ?? placeholderEvidenceImage,
+      stackedOnReference: report.stackedOnReference,
+      publicConsent: report.publicConsent ?? {
+        accepted: true,
+        acceptedAt: report.createdAt,
+        version: 'public-image-pin-ai-v2',
+      },
+      hotspotPriority: report.hotspotPriority ?? defaultHotspotPriority(report.publicLocation),
+      officerNotes: undefined,
+      followUpAction: undefined,
+      reviewedAt: undefined,
+      reviewedBy: undefined,
+    }
+  }
+
+  function applyOfficerUpdate(
+    report: SubmittedReport,
+    update: OfficerReportUpdate,
+  ): SubmittedReport {
+    const statusMessage =
+      update.status === 'submitted'
+        ? 'Received and awaiting officer review.'
+        : update.status === 'under_review'
+          ? 'Queued for officer review with map context.'
+          : update.status === 'prioritized'
+            ? 'Flagged for faster follow-up because the area aligns with active hotspot context.'
+            : update.status === 'action_recorded'
+              ? 'An officer logged follow-up activity for this report.'
+              : 'The report lifecycle has been completed for this prototype.'
+
+    return {
+      ...report,
+      status: update.status,
+      statusMessage,
+    }
+  }
+
   return {
     reportsService: {
       async createReport(draft, createOptions) {
         await delay()
+        if (!createOptions?.publicConsentAccepted) {
+          throw new Error('Confirm public image and exact-pin publication before submitting.')
+        }
+        validateTrustedLocationDraft(draft)
         const reports = readStoredReports()
         validateStackParent(reports, draft, createOptions?.stackParentReference)
         const nextReport = createSubmittedReport(
@@ -327,16 +453,31 @@ export function createMockAppServices(
         writeStoredReports(updatedReports)
         return nextReport
       },
+      async precheckReport(draft): Promise<NearbyReportCheck> {
+        await delay(120)
+        const location = draft.correctedLocation ?? draft.detectedLocation
+        validateTrustedLocationDraft(draft)
+
+        const prediction = predictHabitatForDraft(draft)
+        if (prediction.label === 'unclassified') {
+          return { prediction, candidates: [] }
+        }
+
+        const reports = readStoredReports()
+        const candidates = parentReports(reports)
+          .filter((report) => report.status !== 'closed')
+          .filter((report) => report.prediction.label === prediction.label)
+          .map((report) => toNearbyCandidate(report, reports, location))
+          .filter((report) => report.distanceMeters <= SAME_SITE_RADIUS_METERS)
+          .sort((a, b) => a.distanceMeters - b.distanceMeters)
+          .slice(0, 3)
+
+        return { prediction, candidates }
+      },
       async findNearbyReportCandidates(draft): Promise<NearbyReportCheck> {
         await delay(120)
         const location = draft.correctedLocation ?? draft.detectedLocation
-        if (!location) {
-          throw new Error('The report draft is incomplete.')
-        }
-
-        if (!isWithinServiceArea(location)) {
-          throw new Error(SERVICE_AREA_ERROR)
-        }
+        validateTrustedLocationDraft(draft)
 
         const prediction = predictHabitatForDraft(draft)
         if (prediction.label === 'unclassified') {
@@ -386,6 +527,59 @@ export function createMockAppServices(
       },
       async listHotspots(bounds) {
         return fetchCurrentIdengueHotspots(options.hotspotFetchImpl ?? fetch, bounds)
+      },
+    },
+    officerService: {
+      async listReports() {
+        await delay(120)
+        return readStoredReports().map(toOfficerReport)
+      },
+      async updateReport(reference, update) {
+        await delay(120)
+        const reports = readStoredReports()
+        const report = reports.find(
+          (candidate) => candidate.reference.toUpperCase() === reference.trim().toUpperCase(),
+        )
+
+        if (!report) {
+          throw new Error('Report not found.')
+        }
+
+        const updatedReport = applyOfficerUpdate(report, update)
+        writeStoredReports(
+          reports.map((candidate) =>
+            candidate.reference === report.reference ? updatedReport : candidate,
+          ),
+        )
+
+        return {
+          ...toOfficerReport(updatedReport),
+          officerNotes: update.officerNotes,
+          followUpAction: update.followUpAction,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: update.reviewedBy ?? 'Local officer demo',
+        }
+      },
+      async getHotspotStatus() {
+        await delay(80)
+        return hotspotMirrorStatus
+      },
+      async syncHotspots() {
+        await delay(120)
+        const syncedAt = new Date().toISOString()
+        hotspotMirrorStatus = {
+          hotspotCount: 1,
+          latestSnapshotDate: syncedAt,
+          lastSyncedAt: syncedAt,
+          sourceLabel: 'iDengue hotspot context',
+        }
+
+        return {
+          syncedCount: hotspotMirrorStatus.hotspotCount,
+          snapshotDate: hotspotMirrorStatus.latestSnapshotDate,
+          sourceLabel: hotspotMirrorStatus.sourceLabel,
+          syncedAt,
+        }
       },
     },
   }

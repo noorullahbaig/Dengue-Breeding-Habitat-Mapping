@@ -1,0 +1,12 @@
+{
+  "model_path": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt",
+  "sha256": "44499d7de36675cd117398c439f3967ae24ae865feb72794f50d90b8326c4d70",
+  "task": "detect",
+  "class_names": {
+    "0": "Bottle",
+    "1": "Coconut-Exocarp",
+    "2": "Drain-Inlet",
+    "3": "Tire",
+    "4": "Vase"
+  }
+}

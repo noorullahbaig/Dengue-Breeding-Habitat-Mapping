@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['Breeding Place', 'Mosquito', 'Mosquito Swarm']
+
+roboflow:
+  workspace: mosha
+  project: mosha
+  version: 5
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/mosha/mosha/dataset/5

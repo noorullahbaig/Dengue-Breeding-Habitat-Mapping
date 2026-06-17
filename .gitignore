@@ -30,3 +30,18 @@ backend/tests/__pycache__
 *.njsproj
 *.sln
 *.sw?
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Screenshots & Temporary files
+/*.png
+/*.zip
+/stitch_denguewatch_kl_reporting_system/
+/test-results/
+/test_overflow.js
+/scratch/
+

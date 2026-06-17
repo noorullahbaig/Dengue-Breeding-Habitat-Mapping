@@ -12,6 +12,13 @@ function buildIcon(className: string, html = '<span class="map-pin__core"></span
 }
 
 export const residentMarkerIcon = buildIcon('map-pin map-pin--resident')
+export const detectedLocationIcon = L.divIcon({
+  className: 'map-pin map-pin--detected',
+  html: '<span class="map-pin__guide-ring"></span>',
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -17],
+})
 export const publicMarkerIcon = buildIcon('map-pin map-pin--public')
 export const hotspotMarkerIcon = buildIcon(
   'map-pin map-pin--hotspot',

@@ -1,9 +1,14 @@
 import type {
   HabitatClass,
+  HotspotMirrorStatus,
+  HotspotSyncResult,
+  OfficerReport,
+  OfficerReportUpdate,
   PublicHotspot,
   PublicReportDetail,
   PublicMapReport,
   ReportDraft,
+  ReportPrecheck,
   ReportStatus,
   NearbyReportCheck,
   SubmissionStatus,
@@ -22,11 +27,18 @@ export interface PublicReportFilters {
   habitatClass?: HabitatClass | 'all'
 }
 
+export interface CreateReportOptions {
+  stackParentReference?: string | null
+  publicConsentAccepted?: boolean
+  publicConsentText?: string
+}
+
 export interface ReportsService {
   createReport(
     draft: ReportDraft,
-    options?: { stackParentReference?: string | null },
+    options?: CreateReportOptions,
   ): Promise<SubmittedReport>
+  precheckReport(draft: ReportDraft): Promise<ReportPrecheck>
   findNearbyReportCandidates(draft: ReportDraft): Promise<NearbyReportCheck>
   getReportStatus(reference: string): Promise<ReportStatus | null>
   getPublicReport(reference: string): Promise<PublicReportDetail | null>
@@ -40,7 +52,15 @@ export interface MapService {
   listHotspots(bounds?: MapBounds): Promise<PublicHotspot[]>
 }
 
+export interface OfficerService {
+  listReports(): Promise<OfficerReport[]>
+  updateReport(reference: string, update: OfficerReportUpdate): Promise<OfficerReport>
+  getHotspotStatus(): Promise<HotspotMirrorStatus>
+  syncHotspots(): Promise<HotspotSyncResult>
+}
+
 export interface AppServices {
   reportsService: ReportsService
   mapService: MapService
+  officerService: OfficerService
 }

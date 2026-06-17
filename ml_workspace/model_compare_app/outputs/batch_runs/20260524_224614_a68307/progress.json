@@ -1,0 +1,51 @@
+{
+  "jobId": "20260524_224614_a68307",
+  "status": "completed",
+  "processed": 1,
+  "total": 1,
+  "percent": 100.0,
+  "currentFile": "a.jpg",
+  "startedAt": "2026-05-24T14:46:14.553390",
+  "updatedAt": "2026-05-24T14:46:14.566246",
+  "elapsedSeconds": 0.01,
+  "runDir": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs/batch_runs/20260524_224614_a68307",
+  "imagesDir": "/private/var/folders/43/qxg1zdcs2nj11_436glg4gq40000gn/T/pytest-of-noorullah/pytest-2/test_batch_job_lifecycle0/images",
+  "labelsDir": "/private/var/folders/43/qxg1zdcs2nj11_436glg4gq40000gn/T/pytest-of-noorullah/pytest-2/test_batch_job_lifecycle0/labels",
+  "cancelRequested": false,
+  "error": null,
+  "result": {
+    "runDir": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs/batch_runs/20260524_224614_a68307",
+    "metrics": {
+      "decision": {
+        "macroF1Delta_new_minus_old": 0.1,
+        "p95LatencyDeltaMs_new_minus_old": -2.0,
+        "drainInletFalseNegatives": {
+          "old": 1,
+          "new": 0
+        }
+      }
+    }
+  },
+  "previewItems": [
+    {
+      "image": "a.jpg",
+      "groundTruth": "drain_inlet",
+      "old": {
+        "label": "drain_inlet",
+        "confidence": 0.7,
+        "latencyMs": 10
+      },
+      "new": {
+        "label": "drain_inlet",
+        "confidence": 0.9,
+        "latencyMs": 11
+      },
+      "winner": "tie",
+      "overlays": {
+        "old": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs/batch_runs/20260524_224614_a68307/preview/a_old.jpg",
+        "new": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs/batch_runs/20260524_224614_a68307/preview/a_new.jpg",
+        "pair": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs/batch_runs/20260524_224614_a68307/preview/a_pair.jpg"
+      }
+    }
+  ]
+}

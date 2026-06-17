@@ -1,9 +1,22 @@
+from io import BytesIO
+from dataclasses import replace
 from pathlib import Path
+from datetime import datetime, timezone
 
 import pytest
 from fastapi import HTTPException
+from PIL import Image
 
-from app.image_storage import StoredImage, delete_stored_image, store_upload
+from app import image_storage
+from app.config import settings
+from app.image_storage import (
+    StoredImage,
+    cleanup_precheck_uploads,
+    delete_precheck_image,
+    delete_stored_image,
+    store_precheck_image,
+    store_upload,
+)
 
 
 class FakeUpload:
@@ -16,12 +29,59 @@ class FakeUpload:
         return self._content
 
 
+def jpeg_bytes() -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (24, 24), color=(120, 80, 40)).save(output, format="JPEG")
+    return output.getvalue()
+
+
 @pytest.mark.anyio
 async def test_rejects_non_image_upload():
     with pytest.raises(HTTPException) as exc_info:
         await store_upload(FakeUpload(b"not an image"))
 
     assert exc_info.value.status_code == 400
+
+
+@pytest.mark.anyio
+async def test_store_precheck_image_persists_backend_processed_image(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(image_storage, "settings", replace(settings, upload_root=tmp_path / "uploads"))
+
+    stored = await store_precheck_image(FakeUpload(jpeg_bytes(), "image/jpeg"))
+
+    assert stored.storage_key.startswith("prechecks/")
+    assert stored.image_path.exists()
+    assert stored.image_path.parent.name == "prechecks"
+
+    delete_precheck_image(stored)
+
+    assert not stored.image_path.exists()
+
+
+def test_cleanup_precheck_uploads_removes_old_temp_images(tmp_path: Path, monkeypatch):
+    upload_root = tmp_path / "uploads"
+    prechecks = upload_root / "prechecks"
+    prechecks.mkdir(parents=True)
+    old_image = prechecks / "old.jpg"
+    recent_image = prechecks / "recent.jpg"
+    old_image.write_bytes(b"old")
+    recent_image.write_bytes(b"recent")
+
+    monkeypatch.setattr(image_storage, "settings", replace(settings, upload_root=upload_root))
+
+    now = datetime.now(timezone.utc).timestamp()
+    old_mtime = now - (60 * 60 * 25)
+    recent_mtime = now
+    import os
+
+    os.utime(old_image, (old_mtime, old_mtime))
+    os.utime(recent_image, (recent_mtime, recent_mtime))
+
+    deleted = cleanup_precheck_uploads(max_age_seconds=60 * 60 * 24)
+
+    assert deleted == 1
+    assert not old_image.exists()
+    assert recent_image.exists()
 
 
 def test_delete_stored_image_removes_evidence_and_thumbnail(tmp_path: Path):
@@ -36,6 +96,8 @@ def test_delete_stored_image_removes_evidence_and_thumbnail(tmp_path: Path):
             mime_type="image/jpeg",
             size_bytes=8,
             sha256="a" * 64,
+            image_storage_key="evidence/evidence.jpg",
+            thumbnail_storage_key="thumbnails/thumbnail.jpg",
             image_path=evidence,
             thumbnail_path=thumbnail,
         )

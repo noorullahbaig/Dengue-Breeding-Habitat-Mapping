@@ -1,16 +1,22 @@
 from datetime import datetime, timezone
+from inspect import signature
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import _precheck_report, app
 from app.models import Report
-from app.serializers import status_report_out
+from app.serializers import officer_report_out, public_report_detail_out, status_report_out
 
 
 def test_cors_allows_localhost_and_loopback_dev_origins():
     client = TestClient(app)
 
-    for origin in ("http://localhost:5173", "http://127.0.0.1:5173"):
+    for origin in (
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    ):
         response = client.options(
             "/api/reports",
             headers={
@@ -23,7 +29,12 @@ def test_cors_allows_localhost_and_loopback_dev_origins():
         assert response.headers["access-control-allow-origin"] == origin
 
 
-def test_status_response_does_not_expose_exact_location_notes_or_raw_detections():
+def test_precheck_helper_accepts_concrete_values_not_fastapi_param_defaults():
+    for parameter in signature(_precheck_report).parameters.values():
+        assert parameter.default is parameter.empty
+
+
+def test_status_response_hides_private_fields_but_exposes_public_model_evidence():
     report = Report(
         id="report-1",
         reference="KL-TEST-0001",
@@ -58,6 +69,116 @@ def test_status_response_does_not_expose_exact_location_notes_or_raw_detections(
     assert "reportLocation" not in response
     assert "publicLocation" not in response
     assert "notes" not in response
-    assert "detections" not in response["prediction"]
-    assert "topRawLabel" not in response["prediction"]
     assert response["prediction"]["label"] == "tire"
+    assert response["prediction"]["confidence"] == 0.91
+    assert response["prediction"]["topRawLabel"] == "Tire"
+    assert response["prediction"]["detections"] == [
+        {
+            "rawLabel": "Tire",
+            "confidence": 0.91,
+            "bbox": [1.0, 2.0, 3.0, 4.0],
+            "bboxNormalized": None,
+            "imageWidth": None,
+            "imageHeight": None,
+        }
+    ]
+
+
+def test_public_detail_includes_additive_privacy_and_hotspot_context():
+    report = Report(
+        id="report-2",
+        reference="KL-TEST-2000",
+        created_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        latitude=3.1411,
+        longitude=101.6892,
+        accuracy_meters=10,
+        location_source="browser",
+        public_latitude=3.1411,
+        public_longitude=101.6892,
+        status="submitted",
+        neighborhood="Sentul",
+        status_message="Received and awaiting officer review.",
+        image_original_filename="public.jpg",
+        image_mime_type="image/jpeg",
+        image_size_bytes=123,
+        image_sha256="b" * 64,
+        image_path="/private/public.jpg",
+        thumbnail_path="/private/public-thumb.jpg",
+        prediction_label="drain_inlet",
+        prediction_confidence=0.73,
+        prediction_confidence_band="moderate",
+        prediction_top_raw_label="Drain-Inlet",
+        prediction_advisory_text="Advisory only.",
+        detections=[],
+        hotspot_priority_level="warning",
+        hotspot_priority_reason="Within warning buffer.",
+    )
+
+    response = public_report_detail_out(report, [report]).model_dump()
+
+    assert "privacyNote" in response
+    assert response["hotspotPriority"]["priorityLevel"] == "warning"
+
+
+def test_officer_report_includes_optional_stack_parent_summary():
+    parent = Report(
+        id="report-parent",
+        reference="KL-PARENT-0001",
+        created_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        latitude=3.141,
+        longitude=101.689,
+        accuracy_meters=10,
+        location_source="browser",
+        public_latitude=3.141,
+        public_longitude=101.689,
+        status="under_review",
+        neighborhood="Sentul",
+        status_message="Queued for officer review with map context.",
+        image_original_filename="parent.jpg",
+        image_mime_type="image/jpeg",
+        image_size_bytes=123,
+        image_sha256="c" * 64,
+        image_path="/private/parent.jpg",
+        thumbnail_path="/private/parent-thumb.jpg",
+        prediction_label="tire",
+        prediction_confidence=0.88,
+        prediction_confidence_band="high",
+        prediction_top_raw_label="Tire",
+        prediction_advisory_text="Advisory only.",
+        detections=[],
+    )
+    child = Report(
+        id="report-child",
+        reference="KL-CHILD-0002",
+        created_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        latitude=3.1411,
+        longitude=101.6891,
+        accuracy_meters=11,
+        location_source="browser",
+        public_latitude=3.1411,
+        public_longitude=101.6891,
+        status="submitted",
+        neighborhood="Sentul",
+        status_message="Received and awaiting officer review.",
+        image_original_filename="child.jpg",
+        image_mime_type="image/jpeg",
+        image_size_bytes=123,
+        image_sha256="d" * 64,
+        image_path="/private/child.jpg",
+        thumbnail_path="/private/child-thumb.jpg",
+        prediction_label="tire",
+        prediction_confidence=0.85,
+        prediction_confidence_band="high",
+        prediction_top_raw_label="Tire",
+        prediction_advisory_text="Advisory only.",
+        detections=[],
+        parent_report=parent,
+    )
+
+    response = officer_report_out(child).model_dump()
+
+    assert response["stackedOnReference"] == "KL-PARENT-0001"
+    assert response["stackParent"]["reference"] == "KL-PARENT-0001"

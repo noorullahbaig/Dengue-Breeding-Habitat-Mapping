@@ -1,0 +1,25 @@
+{
+  "sessionId": "20260525_091521_684960",
+  "old": {
+    "label": "unclassified",
+    "confidence": null,
+    "confidenceBand": "low",
+    "topRawLabel": null,
+    "latencyMs": 155.51,
+    "detections": []
+  },
+  "new": {
+    "label": "unclassified",
+    "confidence": null,
+    "confidenceBand": "low",
+    "topRawLabel": null,
+    "latencyMs": 80.41,
+    "detections": []
+  },
+  "images": {
+    "source": "/outputs/single_runs/20260525_091521_684960/source.jpg",
+    "oldOverlay": "/outputs/single_runs/20260525_091521_684960/old_overlay.jpg",
+    "newOverlay": "/outputs/single_runs/20260525_091521_684960/new_overlay.jpg",
+    "sideBySide": "/outputs/single_runs/20260525_091521_684960/side_by_side.jpg"
+  }
+}

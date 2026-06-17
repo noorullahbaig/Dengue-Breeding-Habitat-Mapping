@@ -1,19 +1,65 @@
 :root {
   color-scheme: light;
-  --font-heading: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', serif;
-  --font-body: 'Public Sans', 'Trebuchet MS', 'Segoe UI', sans-serif;
-  --color-ink: #163528;
-  --color-ink-soft: #335346;
-  --color-accent: #af6831;
-  --color-accent-soft: #f0d5bf;
-  --color-surface: #f5f2eb;
+  --font-heading: 'Work Sans', 'Segoe UI', sans-serif;
+  --font-body: 'Work Sans', 'Segoe UI', sans-serif;
+  --font-label: 'Inter', 'Segoe UI', sans-serif;
+
+  /* Colors */
+  --color-ink: #021f29;
+  --color-ink-soft: #42585f;
+  --color-accent: #00464f;
+  --color-accent-soft: #d8f2ff;
+  --color-surface: #f3faff;
   --color-surface-strong: #ffffff;
-  --color-surface-muted: #e6ece6;
-  --color-border: rgba(22, 53, 40, 0.14);
-  --color-warning: #8e4a19;
-  --color-success: #2a6f4f;
-  --shadow-soft: 0 18px 50px rgba(22, 53, 40, 0.08);
-  --radius-lg: 28px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
+  --color-surface-muted: #e6f6ff;
+  --color-surface-panel: #f8fcff;
+  --color-surface-rail: #dff0fb;
+  --color-border: rgba(2, 31, 41, 0.14);
+  --color-warning: #ba1a1a;
+  --color-success: #156874;
+  --color-info: #005f6b;
+
+  /* Spacing Scale (Mobile-First) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Fluid Typography Scale */
+  --font-size-xs: clamp(0.7rem, 1.8vw, 0.78rem);
+  --font-size-sm: clamp(0.8rem, 2vw, 0.88rem);
+  --font-size-base: clamp(0.92rem, 2.2vw, 1rem);
+  --font-size-md: clamp(1.1rem, 2.5vw, 1.25rem);
+  --font-size-lg: clamp(1.35rem, 3vw, 1.6rem);
+  --font-size-xl: clamp(1.65rem, 4vw, 2.1rem);
+  --font-size-2xl: clamp(2rem, 6vw, 3.2rem);
+  --font-size-hero: clamp(2.4rem, 7.5vw, 4.2rem);
+
+  /* Motion & Transitions */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-blur: 20px;
+
+  /* Shadows & Radius */
+  --shadow-soft: 0 12px 28px rgba(9, 44, 58, 0.08);
+  --shadow-panel: 0 20px 40px rgba(9, 44, 58, 0.06);
+  --shadow-glow: 0 0 20px rgba(0, 70, 79, 0.12);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  /* Layout dimensions */
+  --app-rail-width: 256px;
+  --app-topbar-height: 64px;
+  --app-bottom-nav-height: 76px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }

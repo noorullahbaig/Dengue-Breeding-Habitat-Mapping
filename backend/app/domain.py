@@ -14,7 +14,15 @@ ADVISORY_TEXT = (
     "Advisory only. Officers still review the image, location, and hotspot context "
     "before any action is recorded."
 )
+PUBLIC_CONSENT_VERSION = "public-image-pin-ai-v2"
+PUBLIC_CONSENT_TEXT = (
+    "I confirm this image, exact pin, computer-vision advisory result, confidence, "
+    "and detection evidence can be shown publicly on the prototype map as crowdsourced "
+    "dengue habitat evidence. Optional notes remain for officer review."
+)
 SAME_SITE_RADIUS_METERS = 30
+MAX_DETECTED_ACCURACY_METERS = 250
+MIN_ALLOWED_CORRECTION_RADIUS_METERS = 75
 EARTH_RADIUS_METERS = 6_371_000
 
 
@@ -38,6 +46,10 @@ def distance_meters(
         + cos(start_latitude) * cos(end_latitude) * sin(delta_longitude / 2) ** 2
     )
     return 2 * EARTH_RADIUS_METERS * atan2(sqrt(haversine), sqrt(1 - haversine))
+
+
+def allowed_correction_radius_meters(accuracy_meters: float) -> float:
+    return min(max(accuracy_meters, MIN_ALLOWED_CORRECTION_RADIUS_METERS), MAX_DETECTED_ACCURACY_METERS)
 
 
 def is_active_report(status: str) -> bool:

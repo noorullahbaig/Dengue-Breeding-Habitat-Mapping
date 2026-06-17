@@ -19,7 +19,10 @@ export const seededReports: SubmittedReport[] = [
     status: 'under_review',
     prediction: {
       label: 'drain_inlet',
+      confidence: 0.62,
       confidenceBand: 'moderate',
+      topRawLabel: 'Drain-Inlet',
+      detections: [{ rawLabel: 'Drain-Inlet', confidence: 0.62, bbox: [36, 30, 280, 210] }],
       advisoryText:
         'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
     },
@@ -44,7 +47,10 @@ export const seededReports: SubmittedReport[] = [
     status: 'prioritized',
     prediction: {
       label: 'tire',
+      confidence: 0.88,
       confidenceBand: 'high',
+      topRawLabel: 'Tire',
+      detections: [{ rawLabel: 'Tire', confidence: 0.88, bbox: [54, 42, 300, 238] }],
       advisoryText:
         'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
     },
@@ -70,7 +76,10 @@ export const seededReports: SubmittedReport[] = [
     status: 'action_recorded',
     prediction: {
       label: 'artificial_container',
+      confidence: 0.67,
       confidenceBand: 'moderate',
+      topRawLabel: 'Bottle',
+      detections: [{ rawLabel: 'Bottle', confidence: 0.67, bbox: [70, 52, 250, 230] }],
       advisoryText:
         'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
     },

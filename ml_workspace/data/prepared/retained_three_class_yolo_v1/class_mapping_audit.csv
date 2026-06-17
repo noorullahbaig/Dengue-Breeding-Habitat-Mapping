@@ -1,0 +1,6 @@
+old_class_id,old_class_name,action,new_class_id,new_class_name,old_instance_count,excluded_count
+0,Bottle,mapped,0,artificial_container,1344,0
+1,Coconut-Exocarp,excluded,,,2211,2211
+2,Drain-Inlet,mapped,1,drain_inlet,1353,0
+3,Tire,mapped,2,tire,1869,0
+4,Vase,mapped,0,artificial_container,2503,0

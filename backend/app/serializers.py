@@ -6,16 +6,23 @@ from app.models import Report
 from app.inference import PredictionSummary
 from app.schemas import (
     DetectionOut,
+    HotspotMirrorStatusOut,
+    HotspotPriorityOut,
+    HotspotSyncOut,
     LocationPoint,
     PredictionSummaryOut,
     NearbyReportOut,
+    OfficerReportOut,
+    PublicConsentOut,
+    PublicHotspotOut,
     PublicReportDetailOut,
     PublicReportObservationOut,
     PublicMapReportOut,
-    StatusPredictionOut,
+    StackParentSummaryOut,
     StatusReportOut,
     SubmittedReportOut,
 )
+from app.hotspots import HotspotMirrorStatus, HotspotSyncResult, PublicHotspot
 
 
 PRIVACY_NOTE = (
@@ -27,20 +34,44 @@ def _media_url(report: Report, variant: str) -> str:
     return f"/api/public/reports/{quote(report.reference)}/{variant}"
 
 
+def _public_consent(report: Report) -> PublicConsentOut:
+    return PublicConsentOut(
+        accepted=bool(report.public_consent_accepted),
+        acceptedAt=report.public_consent_at,
+        version=report.public_consent_version,
+    )
+
+
+def _hotspot_priority(report: Report) -> HotspotPriorityOut:
+    return HotspotPriorityOut(
+        snapshotDate=report.hotspot_snapshot_date,
+        nearestHotspotId=report.nearest_hotspot_id,
+        nearestHotspotLocality=report.nearest_hotspot_locality,
+        nearestHotspotDistrict=report.nearest_hotspot_district,
+        nearestHotspotDistanceMeters=report.nearest_hotspot_distance_meters,
+        priorityLevel=report.hotspot_priority_level or "unassessed",
+        priorityReason=report.hotspot_priority_reason or "Hotspot priority has not been assessed yet.",
+    )
+
+
+def _detection_from_mapping(item: dict) -> DetectionOut:
+    return DetectionOut(
+        rawLabel=item["rawLabel"],
+        confidence=item["confidence"],
+        bbox=item["bbox"],
+        bboxNormalized=item.get("bboxNormalized"),
+        imageWidth=item.get("imageWidth"),
+        imageHeight=item.get("imageHeight"),
+    )
+
+
 def _prediction(report: Report) -> PredictionSummaryOut:
     return PredictionSummaryOut(
         label=report.prediction_label,
         confidence=report.prediction_confidence,
         confidenceBand=report.prediction_confidence_band,
         topRawLabel=report.prediction_top_raw_label,
-        detections=[
-            DetectionOut(
-                rawLabel=item["rawLabel"],
-                confidence=item["confidence"],
-                bbox=item["bbox"],
-            )
-            for item in report.detections
-        ],
+        detections=[_detection_from_mapping(item) for item in report.detections],
         advisoryText=report.prediction_advisory_text,
     )
 
@@ -56,6 +87,9 @@ def prediction_summary_out(prediction: PredictionSummary) -> PredictionSummaryOu
                 rawLabel=detection.raw_label,
                 confidence=detection.confidence,
                 bbox=detection.bbox,
+                bboxNormalized=detection.bbox_normalized,
+                imageWidth=detection.image_width,
+                imageHeight=detection.image_height,
             )
             for detection in prediction.detections
         ],
@@ -87,6 +121,8 @@ def submitted_report_out(report: Report) -> SubmittedReportOut:
         statusMessage=report.status_message,
         notes=report.notes,
         stackedOnReference=stacked_on_reference,
+        publicConsent=_public_consent(report),
+        hotspotPriority=_hotspot_priority(report),
     )
 
 
@@ -99,12 +135,7 @@ def status_report_out(report: Report) -> StatusReportOut:
         reference=report.reference,
         createdAt=report.created_at,
         status=root_report.status,
-        prediction=StatusPredictionOut(
-            label=report.prediction_label,
-            confidence=report.prediction_confidence,
-            confidenceBand=report.prediction_confidence_band,
-            advisoryText=report.prediction_advisory_text,
-        ),
+        prediction=_prediction(report),
         neighborhood=root_report.neighborhood,
         statusMessage=(
             f"Added to existing public report {stacked_on_reference}."
@@ -129,11 +160,12 @@ def public_report_out(
         id=report.id,
         reference=report.reference,
         publicLocation=LocationPoint(
-            latitude=report.latitude,
-            longitude=report.longitude,
+            latitude=report.public_latitude,
+            longitude=report.public_longitude,
             source="public",
         ),
         habitatClass=report.prediction_label,
+        prediction=_prediction(report),
         status=report.status,
         neighborhood=report.neighborhood,
         reportedAt=report.created_at,
@@ -159,8 +191,8 @@ def nearby_report_out(
         id=report.id,
         reference=report.reference,
         publicLocation=LocationPoint(
-            latitude=report.latitude,
-            longitude=report.longitude,
+            latitude=report.public_latitude,
+            longitude=report.public_longitude,
             source="public",
         ),
         habitatClass=report.prediction_label,
@@ -181,11 +213,12 @@ def public_report_detail_out(root_report: Report, observations: list[Report]) ->
         id=root_report.id,
         reference=root_report.reference,
         publicLocation=LocationPoint(
-            latitude=root_report.latitude,
-            longitude=root_report.longitude,
+            latitude=root_report.public_latitude,
+            longitude=root_report.public_longitude,
             source="public",
         ),
         habitatClass=root_report.prediction_label,
+        prediction=_prediction(root_report),
         status=root_report.status,
         neighborhood=root_report.neighborhood,
         reportedAt=root_report.created_at,
@@ -193,6 +226,8 @@ def public_report_detail_out(root_report: Report, observations: list[Report]) ->
         reportCount=len(ordered_observations),
         thumbnailUrl=_media_url(latest_observation, "thumbnail"),
         imageUrl=_media_url(latest_observation, "image"),
+        privacyNote=PRIVACY_NOTE,
+        hotspotPriority=_hotspot_priority(root_report),
         observations=[
             PublicReportObservationOut(
                 id=observation.id,
@@ -203,7 +238,97 @@ def public_report_detail_out(root_report: Report, observations: list[Report]) ->
                 thumbnailUrl=_media_url(observation, "thumbnail"),
                 habitatClass=observation.prediction_label,
                 confidenceBand=observation.prediction_confidence_band,
+                prediction=_prediction(observation),
             )
             for observation in ordered_observations
         ],
+    )
+
+
+def public_hotspot_out(hotspot: PublicHotspot) -> PublicHotspotOut:
+    return PublicHotspotOut(
+        id=hotspot.id,
+        locality=hotspot.locality,
+        district=hotspot.district,
+        center=LocationPoint(
+            latitude=hotspot.latitude,
+            longitude=hotspot.longitude,
+            source="public",
+        ),
+        radiusMeters=hotspot.radius_meters,
+        cumulativeCases=hotspot.cumulative_cases,
+        outbreakDurationDays=hotspot.outbreak_duration_days,
+        outbreakStartDate=hotspot.outbreak_start_date,
+        weekNumber=hotspot.week_number,
+        year=hotspot.year,
+        snapshotDate=hotspot.snapshot_date,
+        sourceLabel=hotspot.source_label,
+        reportCountWithinWarning=hotspot.report_count_within_warning,
+    )
+
+
+def hotspot_mirror_status_out(status: HotspotMirrorStatus) -> HotspotMirrorStatusOut:
+    return HotspotMirrorStatusOut(
+        hotspotCount=status.hotspot_count,
+        latestSnapshotDate=status.latest_snapshot_date,
+        lastSyncedAt=status.last_synced_at,
+        sourceLabel=status.source_label,
+    )
+
+
+def hotspot_sync_out(result: HotspotSyncResult) -> HotspotSyncOut:
+    return HotspotSyncOut(
+        syncedCount=result.synced_count,
+        snapshotDate=result.snapshot_date,
+        sourceLabel=result.source_label,
+        syncedAt=result.synced_at,
+    )
+
+
+def officer_report_out(report: Report) -> OfficerReportOut:
+    stacked_on_reference = report.parent_report.reference if report.parent_report else None
+    stack_parent = (
+        StackParentSummaryOut(
+            reference=report.parent_report.reference,
+            createdAt=report.parent_report.created_at,
+            status=report.parent_report.status,
+            prediction=_prediction(report.parent_report),
+            imageUrl=_media_url(report.parent_report, "image"),
+            thumbnailUrl=_media_url(report.parent_report, "thumbnail"),
+        )
+        if report.parent_report
+        else None
+    )
+
+    return OfficerReportOut(
+        id=report.id,
+        reference=report.reference,
+        createdAt=report.created_at,
+        capturedAt=report.captured_at,
+        reportLocation=LocationPoint(
+            latitude=report.latitude,
+            longitude=report.longitude,
+            accuracyMeters=report.accuracy_meters,
+            source=report.location_source,
+        ),
+        publicLocation=LocationPoint(
+            latitude=report.public_latitude,
+            longitude=report.public_longitude,
+            source="public",
+        ),
+        status=report.status,
+        prediction=_prediction(report),
+        neighborhood=report.neighborhood,
+        statusMessage=report.status_message,
+        notes=report.notes,
+        imageUrl=_media_url(report, "image"),
+        thumbnailUrl=_media_url(report, "thumbnail"),
+        stackedOnReference=stacked_on_reference,
+        publicConsent=_public_consent(report),
+        hotspotPriority=_hotspot_priority(report),
+        officerNotes=report.officer_notes,
+        followUpAction=report.follow_up_action,
+        reviewedAt=report.reviewed_at,
+        reviewedBy=report.reviewed_by,
+        stackParent=stack_parent,
     )

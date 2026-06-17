@@ -1,0 +1,59 @@
+{
+  "dataset_root": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/raw/mosquitofusion_yolov8",
+  "class_count": 3,
+  "class_names": [
+    "Breeding Place",
+    "Mosquito",
+    "Mosquito Swarm"
+  ],
+  "splits": [
+    {
+      "split": "train",
+      "image_dir": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/raw/mosquitofusion_yolov8/train/images",
+      "image_count": 1053,
+      "missing_label_count": 0,
+      "empty_label_count": 0,
+      "invalid_row_count": 0,
+      "instances_by_class": {
+        "Breeding Place": 2168,
+        "Mosquito Swarm": 57,
+        "Mosquito": 416
+      },
+      "missing_labels": [],
+      "empty_labels": [],
+      "invalid_rows": []
+    },
+    {
+      "split": "val",
+      "image_dir": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/raw/mosquitofusion_yolov8/valid/images",
+      "image_count": 100,
+      "missing_label_count": 0,
+      "empty_label_count": 0,
+      "invalid_row_count": 0,
+      "instances_by_class": {
+        "Breeding Place": 223,
+        "Mosquito Swarm": 6,
+        "Mosquito": 36
+      },
+      "missing_labels": [],
+      "empty_labels": [],
+      "invalid_rows": []
+    },
+    {
+      "split": "test",
+      "image_dir": "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/data/raw/mosquitofusion_yolov8/test/images",
+      "image_count": 51,
+      "missing_label_count": 0,
+      "empty_label_count": 0,
+      "invalid_row_count": 0,
+      "instances_by_class": {
+        "Breeding Place": 81,
+        "Mosquito": 36,
+        "Mosquito Swarm": 1
+      },
+      "missing_labels": [],
+      "empty_labels": [],
+      "invalid_rows": []
+    }
+  ]
+}

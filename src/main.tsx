@@ -6,6 +6,7 @@ import { AppRoutes } from '@/app/AppRoutes'
 import 'leaflet/dist/leaflet.css'
 import '@/styles/tokens.css'
 import '@/styles/global.css'
+import '@/styles/stitch.css'
 
 const rootElement = document.getElementById('root')
 
