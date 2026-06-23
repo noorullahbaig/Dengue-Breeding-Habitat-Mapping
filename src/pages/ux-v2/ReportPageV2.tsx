@@ -261,23 +261,19 @@ export function ReportPageV2({
 			return;
 		}
 
-		if (consentAdvanceTimerRef.current !== null) {
-			window.clearTimeout(consentAdvanceTimerRef.current);
-			consentAdvanceTimerRef.current = null;
-		}
 		setHasScrolledConsentToEnd(draft.hasPublicConsent ?? false);
 
 		const consentBody = consentBodyRef.current;
 		if (consentBody) {
 			consentBody.scrollTop = 0;
+			// Auto-unlock if text doesn't overflow
+			window.setTimeout(() => {
+				if (consentBody.scrollHeight <= consentBody.clientHeight + 12) {
+					setHasScrolledConsentToEnd(true);
+				}
+			}, 50);
 		}
-		return () => {
-			if (consentAdvanceTimerRef.current !== null) {
-				window.clearTimeout(consentAdvanceTimerRef.current);
-				consentAdvanceTimerRef.current = null;
-			}
-		};
-	}, [draft.hasPublicConsent, isMobileConsentStep]);
+	}, [isMobileConsentStep]);
 
 	useEffect(() => {
 		return () => {
@@ -726,12 +722,14 @@ export function ReportPageV2({
 									<div className="report-photo-stage">
 										{draft.photoPreviewUrl ? (
 											<Surface className="premium-upload-card">
-												<div className="report-photo-stage__preview" style={{ width: "100%", display: "flex", justifyContent: "center", padding: 0 }}>
-													<img
-														src={draft.photoPreviewUrl}
-														alt="Captured preview"
-														className="report-photo-stage__image"
-													/>
+												<div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+													<div className="report-photo-stage__preview" style={{ width: "100%", display: "flex", justifyContent: "center", padding: 0 }}>
+														<img
+															src={draft.photoPreviewUrl}
+															alt="Captured preview"
+															className="report-photo-stage__image"
+														/>
+													</div>
 												</div>
 												<div className="premium-upload-card__actions">
 													<button
@@ -756,10 +754,11 @@ export function ReportPageV2({
 											</Surface>
 										) : (
 											<Surface className="premium-upload-card">
-												<div className="premium-upload-card__icon-wrapper">
-							<svg
-								aria-hidden="true"
-								className="premium-upload-card__icon"
+												<div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', width: '100%' }}>
+													<div className="premium-upload-card__icon-wrapper">
+														<svg
+															aria-hidden="true"
+															className="premium-upload-card__icon"
 															viewBox="0 0 24 24"
 															fill="none"
 															stroke="currentColor"
@@ -780,6 +779,7 @@ export function ReportPageV2({
 															Focus on the object and its water-holding area.
 														</p>
 													</div>
+												</div>
 													<div className="premium-upload-card__actions">
 														<label className="premium-upload-btn premium-upload-btn--camera">
 								<svg

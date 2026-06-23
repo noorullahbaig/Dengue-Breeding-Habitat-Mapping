@@ -385,6 +385,7 @@
   z-index: 1;
   flex: 0 0 auto;
   width: 100%;
+  box-sizing: border-box;
   padding: 0.85rem 1rem max(calc(var(--safe-area-bottom) + 1.25rem), 1.5rem);
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
@@ -393,6 +394,7 @@
 
 .report-location-sheet__confirm {
   width: 100%;
+  box-sizing: border-box;
   min-height: 52px !important;
   padding: 0.9rem 1.25rem !important;
   border-radius: var(--radius-md) !important;
@@ -562,4 +564,17 @@
     border-color: color-mix(in srgb, var(--color-ink) 16%, transparent);
     background: var(--color-surface-strong);
   }
+}
+
+.report-slide {
+  overflow: hidden;
+}
+
+.u-static-2aa73adf {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
