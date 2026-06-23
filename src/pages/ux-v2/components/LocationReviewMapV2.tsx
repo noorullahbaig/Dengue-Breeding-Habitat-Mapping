@@ -191,6 +191,7 @@ export function LocationReviewMapV2({
 	return (
 		<MapFrame
 			label="Choose the exact report location"
+			height="immersive"
 			className="map-frame stack-md"
 			banner={
 				boundaryWarning ? (

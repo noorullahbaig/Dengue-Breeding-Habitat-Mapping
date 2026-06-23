@@ -175,9 +175,6 @@
   font-size: 0.78rem;
   line-height: 1.25;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .report-segmented-progress {
