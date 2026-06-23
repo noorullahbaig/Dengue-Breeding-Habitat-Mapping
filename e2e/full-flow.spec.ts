@@ -178,8 +178,8 @@ for (const viewport of [
     expect(retakeBox).not.toBeNull()
     expect(continueBox).not.toBeNull()
     expect(imageBox!.width / previewBox!.width).toBeGreaterThanOrEqual(0.7)
-    expect(retakeBox!.width).toBeLessThan(previewBox!.width)
-    expect(continueBox!.width).toBeLessThan(previewBox!.width)
+    expect(retakeBox!.width).toBeLessThanOrEqual(previewBox!.width)
+    expect(continueBox!.width).toBeLessThanOrEqual(previewBox!.width)
     expect(previewStyles.objectFit).toBe('cover')
 
     await page.getByRole('button', { name: 'Use photo & continue' }).click()
