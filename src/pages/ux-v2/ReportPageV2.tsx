@@ -725,16 +725,23 @@ export function ReportPageV2({
 										// MOBILE ONLY REDESIGNED PHOTO FLOW
 									<div className="report-photo-stage">
 										{draft.photoPreviewUrl ? (
-											<>
-												<div className="report-photo-stage__preview">
+											<Surface className="premium-upload-card">
+												<div className="report-photo-stage__preview" style={{ width: "100%", display: "flex", justifyContent: "center", padding: 0 }}>
 													<img
 														src={draft.photoPreviewUrl}
 														alt="Captured preview"
 														className="report-photo-stage__image"
 													/>
 												</div>
-												<div className="report-photo-stage__actions">
-													<label className="ui-button ui-button--secondary report-photo-stage__retake">
+												<div className="premium-upload-card__actions">
+													<button
+														type="button"
+														className="premium-upload-btn premium-upload-btn--camera"
+														onClick={() => setCurrentStep(1)}
+													>
+														Use photo &amp; continue
+													</button>
+													<label className="premium-upload-btn premium-upload-btn--gallery">
 														<span>Retake photo</span>
 														<input
 															type="file"
@@ -745,11 +752,8 @@ export function ReportPageV2({
 															onChange={handleFileSelection}
 														/>
 													</label>
-													<Button variant="primary" className="report-photo-stage__continue" onClick={() => setCurrentStep(1)}>
-														Use photo &amp; continue
-													</Button>
 												</div>
-											</>
+											</Surface>
 										) : (
 											<Surface className="premium-upload-card">
 												<div className="premium-upload-card__icon-wrapper">
