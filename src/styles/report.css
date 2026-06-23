@@ -21,7 +21,7 @@
   width: 100%;
   min-width: 0;
   min-height: 100%;
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
   background: var(--color-surface);
   box-shadow: 0 -24px 64px color-mix(in srgb, var(--color-ink) 24%, transparent);
@@ -38,7 +38,7 @@
 
 .page--report-overlay {
   width: 100%;
-  height: 100dvh;
+  height: 100%;
   max-width: none;
   overflow: hidden;
   background: var(--color-surface);
@@ -385,10 +385,19 @@
   z-index: 1;
   flex: 0 0 auto;
   width: 100%;
-  padding: 0.85rem 1rem max(calc(var(--safe-area-bottom) + 0.75rem), 0.85rem);
+  padding: 0.85rem 1rem max(calc(var(--safe-area-bottom) + 1.25rem), 1.5rem);
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
   box-shadow: 0 -4px 16px color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.report-location-sheet__confirm {
+  width: 100%;
+  min-height: 52px !important;
+  padding: 0.9rem 1.25rem !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
 }
 
 .report-location-desktop-actions {
