@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { PageHeader } from '@/components/ui'
 
 interface SectionHeadingProps {
   eyebrow: string
@@ -16,11 +17,13 @@ export function SectionHeading({
   variant = 'default',
 }: SectionHeadingProps) {
   return (
-    <div className={`section-heading section-heading--${variant}`}>
-      <span className="section-heading__eyebrow">{eyebrow}</span>
-      <h1 className="section-heading__title">{title}</h1>
-      <p className="section-heading__description">{description}</p>
-      {actions ? <div className="page-header__actions">{actions}</div> : null}
-    </div>
+    <PageHeader
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      actions={actions}
+      compact={variant === 'compact'}
+      className={`section-heading section-heading--${variant}`}
+    />
   )
 }

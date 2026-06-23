@@ -10,10 +10,13 @@ const evidenceJpeg = Buffer.from(
 )
 
 test('resident public report and officer review complete against the local backend', async ({
+  context,
   page,
   request,
 }) => {
   test.setTimeout(180_000)
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
 
   const syncResponse = await request.post('http://127.0.0.1:8000/api/officer/hotspots/sync', {
     headers: officerHeaders,
@@ -23,57 +26,57 @@ test('resident public report and officer review complete against the local backe
   expect(syncBody.syncedCount).toBeGreaterThan(0)
 
   await page.goto('/report')
-  await expect(page.getByText(/Next needed: add one clear evidence photo/)).toBeVisible()
+  await expect(page.getByLabel('Upload a photo instead')).toBeVisible()
   await page.getByLabel('Upload a photo instead').setInputFiles({
     name: 'local-flow-evidence.jpg',
     mimeType: 'image/jpeg',
     buffer: evidenceJpeg,
   })
-  await page.getByRole('button', { name: 'Use demo Kuala Lumpur location' }).click()
+  await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
+  await page.getByRole('button', { name: 'Use photo & continue' }).click()
   await expect(page.getByText(/blue ring is the approximate device guide/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Confirm this exact pin' })).toBeEnabled()
   await page.getByRole('button', { name: 'Confirm this exact pin' }).click()
 
   await page.locator('input[type="checkbox"]').check()
   await page.getByRole('button', { name: 'Continue to AI review' }).click()
-  await expect(page.getByText(/Computer vision suggests/)).toBeVisible({ timeout: 120_000 })
-  await expect(page.getByText(/How to read this AI result/).first()).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Submitted evidence preview' })).toBeVisible({ timeout: 120_000 })
+  await expect(page.getByText(/Advisory only/)).toBeVisible()
 
-  const separateButton = page.getByRole('button', { name: 'Create separate report' })
+  const separateButton = page.getByRole('button', { name: 'No, this is separate' })
   if (await separateButton.isVisible().catch(() => false)) {
     await separateButton.click()
   }
 
   await expect(page.getByRole('button', { name: 'Continue to submit' })).toBeEnabled()
   await page.getByRole('button', { name: 'Continue to submit' }).click()
-  const submitButton = page.getByRole('button', { name: /Submit public report|Submit stacked report/ })
+  const submitButton = page.getByRole('button', { name: /Submit Report|Submit Stacked Report/i })
   await expect(submitButton).toBeEnabled({ timeout: 90_000 })
   await submitButton.click()
-  const referenceBadge = page.locator('.success-card__reference')
+  const referenceBadge = page.getByRole('button', { name: 'Copy reference code to clipboard' })
   await expect(referenceBadge).toBeVisible({ timeout: 120_000 })
   const reference = (await referenceBadge.textContent())?.trim() ?? ''
   expect(reference).toMatch(/^KL-[A-Z0-9]+-\d+$/)
 
   await page.goto(`/map/reports/${reference}`)
-  await expect(page.getByRole('heading', { name: reference })).toBeVisible()
-  await expect(page.getByText('All public submissions in this stack')).toBeVisible()
-  await expect(page.getByText(/How to read this AI result/).first()).toBeVisible()
+  await expect(page.getByText(reference).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Observation history' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Evidence review' })).toBeVisible()
 
   await page.goto(`/status?ref=${reference}`)
   await expect(page.getByText(reference).first()).toBeVisible()
-  await expect(page.getByText(/Advisory habitat/)).toBeVisible()
-  await expect(page.getByText(/Public model evidence/)).toBeVisible()
-  await expect(page.getByText(/How to read this AI result/).first()).toBeVisible()
+  await expect(page.getByText(/AI Habitat Advisory/)).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Citizen evidence thumbnail' })).toBeVisible()
 
   await page.goto('/officer')
-  await expect(page.getByText(/current hotspot row/)).toBeVisible()
+  await expect(page.getByText(/hotspot rows synced/)).toBeVisible()
   await expect(page.getByText(reference).first()).toBeVisible()
   await page.getByRole('button', { name: new RegExp(reference) }).click()
   await expect(page.getByText(/Hotspot priority/)).toBeVisible()
-  await expect(page.getByText(/Officer model evidence/)).toBeVisible()
+  await expect(page.getByRole('img', { name: new RegExp(`Evidence photo for ${reference}`) })).toBeVisible()
   await page.getByLabel('Review status').selectOption('action_recorded')
-  await page.getByLabel('Officer notes').fill('Verified by Playwright full-flow rehearsal.')
-  await page.getByLabel('Follow-up action').fill('Inspection scheduled from local E2E test.')
+  await page.getByLabel(/Internal officer notes/).fill('Verified by Playwright full-flow rehearsal.')
+  await page.getByLabel(/Vector follow-up action/).fill('Inspection scheduled from local E2E test.')
   await page.getByRole('button', { name: 'Save review update' }).click()
   await expect(page.getByText(`Saved review update for ${reference}.`)).toBeVisible()
 
@@ -88,19 +91,155 @@ test('resident public report and officer review complete against the local backe
   expect(officerBody.hotspotPriority.priorityLevel).not.toBe('unassessed')
 })
 
-test('mobile resident flow keeps the guided stepper and pin controls usable', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+test('desktop resident can confirm the selected location', async ({ context, page }) => {
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
 
   await page.goto('/report')
-  await expect(page.getByRole('button', { name: /1\. Photo/ })).toBeVisible()
-  await expect(page.getByText(/Next needed: add one clear evidence photo/)).toBeVisible()
-
   await page.getByLabel('Upload a photo instead').setInputFiles({
-    name: 'mobile-local-flow-evidence.jpg',
+    name: 'desktop-location-confirmation.jpg',
     mimeType: 'image/jpeg',
     buffer: evidenceJpeg,
   })
-  await page.getByRole('button', { name: 'Use demo Kuala Lumpur location' }).click()
-  await expect(page.getByRole('button', { name: 'North' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Confirm this exact pin' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
+  await page.getByRole('button', { name: 'Use photo & continue' }).click()
+
+  const confirmButton = page.getByRole('button', { name: 'Confirm this exact pin' })
+  const progressHeader = page.getByRole('navigation', { name: 'Report progress' })
+
+  await expect(confirmButton).toBeVisible()
+  await expect(confirmButton).toBeEnabled()
+
+  const desktopHeaderGeometry = await progressHeader.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    const canvas = element.closest('.app-canvas')?.getBoundingClientRect()
+    return {
+      containedByCanvas:
+        Boolean(canvas) &&
+        rect.left >= (canvas?.left ?? 0) &&
+        rect.right <= (canvas?.right ?? window.innerWidth),
+      top: rect.top,
+    }
+  })
+
+  expect(desktopHeaderGeometry.containedByCanvas).toBeTruthy()
+  expect(desktopHeaderGeometry.top).toBeGreaterThanOrEqual(0)
+
+  await page.getByRole('button', { name: 'Take image, complete' }).click()
+  await expect(page.getByRole('heading', { name: 'Take image' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Confirm location, available' }).click()
+  await expect(page.getByRole('heading', { name: 'Confirm location' })).toBeVisible()
+
+  await confirmButton.click()
+  await expect(page.getByRole('heading', { name: 'Consent form' })).toBeVisible()
+})
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 390, height: 667 },
+]) {
+  test(`mobile resident can confirm the location at ${viewport.width}x${viewport.height}`, async ({
+    context,
+    page,
+  }) => {
+    await page.setViewportSize(viewport)
+    await context.grantPermissions(['geolocation'])
+    await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
+
+    await page.goto('/report')
+    await expect(page.getByRole('dialog', { name: 'Report a breeding habitat' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Take image' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Capture Breeding Habitat' })).toBeVisible()
+
+    await page.getByLabel('Upload a photo instead').setInputFiles({
+      name: `mobile-local-flow-evidence-${viewport.height}.jpg`,
+      mimeType: 'image/jpeg',
+      buffer: evidenceJpeg,
+    })
+    await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
+    await expect(page.getByLabel('Retake photo')).toBeVisible()
+
+    const [previewBox, imageBox, retakeBox, continueBox, previewStyles] = await Promise.all([
+      page.locator('.report-photo-stage__preview').boundingBox(),
+      page.getByRole('img', { name: 'Captured preview' }).boundingBox(),
+      page.getByLabel('Retake photo').boundingBox(),
+      page.getByRole('button', { name: 'Use photo & continue' }).boundingBox(),
+      page.getByRole('img', { name: 'Captured preview' }).evaluate((element) => {
+        const styles = window.getComputedStyle(element)
+        return {
+          objectFit: styles.objectFit,
+        }
+      }),
+    ])
+
+    expect(previewBox).not.toBeNull()
+    expect(imageBox).not.toBeNull()
+    expect(retakeBox).not.toBeNull()
+    expect(continueBox).not.toBeNull()
+    expect(imageBox!.width / previewBox!.width).toBeGreaterThanOrEqual(0.7)
+    expect(retakeBox!.width).toBeLessThan(previewBox!.width)
+    expect(continueBox!.width).toBeLessThan(previewBox!.width)
+    expect(previewStyles.objectFit).toBe('cover')
+
+    await page.getByRole('button', { name: 'Use photo & continue' }).click()
+
+    const confirmButton = page.getByRole('button', { name: 'Confirm this exact site' })
+    const progressHeader = page.getByRole('navigation', { name: 'Report progress' })
+
+    await expect(page.getByRole('button', { name: 'Use current location again' })).toBeVisible()
+    await expect(confirmButton).toBeVisible()
+    await expect(confirmButton).toBeEnabled()
+
+    const locationPanelPosition = await page
+      .locator('.report-location-confirmation-panel')
+      .evaluate((element) => window.getComputedStyle(element).position)
+
+    expect(locationPanelPosition).toBe('static')
+
+    const [confirmBox, dialogBox] = await Promise.all([
+      confirmButton.boundingBox(),
+      page.getByRole('dialog', { name: 'Report a breeding habitat' }).boundingBox(),
+    ])
+
+    expect(confirmBox).not.toBeNull()
+    expect(dialogBox).not.toBeNull()
+    expect(confirmBox!.y + confirmBox!.height).toBeLessThanOrEqual(dialogBox!.height)
+
+    const targetSizes = await progressHeader
+      .locator('.report-segmented-progress__button')
+      .evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const rect = button.getBoundingClientRect()
+          return { width: rect.width, height: rect.height }
+        }),
+      )
+
+    expect(targetSizes).toHaveLength(5)
+    expect(targetSizes.every(({ width, height }) => width >= 44 && height >= 44)).toBeTruthy()
+
+    await confirmButton.click()
+    await expect(page.getByRole('heading', { name: 'Consent form' })).toBeVisible()
+  })
+}
+
+test('report progress dock respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/report')
+
+  const motionStyles = await page
+    .getByRole('navigation', { name: 'Report progress' })
+    .evaluate((dock) => {
+      const activeBar = dock.querySelector(
+        '.report-segmented-progress__item[data-state="current"] .report-segmented-progress__bar',
+      )
+
+      return {
+        transition: activeBar ? window.getComputedStyle(activeBar).transitionDuration : null,
+        animation: activeBar ? window.getComputedStyle(activeBar).animationName : null,
+      }
+    })
+
+  expect(Number.parseFloat(motionStyles.transition ?? '1')).toBeLessThanOrEqual(0.001)
+  expect(motionStyles.animation).toBe('none')
 })

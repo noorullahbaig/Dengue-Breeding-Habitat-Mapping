@@ -55,7 +55,7 @@ Classes such as `Water Drum` and `Flowerpot` remain deferred because the current
 2. Build a curated retained-class dataset under `data/prepared/` locally only for audits, or under `/kaggle/working/` for GPU training.
 3. Freeze train/validation/test membership in `data/splits/`.
 4. Evaluate the current model before retraining and store live-model outputs under `metrics/baselines/`; store historical references under `metrics/historical/`.
-5. Train new experiments into `models/experiments/<date>_<model>_<dataset>/`.
+5. Store downloaded or exported training records under `runs/training/YYYY-MM-DD_<base-model>_<dataset>_<version>/`.
 6. Store all evaluation outputs under `runs/evaluation/` and summarize results in `metrics/comparisons/`.
 
 Useful helper scripts:
@@ -69,20 +69,33 @@ The prototype backend points to `models/current_yolo/best.pt` as the stable runt
 
 For the first proper retraining run, use `kaggle/train_retained_three_class_yolo.py` so preprocessing and training happen where the Kaggle dataset and GPU are available.
 
-Current integrated model (promoted on 2026-05-25):
+Current integrated model (promoted on 2026-06-18):
 
 - Runtime path: `models/current_yolo/best.pt`
-- Approved archive: `models/approved/new_more_data_model_20260522/best.pt`
-- Original local source: `/Users/noorullah/Downloads/best.pt`
-- Interpretable comparison label: `new_more_data_model`
+- Approved archive: `models/approved/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/best.pt`
+- Source training record: `runs/training/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/`
+- SHA-256: `66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e`
+- Classes: `Artificial Container`, `Drain Inlet`, `Tire`
+
+Previous live checkpoint archived on promotion:
+
+- Archived path: `models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt`
 - SHA-256: `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7`
-- Classes: `artificial_container`, `drain_inlet`, `tire`
 
 Current live-model metrics status:
 
 - Live checkpoint metadata is recorded in `metrics/baselines/current_yolo_checkpoint_info.json`.
-- No reproducible precision, recall, mAP50, or mAP50-95 metrics are currently recorded in this workspace for the live `models/current_yolo/best.pt` checkpoint.
+- Updated expanded-dataset comparison versus the previous live checkpoint is recorded in `metrics/comparisons/expanded_dataset_new_vs_current_live_20260618.md`.
+- Retained local regression comparison is recorded in `metrics/comparisons/retained_three_class_same_split_comparison_20260618.md`.
 - Stage 1 metrics under `metrics/historical/stage1/` are historical reference metrics only and must not be reported as live-model performance.
+
+Canonical 2026-06-18 evaluation records:
+
+- `runs/evaluation/2026-06-18_previous-live_updated-expanded-test_kaggle/`
+- `runs/evaluation/2026-06-18_previous-live_retained-three-class-test_local/`
+- `runs/evaluation/2026-06-18_2026-06-17-yolov8n-mosquito-breeding-expanded-v1_retained-three-class-test_local/`
+- `runs/evaluation/2026-06-18_stage1-historical_retained-three-class-test_local/`
+- `runs/evaluation/legacy_20260618_cleanup/` preserves duplicate exploratory outputs that are no longer canonical.
 
 Important safeguards:
 

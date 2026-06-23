@@ -1,0 +1,559 @@
+.page--report-v2 {
+  height: 100%;
+  max-height: 100%;
+  gap: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  animation: report-overlay-backdrop-in 220ms ease-out both;
+}
+
+.report-overlay__surface {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 -24px 64px color-mix(in srgb, var(--color-ink) 24%, transparent);
+  animation: report-overlay-enter 300ms var(--ease-out-expo) both;
+}
+
+.report-overlay--closing {
+  animation: report-overlay-backdrop-out 220ms ease-in both;
+}
+
+.report-overlay--closing .report-overlay__surface {
+  animation: report-overlay-exit 220ms ease-in both;
+}
+
+.page--report-overlay {
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.report-resume {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  width: min(100%, 32rem);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem max(2rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.report-resume__mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  font-family: var(--font-label);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.report-resume__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--color-accent);
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.report-resume h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.report-resume p {
+  color: var(--color-ink-soft);
+}
+
+.report-resume__actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.report-stepper-header {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--color-surface-strong) 98%, transparent);
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.7rem;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-ink) 6%, transparent);
+}
+
+.report-stepper-header__top {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-stepper-header__side {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.report-stepper-header__side--end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.report-stepper-header__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+  background: var(--color-surface-strong);
+  color: var(--color-ink);
+  padding: 0;
+  transition:
+    transform 180ms var(--ease-out-expo),
+    background-color 180ms ease;
+}
+
+.report-stepper-header__icon-button:hover {
+  background: var(--color-surface-muted);
+  transform: translateY(-1px);
+}
+
+.report-stepper-header__close {
+  background: var(--color-surface-muted);
+}
+
+.report-stepper-header__copy {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.report-stepper-header__count {
+  color: var(--color-ink-soft);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.report-stepper-header__title {
+  font-family: var(--font-heading);
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.report-stepper-header__description {
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-segmented-progress {
+  margin-top: 0.6rem;
+}
+
+.report-segmented-progress__list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.report-segmented-progress__item {
+  min-width: 0;
+}
+
+.report-segmented-progress__button {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.report-segmented-progress__button:disabled {
+  cursor: default;
+}
+
+.report-segmented-progress__bar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink) 13%, transparent);
+  color: white;
+  transition:
+    height 240ms var(--ease-out-expo),
+    background-color 200ms ease,
+    box-shadow 240ms ease,
+    transform 240ms var(--ease-out-expo);
+}
+
+.report-segmented-progress__item[data-state='complete'] .report-segmented-progress__bar {
+  background: var(--color-success);
+}
+
+.report-segmented-progress__item[data-state='current'] .report-segmented-progress__bar {
+  height: 8px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 10%, transparent);
+  transform: scaleX(1.02);
+  animation: report-segment-activate 300ms var(--ease-out-expo) both;
+}
+
+.report-segmented-progress__item[data-state='available'] .report-segmented-progress__bar {
+  background: color-mix(in srgb, var(--color-accent) 28%, white);
+}
+
+.report-segmented-progress__check {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: report-check-in 220ms var(--ease-out-expo) both;
+}
+
+.report-photo-stage {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 100%;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-muted) 72%, transparent),
+      color-mix(in srgb, var(--color-surface) 92%, transparent)
+    );
+}
+
+.report-photo-stage__preview {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 1.25rem 1rem 0.75rem;
+}
+
+.report-photo-stage__image {
+  display: block;
+  width: min(100%, 18rem);
+  aspect-ratio: 4 / 5;
+  height: auto;
+  max-height: min(52vh, 25rem);
+  object-fit: cover;
+  object-position: center;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--color-surface-strong) 94%, transparent);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--color-ink) 8%, transparent);
+}
+
+.report-photo-stage__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  width: min(calc(100% - 2rem), 20rem);
+  margin: 0 auto;
+  padding: 0.95rem 0 0;
+  background: transparent;
+  border-top: 0;
+  box-shadow: none;
+}
+
+.report-photo-stage__retake,
+.report-photo-stage__continue {
+  width: 100%;
+  justify-content: center;
+}
+
+.report-photo-stage__retake {
+  position: relative;
+  overflow: hidden;
+}
+
+.report-photo-stage__retake input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.page--report-v2 .premium-upload-btn {
+  position: relative;
+  min-height: 52px;
+  overflow: hidden;
+}
+
+.page--report-v2 .premium-upload-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.page--report-v2 .premium-upload-btn--camera {
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.page--report-v2 .premium-upload-btn--gallery {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-strong);
+  color: var(--color-ink);
+}
+
+.report-ai-actions {
+  padding-block: 1rem 2rem;
+}
+
+.report-submit-actions {
+  padding-top: 1rem;
+}
+
+.report-submit-helper {
+  margin-top: 0.5rem;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+
+.page--report-v2 .report-slides-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page--report-overlay .report-slides-window {
+  min-height: 0;
+}
+
+.page--report-overlay .report-slide__content {
+  overscroll-behavior: contain;
+}
+
+.page--report-v2 .report-slide--map .report-slide__content,
+.page--report-v2 .report-location-stage,
+.page--report-v2 .report-location-stage__surface {
+  min-height: 0;
+}
+
+.report-location-confirmation-panel {
+  position: static;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 0.85rem 1rem max(calc(var(--safe-area-bottom) + 0.75rem), 0.85rem);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.report-location-desktop-actions {
+  position: static;
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: color-mix(in srgb, var(--color-surface-strong) 90%, transparent);
+  border-top: 1px solid var(--color-border);
+}
+
+.report-consent-desktop-actions {
+  position: static;
+  padding: 0;
+  background: transparent;
+  border-top: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.report-consent-desktop-actions .button {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 761px) {
+  .report-overlay {
+    display: none;
+  }
+
+  .report-stepper-header {
+    padding: 1.15rem 1.4rem 0.85rem;
+  }
+
+  .report-stepper-header__title {
+    font-size: 1.35rem;
+  }
+
+  .report-stepper-header__description {
+    font-size: 0.9rem;
+  }
+
+  .report-wizard-header {
+    padding-inline: 1.4rem;
+  }
+
+  .report-progress-dock {
+    inset-inline: 50%;
+    bottom: 1.25rem;
+    width: min(36rem, calc(100% - 3rem));
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transform: translateX(-50%);
+  }
+
+  .page--report-v2 .report-slide__actions {
+    position: static;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .page--report-v2 .report-slide__actions .button {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-overlay,
+  .report-overlay__surface,
+  .report-segmented-progress__bar,
+  .report-segmented-progress__check,
+  .page--report-v2 .report-slides-container {
+    animation: none;
+    transition-duration: 0.01ms;
+  }
+
+  .report-segmented-progress__item[data-state='current'] .report-segmented-progress__bar,
+  .report-segmented-progress__check {
+    animation: none;
+  }
+
+  .report-progress-dock__rail-fill,
+  .report-progress-dock__node,
+  .report-progress-dock__core {
+    transition: none;
+  }
+
+  .report-progress-dock__rail-highlight,
+  .report-progress-dock__check,
+  .report-progress-dock__button[data-state='current'] .report-progress-dock__node {
+    animation: none;
+  }
+}
+
+@keyframes report-overlay-enter {
+  from {
+    opacity: 0.72;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes report-overlay-backdrop-in {
+  from { background-color: transparent; }
+  to { background-color: color-mix(in srgb, var(--color-ink) 28%, transparent); }
+}
+
+@keyframes report-overlay-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0.82;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes report-overlay-backdrop-out {
+  from { background-color: color-mix(in srgb, var(--color-ink) 28%, transparent); }
+  to { background-color: transparent; }
+}
+
+@keyframes report-segment-activate {
+  0% { transform: scaleX(0.72); }
+  100% { transform: scaleX(1.02); }
+}
+
+@keyframes report-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .report-progress-dock {
+    background: var(--color-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .report-progress-dock__surface {
+    border-color: color-mix(in srgb, var(--color-ink) 16%, transparent);
+    background: var(--color-surface-strong);
+  }
+}

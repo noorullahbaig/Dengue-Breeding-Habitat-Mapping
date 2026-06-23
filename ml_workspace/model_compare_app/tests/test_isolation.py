@@ -1,12 +1,14 @@
 import subprocess
+from pathlib import Path
 
 
 def test_prototype_has_no_import_of_model_compare_app():
+    backend_root = Path(__file__).resolve().parents[3] / "backend"
     cmd = [
         "rg",
         "-n",
         "model_compare_app",
-        "/Users/noorullah/Desktop/FYP CODEX/prototype",
+        str(backend_root),
         "-g",
         "!node_modules/**",
     ]

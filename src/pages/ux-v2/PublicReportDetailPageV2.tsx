@@ -1,16 +1,18 @@
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useServices } from "@/app/useServices";
 import { InlineNotice } from "@/components/InlineNotice";
 import { StaticReceiptMap } from "@/pages/ux-v2/components/StaticReceiptMap";
 import { StatusBadge } from "@/features/shared/StatusBadge";
+import { Surface, ButtonLink, EmptyState, LoadingState } from "@/components/ui";
 import {
 	formatCalendarDate,
 	formatConfidenceLabel,
 	formatHabitatLabel,
 	formatTimestamp,
 } from "@/lib/formatters";
+import { toPublicReportErrorMessage } from "@/lib/userFacingErrors";
 import { PredictionEvidencePanelV2 } from "@/pages/ux-v2/components/PredictionEvidencePanelV2";
 import type { PublicReportDetail } from "@/types/report";
 
@@ -41,13 +43,8 @@ export function PublicReportDetailPageV2() {
 				}
 			} catch (loadError) {
 				if (isMounted) {
-					setError(
-						loadError instanceof Error &&
-							loadError.message &&
-							loadError.message !== "Failed to fetch"
-							? loadError.message
-							: "Public report details are temporarily unavailable.",
-					);
+					console.error("Failed to load public report detail:", loadError);
+					setError(toPublicReportErrorMessage(loadError));
 					setReport(null);
 				}
 			} finally {
@@ -65,7 +62,8 @@ export function PublicReportDetailPageV2() {
 	}, [reference, reportsService]);
 
 	// Get active observation data for display
-	const activeObs = report?.observations?.find(
+	const observations = report?.observations ?? [];
+	const activeObs = observations.find(
 		(o) => o.reference === selectedObsRef,
 	);
 
@@ -77,30 +75,36 @@ export function PublicReportDetailPageV2() {
 	const activeImageUrl = activeObs ? activeObs.imageUrl : report?.imageUrl;
 
 	return (
-		<div className="page stack-md page--detail-revamp">
-			{/* Premium Back Bar */}
-			<div className="detail-navigation-bar">
-				<Link to="/map" className="detail-back-link">
-					<ArrowLeft size={18} />
-					Back to Interactive Map
-				</Link>
-			</div>
-
-			{isLoading ? (
-				<div className="loading-state">Loading public report details...</div>
-			) : null}
-			{error ? <InlineNotice tone="warning">{error}</InlineNotice> : null}
-
-			{!isLoading && !error && !report ? (
-				<div className="empty-state">
-					<p>No public report found matching this reference code.</p>
+		<div className="page-layout page--detail-revamp">
+			<div className="page-body stack-md">
+				{/* Premium Back Bar */}
+				<div className="detail-navigation-bar">
+					<ButtonLink to="/map" variant="ghost">
+						<ArrowLeft size={18} />
+						Back to Interactive Map
+					</ButtonLink>
 				</div>
-			) : null}
+
+				{isLoading ? (
+					<LoadingState label="Loading public report details..." />
+				) : null}
+				{error ? (
+					<InlineNotice tone="warning">
+						<strong>Report unavailable.</strong> {error}
+					</InlineNotice>
+				) : null}
+
+				{!isLoading && !error && !report ? (
+					<Surface>
+						<EmptyState title="Report Not Found">
+							<p>No public report found matching this reference code.</p>
+						</EmptyState>
+					</Surface>
+				) : null}
 
 			{report ? (
-				<div className="stack-md" style={{ gap: "1.5rem" }}>
-					{/* Hero Header */}
-					<header className="detail-hero-header glass-panel">
+				<div className="stack-md u-static-64fe16d9">
+					<Surface as="header" className="detail-hero-header">
 						<div className="detail-hero-header__main">
 							<div className="detail-hero-header__meta">
 								<span className="detail-hero-header__ref">
@@ -112,7 +116,7 @@ export function PublicReportDetailPageV2() {
 								{report.neighborhood}
 							</h1>
 							<p className="detail-hero-header__eyebrow">
-								Active Observation:{" "}
+								Selected habitat:{" "}
 								<strong>
 									{formatHabitatLabel(
 										activeObs ? activeObs.habitatClass : report.habitatClass,
@@ -133,27 +137,22 @@ export function PublicReportDetailPageV2() {
 								<span className="detail-hero-header__stat-label">
 									Last Updated
 								</span>
-								<span
-									className="detail-hero-header__stat-value"
-									style={{ fontSize: "0.95rem" }}
-								>
+								<span className="detail-hero-header__stat-value u-static-000a3510">
 									{formatCalendarDate(report.latestReportedAt)}
 								</span>
 							</div>
 						</div>
-					</header>
+					</Surface>
 
-					{/* Main Content Split Grid */}
 					<div className="public-detail-layout">
 						{/* Left Column: Image Panel + Interactive Timeline */}
 						<div className="public-detail-column public-detail-column--primary stack-md">
 							{/* AI Evidence Card */}
-							<section className="public-detail-card-section glass-panel">
+							<Surface as="section" className="public-detail-card-section">
 								<div className="public-detail-card-section__header">
-									<h2>Computer Vision Evidence</h2>
+									<h2>Evidence review</h2>
 									<p className="caption-text">
-										Citizen verified evidence photo and AI classification
-										boundaries
+										Submitted photo with model classification boundaries
 									</p>
 								</div>
 
@@ -176,12 +175,12 @@ export function PublicReportDetailPageV2() {
 										showDetections
 									/>
 								) : null}
-							</section>
+							</Surface>
 
 							{/* Gallery Timeline */}
-							<section className="public-detail-card-section glass-panel">
+							<Surface as="section" className="public-detail-card-section">
 								<div className="public-detail-card-section__header">
-									<h2>Observation Timeline</h2>
+									<h2>Observation history</h2>
 									<p className="caption-text">
 										This location has {report.reportCount} stacked citizen
 										submissions
@@ -189,7 +188,22 @@ export function PublicReportDetailPageV2() {
 								</div>
 
 								<div className="timeline-gallery-wrap">
-									{report.observations.map((obs) => {
+									{(observations.length > 0
+										? observations
+										: [
+												{
+													id: report.id,
+													reference: report.reference,
+													capturedAt: report.reportedAt,
+													reportedAt: report.reportedAt,
+													imageUrl: report.imageUrl,
+													thumbnailUrl: report.thumbnailUrl,
+													habitatClass: report.habitatClass,
+													confidenceBand: report.prediction.confidenceBand,
+													prediction: report.prediction,
+												},
+											]
+									).map((obs) => {
 										const isSelected = selectedObsRef === obs.reference;
 										return (
 											<button
@@ -230,7 +244,7 @@ export function PublicReportDetailPageV2() {
 													</div>
 													{isSelected ? (
 														<span className="timeline-card__badge">
-															▶ ACTIVE
+															Selected
 														</span>
 													) : (
 														<span className="timeline-card__action">
@@ -242,13 +256,13 @@ export function PublicReportDetailPageV2() {
 										);
 									})}
 								</div>
-							</section>
+							</Surface>
 						</div>
 
 						{/* Right Column: Spatial Map + Proximity Notice + Metadata Grid */}
 						<div className="public-detail-column public-detail-column--secondary stack-md">
 							{/* Spatial Context Card */}
-							<section className="public-detail-card-section glass-panel">
+							<Surface as="section" className="public-detail-card-section">
 								<div className="public-detail-card-section__header">
 									<h2>Location Context</h2>
 									<p className="caption-text">
@@ -300,10 +314,10 @@ export function PublicReportDetailPageV2() {
 										</p>
 									</div>
 								)}
-							</section>
+							</Surface>
 
 							{/* Metadata details grid */}
-							<section className="public-detail-card-section glass-panel">
+							<Surface as="section" className="public-detail-card-section">
 								<div className="public-detail-card-section__header">
 									<h2>Report Metadata</h2>
 								</div>
@@ -349,11 +363,12 @@ export function PublicReportDetailPageV2() {
 										<p>{report.privacyNote}</p>
 									</div>
 								) : null}
-							</section>
+							</Surface>
 						</div>
 					</div>
 				</div>
 			) : null}
+			</div>
 		</div>
 	);
 }

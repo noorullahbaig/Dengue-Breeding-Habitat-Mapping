@@ -1,7 +1,6 @@
 import L from "leaflet";
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
-	Circle,
 	MapContainer,
 	Marker,
 	TileLayer,
@@ -9,7 +8,6 @@ import {
 } from "react-leaflet";
 import {
 	DEFAULT_MAP_ZOOM,
-	HOTSPOT_WARNING_RADIUS_METERS,
 	KL_CENTER,
 } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
@@ -26,21 +24,6 @@ interface PublicReportsMapV2Props {
 }
 
 type TileStatus = "loading" | "ready" | "fallback";
-
-const hotspotCircleStyle = {
-	color: "#af6831",
-	fillColor: "#af6831",
-	fillOpacity: 0.15,
-	weight: 1.5,
-};
-
-const hotspotWarningCircleStyle = {
-	color: "#d08a47",
-	fillColor: "#d08a47",
-	fillOpacity: 0.05,
-	weight: 1.0,
-	dashArray: "5 5",
-};
 
 function buildPublicIcon(habitatClass: string) {
 	return L.divIcon({
@@ -107,9 +90,10 @@ export function PublicReportsMapV2({
 				zoom={DEFAULT_MAP_ZOOM}
 				scrollWheelZoom
 				zoomControl={false}
+				attributionControl={false}
 				className="map-frame__canvas"
 			>
-				<ZoomControl position="topright" />
+				<ZoomControl position="bottomright" />
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -126,23 +110,6 @@ export function PublicReportsMapV2({
 						},
 					}}
 				/>
-
-				{showHotspots
-					? hotspots.map((hotspot) => (
-							<Fragment key={`${hotspot.id}-zones`}>
-								<Circle
-									center={toLeafletPosition(hotspot.center)}
-									radius={HOTSPOT_WARNING_RADIUS_METERS}
-									pathOptions={hotspotWarningCircleStyle}
-								/>
-								<Circle
-									center={toLeafletPosition(hotspot.center)}
-									radius={hotspot.radiusMeters}
-									pathOptions={hotspotCircleStyle}
-								/>
-							</Fragment>
-						))
-					: null}
 
 				{showHotspots
 					? hotspots.map((hotspot) => (

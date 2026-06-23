@@ -1,0 +1,22 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "overrides": [
+    {
+      "includes": ["src/styles/**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          },
+          "suspicious": {
+            "noDuplicateProperties": "off",
+            "noEmptyBlock": "off"
+          }
+        }
+      }
+    }
+  ]
+}

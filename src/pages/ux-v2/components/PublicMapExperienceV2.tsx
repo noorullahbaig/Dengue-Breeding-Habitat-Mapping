@@ -1,8 +1,7 @@
 import { ImageIcon, Navigation, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useServices } from "@/app/useServices";
-import { InlineNotice } from "@/components/InlineNotice";
+import { Notice, Surface, Button, ButtonLink, IconButton } from "@/components/ui";
 import {
 	formatCalendarDate,
 	formatCompactCalendarDate,
@@ -31,7 +30,7 @@ export function PublicMapExperienceV2() {
 	const [habitatFilter, setHabitatFilter] = useState<HabitatFilter>("all");
 	const [isReportsLoading, setIsReportsLoading] = useState(true);
 	const [hotspotError, setHotspotError] = useState("");
-	const [showHotspots, setShowHotspots] = useState(true);
+	const [showHotspots, _setShowHotspots] = useState(true);
 
 	const [centerOverride, setCenterOverride] = useState<
 		[number, number] | undefined
@@ -158,43 +157,25 @@ export function PublicMapExperienceV2() {
 						onSelectReport={handleReportClick}
 					/>
 				) : (
-					<div
-						className="loading-state"
-						style={{
-							height: "100%",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							background: "#cbdce6",
-							color: "var(--color-ink-soft)",
-							fontWeight: 600,
-						}}
-					>
+					<div className="loading-state map-fullscreen-loading">
 						Updating report markers...
 					</div>
 				)}
 			</div>
 
-			{/* Floating Header Panel */}
-			<div className="floating-header-panel floating-glass">
-				<span
-					className="section-heading__eyebrow"
-					style={{ fontSize: "0.62rem", letterSpacing: "0.06em", margin: 0 }}
-				>
-					Public Awareness Map
-				</span>
-				<h1 className="floating-header-panel__title">Kuala Lumpur Hotspots</h1>
-				<ul className="floating-header-panel__trust">
-					<li>Active outbreak zones updated real-time (iDengue)</li>
-					<li>Resident reporting points with privacy consent</li>
-				</ul>
+			{/* Compact Floating Header Chip */}
+			<div className="floating-header-chip floating-glass">
+				<span className="floating-header-chip__eyebrow">LIVE MAP</span>
+				<div className="floating-header-chip__title-row">
+					<h1 className="floating-header-chip__title">KL Dengue Hotspots</h1>
+				</div>
 			</div>
 
 			{/* Floating Filters (Scrolling Pills) */}
 			<div className="floating-filter-container">
 				{/* Status Filter */}
 				<div className="filter-pill-group">
-					<span className="filter-pill-label">Status</span>
+					<span className="filter-pill-label">STATUS</span>
 					<div className="filter-pills-list">
 						{(
 							[
@@ -220,7 +201,7 @@ export function PublicMapExperienceV2() {
 
 				{/* Habitat Class Filter */}
 				<div className="filter-pill-group">
-					<span className="filter-pill-label">Habitat</span>
+					<span className="filter-pill-label">TYPE</span>
 					<div className="filter-pills-list">
 						{(
 							[
@@ -243,33 +224,13 @@ export function PublicMapExperienceV2() {
 					</div>
 				</div>
 
-				{/* Hotspots Toggle */}
-				<div className="filter-pill-group">
-					<span className="filter-pill-label">Overlay</span>
-					<div className="filter-pills-list">
-						<button
-							type="button"
-							className={`filter-pill-button ${showHotspots ? "filter-pill-button--active" : ""}`}
-							onClick={() => setShowHotspots(!showHotspots)}
-						>
-							Outbreak Zones
-						</button>
-					</div>
-				</div>
+
 			</div>
 
 			{/* Inline Errors if hotspots fail to load */}
 			{hotspotError ? (
-				<div
-					style={{
-						position: "absolute",
-						top: "130px",
-						left: "16px",
-						zIndex: 100,
-						maxWidth: "300px",
-					}}
-				>
-					<InlineNotice tone="warning">{hotspotError}</InlineNotice>
+				<div className="map-inline-error">
+					<Notice tone="warning">{hotspotError}</Notice>
 				</div>
 			) : null}
 
@@ -277,23 +238,19 @@ export function PublicMapExperienceV2() {
 
 			{/* Detail Hotspot View (Shown only when selected) */}
 			{selectedHotspotId && (
-				<div
-					className="hotspot-carousel-container hotspot-detail-container"
-					style={{ paddingBottom: "16px", pointerEvents: "none" }}
-				>
+				<div className="hotspot-carousel-container hotspot-detail-container">
 					{(() => {
 						const hotspot = hotspots.find((h) => h.id === selectedHotspotId);
 						if (!hotspot) return null;
 						return (
-							<div className="hotspot-detail-card">
-								<button
-									type="button"
+							<Surface className="hotspot-detail-card">
+								<IconButton
 									onClick={() => setSelectedHotspotId(undefined)}
 									className="hotspot-detail-card__close"
 									aria-label="Close hotspot details"
 								>
 									<X size={18} />
-								</button>
+								</IconButton>
 
 								<div className="hotspot-detail-card__badge">
 									<span className="hotspot-detail-card__badge-dot" />
@@ -330,15 +287,12 @@ export function PublicMapExperienceV2() {
 										<span className="hotspot-detail-card__metric-label">
 											Start Date
 										</span>
-										<span
-											className="hotspot-detail-card__metric-value"
-											style={{ fontSize: "0.9rem" }}
-										>
+									<span className="hotspot-detail-card__metric-value hotspot-detail-card__metric-value--compact">
 											{formatCompactCalendarDate(hotspot.outbreakStartDate)}
 										</span>
 									</div>
 								</div>
-							</div>
+							</Surface>
 						);
 					})()}
 				</div>
@@ -346,27 +300,21 @@ export function PublicMapExperienceV2() {
 
 			{/* Detail Report View (Shown only when selected) */}
 			{selectedReportId && (
-				<div
-					className="hotspot-carousel-container hotspot-detail-container"
-					style={{ paddingBottom: "16px", pointerEvents: "none" }}
-				>
+				<div className="hotspot-carousel-container hotspot-detail-container">
 					{(() => {
 						const report = reports.find((r) => r.id === selectedReportId);
 						if (!report) return null;
 						return (
-							<div className="hotspot-detail-card report-detail-card">
-								<button
-									type="button"
+							<Surface className="hotspot-detail-card report-detail-card">
+								<IconButton
 									onClick={() => setSelectedReportId(undefined)}
 									className="hotspot-detail-card__close"
 									aria-label="Close report details"
 								>
 									<X size={18} />
-								</button>
+								</IconButton>
 
-								<div
-									style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
-								>
+								<div className="report-detail-card__status-row">
 									<div
 										className="report-detail-card__status"
 										data-status={report.status}
@@ -384,10 +332,7 @@ export function PublicMapExperienceV2() {
 								</span>
 
 								{showReportEvidence && report.thumbnailUrl ? (
-									<div
-										className="report-detail-card__evidence-wrapper"
-										style={{ pointerEvents: "auto" }}
-									>
+									<div className="report-detail-card__evidence-wrapper report-detail-card__evidence-wrapper--interactive">
 										<PredictionEvidencePanelV2
 											prediction={report.prediction}
 											imageUrl={report.imageUrl || report.thumbnailUrl}
@@ -413,17 +358,11 @@ export function PublicMapExperienceV2() {
 												{report.reportCount}
 											</span>
 										</div>
-										<div
-											className="hotspot-detail-card__metric-item"
-											style={{ gridColumn: "span 2" }}
-										>
+										<div className="hotspot-detail-card__metric-item hotspot-detail-card__metric-item--wide">
 											<span className="hotspot-detail-card__metric-label">
 												Latest Update
 											</span>
-											<span
-												className="hotspot-detail-card__metric-value"
-												style={{ fontSize: "0.9rem" }}
-											>
+											<span className="hotspot-detail-card__metric-value hotspot-detail-card__metric-value--compact">
 												{formatCalendarDate(report.latestReportedAt)}
 											</span>
 										</div>
@@ -432,22 +371,23 @@ export function PublicMapExperienceV2() {
 
 								{!showReportEvidence && (
 									<div className="report-detail-card__actions">
-										<button
-											type="button"
-											className="button button--secondary report-detail-card__action-btn"
+										<Button
+											variant="secondary"
+											className="report-detail-card__action-btn"
 											onClick={() => setShowReportEvidence(true)}
 										>
 											<ImageIcon size={16} /> View Evidence
-										</button>
-										<Link
+										</Button>
+										<ButtonLink
 											to={`/map/reports/${report.reference}`}
-											className="button button--primary report-detail-card__action-btn"
+											variant="primary"
+											className="report-detail-card__action-btn"
 										>
 											<Navigation size={16} /> View Details
-										</Link>
+										</ButtonLink>
 									</div>
 								)}
-							</div>
+							</Surface>
 						);
 					})()}
 				</div>

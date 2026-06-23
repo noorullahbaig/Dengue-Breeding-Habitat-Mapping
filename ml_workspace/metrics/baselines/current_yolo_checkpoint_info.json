@@ -1,10 +1,10 @@
 {
   "model_path": "/Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/best.pt",
-  "sha256": "215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7",
+  "sha256": "66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e",
   "task": "detect",
   "class_names": {
-    "0": "artificial_container",
-    "1": "drain_inlet",
-    "2": "tire"
+    "0": "Artificial Container",
+    "1": "Drain Inlet",
+    "2": "Tire"
   }
 }

@@ -2,13 +2,22 @@
 
 Generated: 2026-05-11
 
-Workspace: `/Users/noorullah/Desktop/FYP CODEX`
+## Status Note
+
+This report reflects the pre-promotion state from 2026-05-11 and is retained as historical recovery documentation.
+
+- The workspace root is now `/Users/noorullah/Developer/prototype`.
+- The current live checkpoint is `ml_workspace/models/current_yolo/best.pt` with SHA-256 `66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e`.
+- The older three-class checkpoint described below is now archived at `ml_workspace/models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt`.
+- Use `ml_workspace/reports/expanded_model_training_assessment_2026-06-18.md` and `ml_workspace/README.md` for the current canonical state.
+
+Workspace at time of original report: `/Users/noorullah/Desktop/FYP CODEX`
 
 ## Executive Summary
 
 The computer-vision model is implemented in the prototype and is actively used by the reporting workflow. It is not just a placeholder: uploaded images are passed through the backend YOLO inference service, the prediction is returned to the frontend, and the prediction is stored with each public report.
 
-The current model performance problem is real, but the project does not yet have defensible evaluation metrics for the currently integrated model. The live runtime checkpoint is now the retained three-class model at `ml_workspace/models/current_yolo/best.pt` with classes `artificial_container`, `drain_inlet`, and `tire`, confirmed by SHA-256 `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7`. Historical five-class metadata is preserved separately for reference only.
+At the time of this report, the current model performance problem was real, and the project did not yet have defensible evaluation metrics for the then-integrated model. The then-live runtime checkpoint was the retained three-class model at `ml_workspace/models/current_yolo/best.pt` with classes `artificial_container`, `drain_inlet`, and `tire`, confirmed by SHA-256 `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7`. Historical five-class metadata is preserved separately for reference only.
 
 The biggest blocker is dataset alignment. The Investigation Report supports a three-class operational scope, while the local datasets are in mixed states:
 
@@ -39,7 +48,7 @@ Key CV-related findings from those documents:
 
 ## Current Model Implementation
 
-The integrated model file is now stored here:
+At the time of the original report, the integrated model file was stored here:
 
 ```text
 ml_workspace/models/current_yolo/best.pt
@@ -53,7 +62,7 @@ Task: detect
 Raw classes: Bottle, Coconut-Exocarp, Drain-Inlet, Tire, Vase
 ```
 
-The backend loads the model on startup through `ModelInference(settings.model_path)`. The model path now resolves from:
+The backend loaded the model on startup through `ModelInference(settings.model_path)`. The model path then resolved from:
 
 ```text
 prototype/backend/.env
@@ -61,7 +70,7 @@ prototype/backend/.env.local
 prototype/backend/app/config.py default fallback
 ```
 
-The backend health endpoint currently verifies this integration:
+The backend health endpoint snapshot in this report was:
 
 ```json
 {

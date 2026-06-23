@@ -65,14 +65,15 @@ img {
 .app-topbar {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 100;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: var(--app-topbar-height);
   padding: 0 1.25rem;
-  background: rgba(243, 250, 255, 0.4);
+  background: rgba(243, 250, 255, 0.85);
   border-bottom: 1px solid transparent;
-  backdrop-filter: blur(0px);
+  backdrop-filter: blur(12px);
   transition: 
     background-color var(--duration-normal) ease, 
     border-color var(--duration-normal) ease, 
@@ -81,9 +82,8 @@ img {
 }
 
 .app-topbar--scrolled {
-  background: rgba(243, 250, 255, 0.75);
+  background: rgba(243, 250, 255, 0.92);
   border-bottom: 1px solid var(--color-border);
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 4px 20px rgba(9, 44, 58, 0.04);
 }
 
@@ -106,13 +106,13 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   background: var(--color-accent);
   color: #fff;
   font-family: var(--font-label);
-  font-size: 0.84rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -125,9 +125,9 @@ img {
 
 .app-brand__copy strong {
   font-family: var(--font-heading);
-  font-size: 1.18rem;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .app-brand__copy span {
@@ -138,6 +138,46 @@ img {
 .app-nav-link__label {
   white-space: nowrap;
 }
+
+/* Topbar avatar — mirrors the KL brand mark on the left */
+.app-topbar__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: transparent;
+  border: 2px solid rgba(0, 70, 79, 0.22);
+  color: var(--color-accent);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  transition:
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.app-topbar__avatar:hover {
+  background: rgba(0, 70, 79, 0.08);
+  border-color: rgba(0, 70, 79, 0.4);
+}
+
+/* When on the profile page — fill it solid to show active state */
+.app-topbar__avatar--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.app-topbar__avatar-initials {
+  line-height: 1;
+}
+
 
 .app-main {
   min-height: calc(100vh - var(--app-topbar-height));
@@ -216,6 +256,50 @@ img {
   letter-spacing: 0.01em;
   text-align: center;
   transition: color var(--duration-normal) ease;
+}
+
+.app-bottom-nav__report-action {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-accent);
+  transform: translateY(-18px);
+}
+
+.app-bottom-nav__report-core {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 4px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow:
+    0 12px 24px color-mix(in srgb, var(--color-accent) 24%, transparent),
+    0 3px 8px color-mix(in srgb, var(--color-ink) 14%, transparent);
+  transition:
+    transform 180ms var(--ease-out-expo),
+    box-shadow 180ms var(--ease-out-expo);
+}
+
+.app-bottom-nav__report-action > span:last-child {
+  margin-top: -0.1rem;
+  color: var(--color-accent);
+  font-weight: 800;
+}
+
+.app-bottom-nav__report-action:hover .app-bottom-nav__report-core,
+.app-bottom-nav__report-action:focus-visible .app-bottom-nav__report-core {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 16px 30px color-mix(in srgb, var(--color-accent) 28%, transparent),
+    0 4px 10px color-mix(in srgb, var(--color-ink) 16%, transparent);
+}
+
+.app-bottom-nav__report-action:active .app-bottom-nav__report-core {
+  transform: scale(0.96);
 }
 
 .app-bottom-nav__link svg,
@@ -331,17 +415,16 @@ img {
   justify-content: flex-end;
 }
 
-.stack-lg,
-.stack-md {
-  display: grid;
-}
+.stack-sm { gap: var(--space-xs); }
+.stack-md { gap: var(--space-sm); }
+.stack-lg { gap: var(--space-md); }
+.stack-xl { gap: var(--space-lg); }
 
-.stack-lg {
-  gap: 1.25rem;
-}
-
-.stack-md {
-  gap: 0.9rem;
+@media (min-width: 1024px) {
+  .stack-sm { gap: var(--space-sm); }
+  .stack-md { gap: var(--space-md); }
+  .stack-lg { gap: var(--space-lg); }
+  .stack-xl { gap: var(--space-xl); }
 }
 
 .surface,
@@ -1580,37 +1663,6 @@ img {
   gap: 0.75rem;
 }
 
-.timeline-node {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-}
-
-.timeline-node > div {
-  display: flex;
-  gap: 0.9rem;
-  align-items: center;
-  padding: 0.85rem;
-  border: 1px solid rgba(2, 31, 41, 0.1);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.86);
-}
-
-.timeline-node--active > div {
-  border-color: rgba(0, 70, 79, 0.2);
-  background: rgba(0, 70, 79, 0.07);
-  box-shadow: var(--shadow-soft);
-}
-
-.timeline-node img {
-  width: 88px;
-  height: 68px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
 @media (min-width: 1024px) {
   .app-rail {
     position: fixed;
@@ -1886,7 +1938,6 @@ img {
 }
 
 .home-hero__copy > * {
-  opacity: 0;
   animation: fadeInUp var(--duration-slow) var(--ease-out-expo) forwards;
 }
 
@@ -2036,7 +2087,6 @@ img {
   padding-top: 0.25rem;
   padding-bottom: var(--space-lg);
   border-top: none !important;
-  opacity: 0;
   animation: fadeInUp var(--duration-slow) var(--ease-out-expo) forwards;
 }
 
@@ -3247,5 +3297,16 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .report-consent-panel--immersive {
     animation: none;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

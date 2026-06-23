@@ -14,6 +14,8 @@ RAW_TO_PUBLIC_LABEL = {
     "Vase": "artificial_container",
     "Drain-Inlet": "drain_inlet",
     "Tire": "tire",
+    "Artificial Container": "artificial_container",
+    "Drain Inlet": "drain_inlet",
     "artificial_container": "artificial_container",
     "drain_inlet": "drain_inlet",
     "tire": "tire",

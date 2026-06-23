@@ -14,15 +14,21 @@ def main() -> None:
     parser.add_argument("--labels-dir", required=True)
     parser.add_argument(
         "--old-model",
-        default="/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt",
+        default=str(
+            Path(__file__).resolve().parent.parent
+            / "models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt"
+        ),
     )
     parser.add_argument(
         "--new-model",
-        default="/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/experiments/yolov8n_retained_three_class_v1/weights/best.pt",
+        default=str(
+            Path(__file__).resolve().parent.parent
+            / "models/approved/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/best.pt"
+        ),
     )
     parser.add_argument(
         "--output-root",
-        default="/Users/noorullah/Desktop/FYP CODEX/ml_workspace/model_compare_app/outputs",
+        default=str(Path(__file__).resolve().parent / "outputs"),
     )
     args = parser.parse_args()
 

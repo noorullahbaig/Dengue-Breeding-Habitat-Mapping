@@ -9,6 +9,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
+    "audit:ui": "node scripts/audit-ui.mjs",
     "lint": "biome lint src vite.config.ts scripts",
     "preview": "vite preview"
   },

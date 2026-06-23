@@ -1,0 +1,58 @@
+{
+  "source": "Kaggle evaluation of the previous live checkpoint on the updated expanded dataset test split",
+  "model_path_in_kaggle": "/kaggle/input/datasets/noorullahbaig/prev-model-best-pt/best.pt",
+  "local_live_model_path": "/Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt",
+  "local_live_model_sha256": "215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7",
+  "dataset": {
+    "source": "updated expanded Kaggle test split from mosquito-breeding-expanded v1 export",
+    "comparison_new_model_metrics_source": "/Users/noorullah/Developer/prototype/ml_workspace/runs/training/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/source_artifacts/mosquito-breeding-expanded_v1_yolov8n_export.zip"
+  },
+  "artifacts_dir": "/Users/noorullah/Developer/prototype/ml_workspace/runs/evaluation/2026-06-18_previous-live_updated-expanded-test_kaggle",
+  "class_names": {
+    "0": "artificial_container",
+    "1": "drain_inlet",
+    "2": "tire"
+  },
+  "metrics": {
+    "precision": 0.8139411689251115,
+    "recall": 0.6648223626311877,
+    "mAP50": 0.6532895765336536,
+    "mAP50_95": 0.511294833923438
+  },
+  "per_class": {
+    "artificial_container": {
+      "precision": 0.8376298036296328,
+      "recall": 0.4545783066587326,
+      "f1": 0.5893297445035754,
+      "mAP50": 0.4976415228846124,
+      "mAP50_95": 0.3709673479712134
+    },
+    "drain_inlet": {
+      "precision": 0.9268716440858618,
+      "recall": 0.6868082125144511,
+      "f1": 0.7889830867023265,
+      "mAP50": 0.7336335143843005,
+      "mAP50_95": 0.5417977638890492
+    },
+    "tire": {
+      "precision": 0.6773220590598398,
+      "recall": 0.8530805687203792,
+      "f1": 0.755108854181353,
+      "mAP50": 0.7285936923320476,
+      "mAP50_95": 0.6211193899100511
+    }
+  },
+  "available_artifacts": [
+    "BoxF1_curve.png",
+    "BoxPR_curve.png",
+    "BoxP_curve.png",
+    "BoxR_curve.png",
+    "confusion_matrix.png",
+    "confusion_matrix_normalized.png",
+    "current_live_eval_summary.json"
+  ],
+  "previous_live_model_path": "/Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt",
+  "previous_live_model_sha256": "215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7",
+  "promoted_live_model_path": "/Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/best.pt",
+  "promoted_live_model_sha256": "66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e"
+}

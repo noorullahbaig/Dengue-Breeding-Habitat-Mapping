@@ -32,6 +32,9 @@ export interface ReportDraft {
   detectedLocation?: LocationPoint | null
   correctedLocation?: LocationPoint | null
   notes?: string
+  wizardStep?: number
+  hasConfirmedPin?: boolean
+  hasPublicConsent?: boolean
 }
 
 export interface PredictionSummary {

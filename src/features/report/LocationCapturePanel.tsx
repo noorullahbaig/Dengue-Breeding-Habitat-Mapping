@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { InlineNotice } from '@/components/InlineNotice'
+import { Button } from '@/components/ui'
 import { getGeolocationFallbackMessage, requestCurrentPosition } from '@/lib/geolocation'
 import { isWithinServiceArea, SERVICE_AREA_ERROR } from '@/lib/serviceArea'
 import type { LocationPoint } from '@/types/report'
@@ -41,27 +41,24 @@ export function LocationCapturePanel({
   }
 
   return (
-    <section className="panel">
-      <div className="stack-md">
-        <div className="cluster-row">
-          <button
-            type="button"
-            className="button"
-            onClick={handleLocate}
-            disabled={isLocating}
-          >
-            Use my current location
-          </button>
-        </div>
-
-        <InlineNotice>{statusMessage}</InlineNotice>
-
-        {locationIsOutsideServiceArea ? (
-          <InlineNotice tone="warning">
-            {SERVICE_AREA_ERROR} Use a location inside Kuala Lumpur to continue.
-          </InlineNotice>
-        ) : null}
+    <div className="location-capture-glass">
+      <div className="location-capture-glass__content">
+        <Button
+          variant="secondary"
+          className="button--small"
+          onClick={handleLocate}
+          disabled={isLocating}
+        >
+          {isLocating ? 'Locating...' : 'Use my current location'}
+        </Button>
+        <span className="location-capture-glass__status">{statusMessage}</span>
       </div>
-    </section>
+
+      {locationIsOutsideServiceArea ? (
+        <div className="location-capture-glass__warning">
+          {SERVICE_AREA_ERROR} Use a location inside Kuala Lumpur to continue.
+        </div>
+      ) : null}
+    </div>
   )
 }

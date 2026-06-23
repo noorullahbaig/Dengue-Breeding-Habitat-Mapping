@@ -2,17 +2,26 @@
 
 Generated: 2026-06-15
 
+## Status Note
+
+Superseded on 2026-06-18 by the live-model promotion and canonical workspace cleanup.
+
+- The live runtime checkpoint is no longer the model described below.
+- The current live checkpoint is `ml_workspace/models/current_yolo/best.pt` with SHA-256 `66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e`.
+- The previous live checkpoint discussed in this report is now archived at `ml_workspace/models/current_yolo/best_replaced_20260618_new_more_data_model_20260522.pt`.
+- Use `ml_workspace/reports/expanded_model_training_assessment_2026-06-18.md` for the current deployment decision record.
+
 ## Summary
 
-This audit compares two different checkpoints:
+This audit originally compared two different checkpoints:
 
 - Historical Stage 1 checkpoint: `ml_workspace/models/experiments/yolov8n_retained_three_class_v1/weights/best.pt`
-- Current live runtime checkpoint: `ml_workspace/models/current_yolo/best.pt`
+- Then-live runtime checkpoint: `ml_workspace/models/current_yolo/best.pt`
 
 The main conclusion is simple:
 
 - Stage 1 is the only model in this workspace with defensible overall and per-class metrics.
-- The live deployed model is a different checkpoint and currently has no reproducible quantitative evaluation artifacts in the repo.
+- At the time of this audit, the live deployed model was a different checkpoint and had no reproducible quantitative evaluation artifacts in the repo.
 - Because of that gap, Stage 1 metrics must not be reported as live-model performance.
 
 ## Checkpoint Identity
@@ -21,18 +30,18 @@ Confirmed SHA-256 hashes:
 
 | Checkpoint | Path | SHA-256 |
 | --- | --- | --- |
-| Live runtime model | `ml_workspace/models/current_yolo/best.pt` | `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7` |
+| Then-live runtime model | `ml_workspace/models/current_yolo/best.pt` | `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7` |
 | Stage 1 best model | `ml_workspace/models/experiments/yolov8n_retained_three_class_v1/weights/best.pt` | `3e27a7e0896a3de81b843011c0be1cc416ecc1e4f2ccbae0efc15524479872b0` |
 
 These are not the same checkpoint.
 
-The live runtime checkpoint metadata currently proves only:
+The then-live runtime checkpoint metadata proved only:
 
 - task: `detect`
 - classes: `artificial_container`, `drain_inlet`, `tire`
 - checkpoint hash: `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7`
 
-No reproducible overall or per-class evaluation metrics for that live checkpoint were found in the workspace.
+No reproducible overall or per-class evaluation metrics for that then-live checkpoint were found in the workspace.
 
 ## Stage 1 Quantitative Performance
 

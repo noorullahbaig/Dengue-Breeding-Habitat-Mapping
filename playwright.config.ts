@@ -5,6 +5,7 @@ const backendPython =
 
 export default defineConfig({
   testDir: './e2e',
+  workers: 1,
   timeout: 120_000,
   expect: {
     timeout: 20_000,
@@ -16,7 +17,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
   webServer: [

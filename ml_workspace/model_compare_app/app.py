@@ -24,10 +24,9 @@ OUTPUTS_DIR = BASE_DIR / "outputs"
 FRONTEND_DIR = BASE_DIR / "frontend"
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 
-OLD_MODEL_PATH = Path("/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt")
-NEW_MODEL_PATH = Path(
-    "/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/experiments/yolov8n_retained_three_class_v1/weights/best.pt"
-)
+ML_ROOT = BASE_DIR.parent
+OLD_MODEL_PATH = ML_ROOT / "models" / "current_yolo" / "best_replaced_20260618_new_more_data_model_20260522.pt"
+NEW_MODEL_PATH = ML_ROOT / "models" / "approved" / "2026-06-17_yolov8n_mosquito-breeding-expanded_v1" / "best.pt"
 
 app = FastAPI(title="Model Compare App", version="1.0.0")
 app.add_middleware(

@@ -7,6 +7,7 @@
   /* Colors */
   --color-ink: #021f29;
   --color-ink-soft: #42585f;
+  --color-text-muted: var(--color-ink-soft);
   --color-accent: #00464f;
   --color-accent-soft: #d8f2ff;
   --color-surface: #f3faff;
@@ -15,9 +16,32 @@
   --color-surface-panel: #f8fcff;
   --color-surface-rail: #dff0fb;
   --color-border: rgba(2, 31, 41, 0.14);
+  --color-border-strong: rgba(2, 31, 41, 0.24);
   --color-warning: #ba1a1a;
   --color-success: #156874;
   --color-info: #005f6b;
+  --color-danger: #d32f2f;
+  --color-on-accent: #ffffff;
+  --control-secondary-bg: #e6f6ff;
+  --control-subtle-bg: rgba(0, 70, 79, 0.08);
+
+  /* Semantic UI Tokens */
+  --semantic-success-bg: #e6f6f4;
+  --semantic-success-text: #0e4b54;
+  --semantic-danger-bg: #ffebee;
+  --semantic-danger-text: #c62828;
+  --semantic-warning-bg: #fff8e1;
+  --semantic-warning-text: #f57f17;
+  --semantic-info-bg: #e1f5fe;
+  --semantic-info-text: #0277bd;
+  --semantic-neutral-bg: #f5f5f5;
+  --semantic-neutral-text: #424242;
+  --semantic-success-border: rgba(14, 75, 84, 0.15);
+  --semantic-danger-border: rgba(198, 40, 40, 0.15);
+  --semantic-danger-border-strong: rgba(198, 40, 40, 0.4);
+  --semantic-warning-border: rgba(245, 127, 23, 0.15);
+  --semantic-info-border: rgba(2, 119, 189, 0.15);
+  --semantic-neutral-border: rgba(66, 66, 66, 0.15);
 
   /* Spacing Scale (Mobile-First) */
   --space-xs: 4px;
@@ -38,6 +62,7 @@
   --font-size-hero: clamp(2.4rem, 7.5vw, 4.2rem);
 
   /* Motion & Transitions */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
@@ -47,19 +72,28 @@
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.45);
-  --glass-blur: 20px;
+  --glass-blur: 24px;
 
   /* Shadows & Radius */
-  --shadow-soft: 0 12px 28px rgba(9, 44, 58, 0.08);
-  --shadow-panel: 0 20px 40px rgba(9, 44, 58, 0.06);
-  --shadow-glow: 0 0 20px rgba(0, 70, 79, 0.12);
+  --shadow-soft: 0 4px 16px rgba(9, 44, 58, 0.04), 0 2px 4px rgba(9, 44, 58, 0.02);
+  --shadow-panel: 0 8px 32px rgba(9, 44, 58, 0.05), 0 2px 8px rgba(9, 44, 58, 0.03);
+  --shadow-glow: 0 0 16px rgba(0, 70, 79, 0.08);
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
+  --control-radius: 14px;
+  --control-height-sm: 36px;
+  --control-height-md: 44px;
+  --control-height-lg: 52px;
 
   /* Layout dimensions */
   --app-rail-width: 256px;
-  --app-topbar-height: 64px;
+  --app-topbar-height: 56px;
   --app-bottom-nav-height: 76px;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 201;
 }

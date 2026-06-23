@@ -4,9 +4,12 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppProviders } from '@/app/AppProviders'
 import { AppRoutes } from '@/app/AppRoutes'
 import 'leaflet/dist/leaflet.css'
+import '@/styles/layers.css'
 import '@/styles/tokens.css'
-import '@/styles/global.css'
+import '@/styles/ui.css'
 import '@/styles/stitch.css'
+import '@/styles/map.css'
+import '@/styles/report.css'
 
 const rootElement = document.getElementById('root')
 
