@@ -21,6 +21,10 @@ class Settings:
     officer_api_token: str
     idengue_hotspot_endpoint: str
     max_upload_bytes: int = 10 * 1024 * 1024
+    storage_backend: str = "local"
+    s3_bucket: str | None = None
+    s3_region: str = "ap-southeast-1"
+    s3_presigned_url_expires_seconds: int = 3600
 
 
 def _resolve_path(value: str) -> Path:
@@ -58,7 +62,10 @@ def get_settings() -> Settings:
             "IDENGUE_HOTSPOT_ENDPOINT",
             "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query",
         ),
+        storage_backend=os.getenv("STORAGE_BACKEND", "local"),
+        s3_bucket=os.getenv("S3_BUCKET"),
+        s3_region=os.getenv("S3_REGION", "ap-southeast-1"),
+        s3_presigned_url_expires_seconds=int(os.getenv("S3_PRESIGNED_URL_EXPIRES_SECONDS", "3600")),
     )
-
 
 settings = get_settings()

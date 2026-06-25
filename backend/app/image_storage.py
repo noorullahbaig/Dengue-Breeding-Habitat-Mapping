@@ -7,6 +7,8 @@ from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image, ImageOps, UnidentifiedImageError
 
@@ -44,12 +46,85 @@ def ensure_upload_dirs() -> None:
     (settings.upload_root / "prechecks").mkdir(parents=True, exist_ok=True)
 
 
+def _get_s3_client():
+    return boto3.client("s3", region_name=settings.s3_region)
+
+
+def _upload_to_s3(file_path: Path, storage_key: str) -> None:
+    if not settings.s3_bucket:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="S3 bucket not configured.",
+        )
+    client = _get_s3_client()
+    try:
+        content_type = "image/jpeg"
+        client.upload_file(
+            str(file_path),
+            settings.s3_bucket,
+            storage_key,
+            ExtraArgs={"ContentType": content_type},
+        )
+    except (BotoCoreError, ClientError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload image to S3.",
+        ) from exc
+
+
+def _delete_from_s3(storage_key: str) -> None:
+    if not settings.s3_bucket:
+        return
+    client = _get_s3_client()
+    try:
+        client.delete_object(Bucket=settings.s3_bucket, Key=storage_key)
+    except (BotoCoreError, ClientError):
+        pass
+
+
+def get_s3_presigned_url(storage_key: str) -> str:
+    if not settings.s3_bucket:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="S3 bucket not configured.",
+        )
+    client = _get_s3_client()
+    try:
+        return client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": settings.s3_bucket, "Key": storage_key},
+            ExpiresIn=settings.s3_presigned_url_expires_seconds,
+        )
+    except (BotoCoreError, ClientError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate image URL.",
+        ) from exc
+
+
+def check_s3_ready() -> bool:
+    if not settings.s3_bucket:
+        return False
+    try:
+        client = _get_s3_client()
+        client.head_bucket(Bucket=settings.s3_bucket)
+        return True
+    except (BotoCoreError, ClientError):
+        return False
+
+
 def delete_stored_image(stored_image: StoredImage) -> None:
     for path in (stored_image.image_path, stored_image.thumbnail_path):
         try:
             path.unlink(missing_ok=True)
         except OSError:
             pass
+
+    if settings.storage_backend == "s3":
+        if stored_image.image_storage_key:
+            _delete_from_s3(stored_image.image_storage_key)
+        if stored_image.thumbnail_storage_key:
+            _delete_from_s3(stored_image.thumbnail_storage_key)
 
 
 def delete_precheck_image(precheck_image: PrecheckImage) -> None:
@@ -163,6 +238,20 @@ async def store_upload(upload: UploadFile) -> StoredImage:
     thumbnail = image.copy()
     thumbnail.thumbnail((480, 480))
     _save_jpeg(thumbnail, thumbnail_path, quality=82)
+
+    if settings.storage_backend == "s3":
+        try:
+            _upload_to_s3(image_path, image_storage_key)
+            _upload_to_s3(thumbnail_path, thumbnail_storage_key)
+        except Exception:
+            try:
+                image_path.unlink(missing_ok=True)
+                thumbnail_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+            _delete_from_s3(image_storage_key)
+            _delete_from_s3(thumbnail_storage_key)
+            raise
 
     return StoredImage(
         original_filename=upload.filename or "evidence-image",

@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
@@ -39,6 +39,8 @@ from app.image_storage import (
     resolve_public_upload_path,
     store_precheck_image,
     store_upload,
+    check_s3_ready,
+    get_s3_presigned_url,
 )
 from app.inference import ModelInference
 from app.models import Report
@@ -356,6 +358,14 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
         details["uploads"] = "Upload root does not exist."
 
     ok = database_ready and postgis_ready and model_inference.ready and upload_ready
+
+    s3_ready = None
+    if settings.storage_backend == "s3":
+        s3_ready = check_s3_ready()
+        ok = ok and s3_ready
+        if not s3_ready:
+             details["s3"] = "S3 bucket is not accessible."
+
     return HealthOut(
         ok=ok,
         database=database_ready,
@@ -363,6 +373,9 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
         uploadRoot=str(settings.upload_root),
         modelPath=str(settings.model_path),
         postgis=postgis_ready,
+        storageBackend=settings.storage_backend,
+        s3Bucket=settings.s3_bucket,
+        s3Ready=s3_ready,
         details=details,
     )
 
@@ -707,6 +720,13 @@ def public_report_thumbnail(reference: str, db: Session = Depends(get_db)) -> Fi
     if not is_within_service_area(report.latitude, report.longitude):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
 
+    if settings.storage_backend == "s3":
+        storage_key = report.thumbnail_storage_key
+        if not storage_key:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
+        url = get_s3_presigned_url(storage_key)
+        return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
+
     return FileResponse(
         resolve_public_upload_path(report.thumbnail_storage_key or report.thumbnail_path),
         media_type="image/jpeg",
@@ -722,6 +742,13 @@ def public_report_image(reference: str, db: Session = Depends(get_db)) -> FileRe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
     if not is_within_service_area(report.latitude, report.longitude):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
+
+    if settings.storage_backend == "s3":
+        storage_key = report.image_storage_key
+        if not storage_key:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
+        url = get_s3_presigned_url(storage_key)
+        return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
     return FileResponse(
         resolve_public_upload_path(report.image_storage_key or report.image_path),

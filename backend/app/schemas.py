@@ -223,4 +223,7 @@ class HealthOut(BaseModel):
     uploadRoot: str
     modelPath: str
     postgis: bool = False
+    storageBackend: str
+    s3Bucket: str | None = None
+    s3Ready: bool | None = None
     details: dict[str, str] = Field(default_factory=dict)
