@@ -21,6 +21,7 @@ import {
 import { seededReports } from "@/mocks/data";
 import type { ReportStatus } from "@/types/report";
 import { Surface, Button, EmptyState, LoadingState } from "@/components/ui";
+import { API_BASE_URL } from "@/config";
 
 const statusSequence = [
 	"submitted",
@@ -321,7 +322,7 @@ export function StatusPageV2() {
 								<PredictionEvidencePanelV2
 									prediction={report.prediction}
 									title="Evidence Analyzed"
-									imageUrl={`http://localhost:8000/api/public/reports/${report.reference}/image`}
+									imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/image`}
 									imageAlt="Citizen evidence thumbnail"
 									compact
 									showDetections

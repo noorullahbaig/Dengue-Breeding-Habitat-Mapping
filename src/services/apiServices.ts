@@ -394,7 +394,7 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
           throw new AppApiError({
             kind: 'network',
             message:
-              'Could not reach the local backend. Start or reconnect the API server at localhost:8000.',
+              `Could not reach the backend. Check the connection to ${baseUrl}.`,
             transport: 'network',
             apiBaseUrl: baseUrl,
             health: null,

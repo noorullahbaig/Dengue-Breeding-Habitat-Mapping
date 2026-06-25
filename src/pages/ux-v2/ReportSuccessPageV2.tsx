@@ -8,6 +8,7 @@ import { PredictionEvidencePanelV2 } from "@/pages/ux-v2/components/PredictionEv
 import { formatTimestamp } from "@/lib/formatters";
 import type { ReportStatus } from "@/types/report";
 import { Notice, Surface, Button, ButtonLink, LoadingState } from "@/components/ui";
+import { API_BASE_URL } from "@/config";
 
 export function ReportSuccessPageV2() {
 	const { reportsService } = useServices();
@@ -191,7 +192,7 @@ export function ReportSuccessPageV2() {
 						<PredictionEvidencePanelV2
 							prediction={report.prediction}
 							title="Submission evidence"
-							imageUrl={`http://localhost:8000/api/public/reports/${report.reference}/image`}
+							imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/image`}
 							imageAlt="Your submitted photo evidence"
 							compact
 							showDetections

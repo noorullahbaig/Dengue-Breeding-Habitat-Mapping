@@ -63,9 +63,9 @@ function precheckFailureCopy(error: AppApiError) {
 		case "network":
 			return {
 				title:
-					"Could not reach the local backend. Start or reconnect the API server at localhost:8000.",
+					"Could not reach the backend API server.",
 				helper:
-					"Submission stays blocked until the API can be reached and returns an advisory result. If the backend is already running, check for a CORS mismatch between this frontend origin and backend CORS_ORIGINS.",
+					"Submission stays blocked until the API can be reached and returns an advisory result. If the backend is already running, check for a network issue or CORS mismatch.",
 			};
 		case "model_not_ready":
 			return {

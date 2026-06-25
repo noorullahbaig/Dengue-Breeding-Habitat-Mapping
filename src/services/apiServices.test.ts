@@ -40,7 +40,7 @@ describe('createApiAppServices precheck errors', () => {
     await expect(services.reportsService.precheckReport(createDraft())).rejects.toMatchObject({
       kind: 'network',
       transport: 'network',
-      message: 'Could not reach the local backend. Start or reconnect the API server at localhost:8000.',
+      message: 'Could not reach the backend. Check the connection to http://localhost:8000/api.',
     })
   })
 
