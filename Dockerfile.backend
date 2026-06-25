@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libglib2.0-0 \
+    libgl1 \
     libsm6 \
     libxext6 \
     libxrender-dev \
@@ -35,7 +36,7 @@ RUN mkdir -p /app/uploads /app/models
 
 # Copy YOLO model file
 # NOTE: Adjust the source path if your model is in a different location
-COPY ml_workspace/models/current_yolo/best.pt /app/models/best.pt
+COPY ml_workspace/models/approved/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/best.pt /app/models/best.pt
 
 # Verify model file exists
 RUN ls -lh /app/models/best.pt
