@@ -1,0 +1,9 @@
+{
+  "record_type": "approved_model",
+  "model_id": "2026-06-17_yolov8n_mosquito-breeding-expanded_v1",
+  "checkpoint_path": "ml_workspace/models/approved/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/best.pt",
+  "checkpoint_sha256": "66a2ecb3ce619207437c241d7c11b7e6c9c4897cb63f6463a762345f7b2d736e",
+  "source_training_record": "ml_workspace/runs/training/2026-06-17_yolov8n_mosquito-breeding-expanded_v1",
+  "promoted_to_runtime_on": "2026-06-18",
+  "runtime_path": "ml_workspace/models/current_yolo/best.pt"
+}

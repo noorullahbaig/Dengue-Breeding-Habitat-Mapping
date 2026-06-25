@@ -45,3 +45,14 @@ __pycache__/
 /test_overflow.js
 /scratch/
 
+
+# Ignored large outputs and models
+ml_workspace/runs/
+ml_workspace/model_compare_app/outputs/
+output/
+*.zip
+
+
+.playwright-cli/
+.kiro/
+

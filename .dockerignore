@@ -1,0 +1,78 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+backend/.venv/
+backend/venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnp
+.pnp.js
+
+# Testing
+.pytest_cache/
+coverage/
+.coverage
+*.cover
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Uploads and data (should not be in Docker image)
+backend/uploads/
+uploads/
+
+# Logs
+*.log
+logs/
+backend/*.log
+backend/postgres.log
+backend/server.log
+
+# Playwright
+.playwright-cli/
+
+# E2E tests
+e2e/
+
+# Temporary files
+.tmp_*
+*.tmp

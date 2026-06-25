@@ -1,0 +1,56 @@
+# Backend Dockerfile for DengueWatch KL
+# FastAPI + Ultralytics YOLO + PostgreSQL client
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for PostGIS, Pillow, and compilation
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgdal-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY backend/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend application code
+COPY backend/app /app/app
+COPY backend/migrations /app/migrations
+COPY backend/alembic.ini /app/alembic.ini
+
+# Create directories for uploads and models
+RUN mkdir -p /app/uploads /app/models
+
+# Copy YOLO model file
+# NOTE: Adjust the source path if your model is in a different location
+COPY ml_workspace/models/current_yolo/best.pt /app/models/best.pt
+
+# Verify model file exists
+RUN ls -lh /app/models/best.pt
+
+# Environment variables (will be overridden by docker-compose)
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_PATH=/app/models/best.pt
+ENV UPLOAD_ROOT=/app/uploads
+
+# Expose port
+EXPOSE 8000
+
+# Health check using Python standard library (no external dependencies needed)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"
+
+# Run uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

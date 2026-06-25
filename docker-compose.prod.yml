@@ -1,0 +1,91 @@
+# Production Docker Compose for DengueWatch KL
+# Runs on EC2 instance, connects to external RDS PostgreSQL/PostGIS
+# 
+# IMPORTANT: This does NOT create a PostgreSQL container.
+# You must create RDS PostgreSQL instance separately via AWS Console.
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: denguewatch-backend
+    restart: unless-stopped
+    
+    environment:
+      # Database connection to RDS (set in .env.production)
+      DATABASE_URL: ${DATABASE_URL}
+      
+      # Model and storage paths
+      MODEL_PATH: /app/models/best.pt
+      UPLOAD_ROOT: /app/uploads
+      
+      # CORS origins (frontend URL)
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      
+      # Officer API token
+      OFFICER_API_TOKEN: ${OFFICER_API_TOKEN}
+      
+      # iDengue hotspot endpoint (optional override)
+      IDENGUE_HOTSPOT_ENDPOINT: ${IDENGUE_HOTSPOT_ENDPOINT:-https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query}
+    
+    volumes:
+      # Persistent storage for uploaded images on EBS
+      - /var/denguewatch/uploads:/app/uploads
+    
+    # DO NOT expose port 8000 publicly - nginx reaches backend internally via Docker network
+    expose:
+      - "8000"
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - denguewatch-network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: denguewatch-nginx
+    restart: unless-stopped
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    # Optional: Mount SSL certificates for HTTPS
+    # Uncomment when using Let's Encrypt or custom certificates
+    # volumes:
+    #   - /etc/letsencrypt:/etc/letsencrypt:ro
+    #   - /var/www/certbot:/var/www/certbot:ro
+    
+    depends_on:
+      backend:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    networks:
+      - denguewatch-network
+
+networks:
+  denguewatch-network:
+    driver: bridge
+
+# Volumes for persistent data
+# Note: /var/denguewatch/uploads should be created on the EC2 host
+# or backed by an EBS volume for persistence
