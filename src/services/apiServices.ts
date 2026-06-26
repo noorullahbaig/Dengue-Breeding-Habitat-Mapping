@@ -1,5 +1,6 @@
 import { OFFICER_DEMO_TOKEN } from '@/lib/constants'
 import { pointInBounds } from '@/services/mapBounds'
+import { preparePhotoForUpload, StaleFileError } from '@/lib/imageProcessing'
 import type { AppServices, CreateReportOptions, PublicReportFilters } from '@/services/contracts'
 import type {
   ApiHealthStatus,
@@ -27,6 +28,7 @@ export type AppApiErrorKind =
   | 'model_not_ready'
   | 'model_processing_failed'
   | 'server_error'
+  | 'stale_file'
 
 type AppApiErrorTransport = 'network' | 'http'
 
@@ -152,19 +154,21 @@ async function fetchHealthStatus(baseUrl: string): Promise<ApiHealthStatus | nul
 
 const shouldProbeHealth = import.meta.env.DEV || import.meta.env.MODE === 'test'
 
-function buildReportFormData(
+async function buildReportFormData(
   draft: ReportDraft,
   options?: CreateReportOptions,
 ) {
   const location = draft.correctedLocation ?? draft.detectedLocation
   const detectedLocation = draft.detectedLocation
 
-  if (!draft.photoFile || !draft.capturedAt || !location || !detectedLocation) {
+  if (!draft.capturedAt || !location || !detectedLocation) {
     throw new Error('The report draft is incomplete.')
   }
 
+  const processedBlob = await preparePhotoForUpload(draft.photoFile)
+
   const formData = new FormData()
-  formData.append('image', draft.photoFile)
+  formData.append('image', processedBlob, 'image.jpg')
   formData.append('captured_at', draft.capturedAt)
   formData.append('latitude', String(location.latitude))
   formData.append('longitude', String(location.longitude))
@@ -202,16 +206,18 @@ function buildReportFormData(
   return formData
 }
 
-function buildNearbyCandidateFormData(draft: ReportDraft) {
+async function buildNearbyCandidateFormData(draft: ReportDraft) {
   const location = draft.correctedLocation ?? draft.detectedLocation
   const detectedLocation = draft.detectedLocation
 
-  if (!draft.photoFile || !location || !detectedLocation) {
+  if (!location || !detectedLocation) {
     throw new Error('The report draft is incomplete.')
   }
 
+  const processedBlob = await preparePhotoForUpload(draft.photoFile)
+
   const formData = new FormData()
-  formData.append('image', draft.photoFile)
+  formData.append('image', processedBlob, 'image.jpg')
   formData.append('latitude', String(location.latitude))
   formData.append('longitude', String(location.longitude))
   formData.append('detected_latitude', String(detectedLocation.latitude))
@@ -332,15 +338,27 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
   return {
     reportsService: {
       async createReport(draft, options) {
-        const response = await fetch(`${baseUrl}/reports`, {
-          method: 'POST',
-          body: buildReportFormData(draft, options),
-        })
-
-        return parseJsonResponse<SubmittedReport>(response, baseUrl)
+        try {
+          const formData = await buildReportFormData(draft, options)
+          const response = await fetch(`${baseUrl}/reports`, {
+            method: 'POST',
+            body: formData,
+          })
+          return parseJsonResponse<SubmittedReport>(response, baseUrl)
+        } catch (error) {
+          if (error instanceof StaleFileError) {
+            throw new AppApiError({
+              kind: 'stale_file',
+              message: error.message,
+              transport: 'http',
+              apiBaseUrl: baseUrl,
+            })
+          }
+          throw error
+        }
       },
       async precheckReport(draft) {
-        const body = buildNearbyCandidateFormData(draft)
+        const body = await buildNearbyCandidateFormData(draft)
 
         try {
           let response = await fetch(`${baseUrl}/reports/precheck`, {
@@ -362,6 +380,15 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
           const result = await parseJsonResponse<ReportPrecheck>(response, baseUrl)
           return normalizePrecheckResult(result)
         } catch (error) {
+          if (error instanceof StaleFileError) {
+            throw new AppApiError({
+              kind: 'stale_file',
+              message: error.message,
+              transport: 'http',
+              apiBaseUrl: baseUrl,
+            })
+          }
+
           if (isAppApiError(error)) {
             if (error.kind === 'network' && shouldProbeHealth) {
               const health = await fetchHealthStatus(baseUrl)
@@ -402,12 +429,26 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
         }
       },
       async findNearbyReportCandidates(draft) {
-        const response = await fetch(`${baseUrl}/reports/nearby-candidates`, {
-          method: 'POST',
-          body: buildNearbyCandidateFormData(draft),
-        })
-        const result = await parseJsonResponse<NearbyReportCheck>(response, baseUrl)
-        return normalizePrecheckResult(result)
+        try {
+          const formData = await buildNearbyCandidateFormData(draft)
+          
+          const response = await fetch(`${baseUrl}/reports/nearby-candidates`, {
+            method: 'POST',
+            body: formData,
+          })
+          const result = await parseJsonResponse<NearbyReportCheck>(response, baseUrl)
+          return normalizePrecheckResult(result)
+        } catch (error) {
+          if (error instanceof StaleFileError) {
+            throw new AppApiError({
+              kind: 'stale_file',
+              message: error.message,
+              transport: 'http',
+              apiBaseUrl: baseUrl,
+            })
+          }
+          throw error
+        }
       },
       async getReportStatus(reference) {
         const response = await fetch(

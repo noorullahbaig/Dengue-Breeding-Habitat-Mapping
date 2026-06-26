@@ -313,6 +313,19 @@ export function ReportPageV2({
 			})
 			.catch((error) => {
 				if (isMounted) {
+					if (error instanceof AppApiError && error.kind === "stale_file") {
+						alert(error.message);
+						updateDraft({
+							photoFile: null,
+							photoPreviewUrl: "",
+							photoEvidence: undefined,
+						});
+						setCurrentStep(0);
+						setPrecheck(null);
+						setPrecheckError(null);
+						return;
+					}
+
 					setPrecheck(null);
 					setPrecheckError(
 						error instanceof AppApiError
@@ -614,6 +627,19 @@ export function ReportPageV2({
 			setLastSubmittedReference(submitted.reference);
 			navigate(`/report/success?ref=${submitted.reference}`);
 		} catch (error) {
+			if (error instanceof AppApiError && error.kind === "stale_file") {
+				alert(error.message);
+				updateDraft({
+					photoFile: null,
+					photoPreviewUrl: "",
+					photoEvidence: undefined,
+				});
+				setCurrentStep(0);
+				setSubmitError("");
+				setIsSubmitting(false);
+				return;
+			}
+
 			setSubmitError(
 				error instanceof Error
 					? error.message
