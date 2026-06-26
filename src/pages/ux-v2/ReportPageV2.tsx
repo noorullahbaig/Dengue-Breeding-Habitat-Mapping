@@ -273,7 +273,7 @@ export function ReportPageV2({
 				}
 			}, 50);
 		}
-	}, [isMobileConsentStep]);
+	}, [isMobileConsentStep, draft.hasPublicConsent]);
 
 	useEffect(() => {
 		return () => {
@@ -359,6 +359,7 @@ export function ReportPageV2({
 		pinReady,
 		precheckSignature,
 		reportsService,
+		updateDraft,
 	]);
 
 	function retryPrecheck() {
