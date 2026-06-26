@@ -31,6 +31,9 @@ COPY backend/app /app/app
 COPY backend/migrations /app/migrations
 COPY backend/alembic.ini /app/alembic.ini
 
+# Copy service area boundary geojson needed for location validation
+COPY src/data/kuala-lumpur-boundary.geojson /src/data/kuala-lumpur-boundary.geojson
+
 # Create directories for uploads and models
 RUN mkdir -p /app/uploads /app/models
 
