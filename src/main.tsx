@@ -10,6 +10,30 @@ import '@/styles/ui.css'
 import '@/styles/stitch.css'
 import '@/styles/map.css'
 import '@/styles/report.css'
+import { authRuntimeConfig } from '@/app/authConfig'
+import { Amplify } from 'aws-amplify'
+
+if (authRuntimeConfig.cognito) {
+  const { userPoolId, userPoolClientId, hostedUiDomain, redirectSignIn, redirectSignOut } = authRuntimeConfig.cognito
+  
+  const oauthConfig = hostedUiDomain && redirectSignIn && redirectSignOut ? {
+    domain: hostedUiDomain,
+    scopes: ['email', 'openid', 'phone'],
+    redirectSignIn: [redirectSignIn],
+    redirectSignOut: [redirectSignOut],
+    responseType: 'code' as const
+  } : undefined
+
+  Amplify.configure({
+    Auth: {
+      Cognito: {
+        userPoolId,
+        userPoolClientId,
+        loginWith: oauthConfig ? { oauth: oauthConfig } : undefined,
+      }
+    }
+  })
+}
 
 const rootElement = document.getElementById('root')
 

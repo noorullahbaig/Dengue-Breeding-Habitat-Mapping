@@ -206,6 +206,7 @@ export function LocationReviewMapV2({
 				<MapContainer
 					center={toLeafletPosition(location)}
 					zoom={REVIEW_MAP_ZOOM}
+					maxZoom={22}
 					maxBounds={serviceAreaMapBounds}
 					maxBoundsViscosity={1}
 					scrollWheelZoom={false}
@@ -215,6 +216,8 @@ export function LocationReviewMapV2({
 					<TileLayer
 						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+						maxNativeZoom={18}
+						maxZoom={22}
 					/>
 					<RecenterMap location={location} />
 					<ServiceAreaPatternDefs />

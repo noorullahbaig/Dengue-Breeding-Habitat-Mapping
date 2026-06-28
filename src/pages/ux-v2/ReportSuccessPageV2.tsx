@@ -135,7 +135,7 @@ export function ReportSuccessPageV2() {
 
 				<div className="report-attach-panel__actions">
 					<ButtonLink
-						to={`/profile?mode=signin&attachRef=${encodeURIComponent(currentReference)}&redirect=%2Factivity`}
+						to={`/profile?attachRef=${encodeURIComponent(currentReference)}&redirect=%2Factivity`}
 					>
 						Sign In & Save to Account
 					</ButtonLink>

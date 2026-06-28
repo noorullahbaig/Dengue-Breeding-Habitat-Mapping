@@ -51,6 +51,8 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<LoadingState label="Loading view…" />}>
     <Routes location={routeLocation}>
+      {/* Standalone routes — no app shell */}
+
       <Route element={<AppLayout />}>
         <Route index element={<HomePageV2 />} />
         <Route path="/report" element={<ReportPageV2 />} />

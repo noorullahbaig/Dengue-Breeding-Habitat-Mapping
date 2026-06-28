@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -11,7 +13,7 @@ from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.domain import (
     PUBLIC_CONSENT_TEXT,
     PUBLIC_CONSENT_VERSION,
@@ -73,7 +75,35 @@ from app.serializers import (
 )
 
 
-app = FastAPI(title="Breeding Habitat Watch API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_upload_dirs()
+    cleanup_precheck_uploads()
+    model_inference.load()
+    
+    # Start periodic hotspot sync in background
+    sync_task = asyncio.create_task(periodic_hotspot_sync())
+    yield
+    sync_task.cancel()
+    try:
+        await sync_task
+    except asyncio.CancelledError:
+        pass
+
+async def periodic_hotspot_sync():
+    while True:
+        try:
+            with SessionLocal() as db:
+                sync_current_hotspots(db)
+                db.commit()
+            print("Background sync: Successfully synced iDengue hotspots.")
+        except Exception as exc:
+            print(f"Background sync failed: {exc}")
+        # Wait 6 hours before next sync
+        await asyncio.sleep(6 * 60 * 60)
+
+
+app = FastAPI(title="Breeding Habitat Watch API", lifespan=lifespan)
 model_inference = ModelInference(settings.model_path)
 STACKABLE_HABITAT_CLASSES = {"tire", "drain_inlet", "artificial_container"}
 
@@ -321,11 +351,7 @@ def _hotspot_report_counts_within_warning(
     return counts
 
 
-@app.on_event("startup")
-def startup() -> None:
-    ensure_upload_dirs()
-    cleanup_precheck_uploads()
-    model_inference.load()
+# Lifespan handles startup events
 
 
 @app.get("/api/health", response_model=HealthOut)

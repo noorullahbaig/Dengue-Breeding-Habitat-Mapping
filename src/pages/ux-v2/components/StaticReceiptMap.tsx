@@ -19,6 +19,7 @@ export function StaticReceiptMap({ location }: StaticReceiptMapProps) {
 			<MapContainer
 				center={toLeafletPosition(location)}
 				zoom={REVIEW_MAP_ZOOM}
+				maxZoom={22}
 				dragging={false}
 				doubleClickZoom={false}
 				scrollWheelZoom={false}
@@ -29,6 +30,8 @@ export function StaticReceiptMap({ location }: StaticReceiptMapProps) {
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+					maxNativeZoom={18}
+					maxZoom={22}
 				/>
 				<Marker
 					position={toLeafletPosition(location)}

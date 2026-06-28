@@ -1,0 +1,656 @@
+/* ============================================================
+   ACTIVITY PAGE — Phone-first, full-screen, matches login.css
+   ============================================================ */
+
+/* ---------- Page shell ---------- */
+.activity-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 120% 60% at 0% 0%, rgba(0, 183, 220, 0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 70% at 100% 100%, rgba(0, 70, 79, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, #f4fbff 0%, #edf7fd 48%, #f7fbfd 100%);
+}
+
+/* ---------- Decorative background ---------- */
+.activity-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.activity-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.activity-bg__orb--1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0, 200, 240, 0.3) 0%, transparent 70%);
+  top: -100px;
+  left: -50px;
+  animation: activityOrbFloat 13s ease-in-out infinite;
+}
+
+.activity-bg__orb--2 {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(0, 70, 79, 0.15) 0%, transparent 70%);
+  bottom: 8%;
+  right: -60px;
+  animation: activityOrbFloat 17s ease-in-out infinite reverse;
+}
+
+.activity-bg__orb--3 {
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  top: 40%;
+  left: 20%;
+  animation: activityOrbFloat 9s ease-in-out infinite 5s;
+}
+
+.activity-bg__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 70, 79, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 70, 79, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@keyframes activityOrbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.04); }
+}
+
+/* ---------- Scroll container ---------- */
+.activity-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* no outer page scroll */
+  align-items: center;
+  /* push content down below the topbar, leave room above bottom nav */
+  padding: calc(var(--app-topbar-height) + 0.875rem) 1rem calc(var(--app-bottom-nav-height) + 0.875rem);
+}
+
+/* ---------- Back link ---------- */
+.activity-back {
+  align-self: flex-start;
+  padding: 1rem 0 0;
+}
+
+.activity-back__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-family: var(--font-label);
+  font-weight: 500;
+  transition: color 150ms;
+  padding: 0.5rem 0;
+}
+
+.activity-back__btn:hover,
+.activity-back__btn:focus-visible {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ---------- Brand header ---------- */
+.activity-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.5rem 0 1.75rem;
+  align-self: flex-start;
+  width: 100%;
+}
+
+.activity-brand__mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #00464f 0%, #005f6b 100%);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+.activity-brand__mark span {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1rem;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.activity-brand__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-brand__copy strong {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.activity-brand__copy span {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-label);
+}
+
+/* Count badge in header */
+.activity-brand__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ---------- Card ---------- */
+.activity-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid rgba(0, 70, 79, 0.1);
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow:
+    0 12px 48px rgba(0, 70, 79, 0.14),
+    0 3px 10px rgba(0, 70, 79, 0.07);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 360ms var(--ease-out-expo), transform 360ms var(--ease-out-expo);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.activity-page--mounted .activity-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   GATE STATE (not signed in)
+   ============================================================ */
+.activity-gate-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+.activity-gate-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.activity-gate-icon__wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0, 70, 79, 0.08) 0%, rgba(0, 95, 107, 0.05) 100%);
+  border: 1px solid rgba(0, 70, 79, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00464f;
+}
+
+.activity-gate-title {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.025em;
+  margin: 0 0 0.5rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.activity-gate-sub {
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+  text-align: center;
+  line-height: 1.55;
+  max-width: 30ch;
+}
+
+.activity-gate-rule {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 0 1rem;
+}
+
+.activity-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.875rem;
+}
+
+.activity-gate-note {
+  text-align: center;
+  font-size: 0.775rem;
+  color: var(--color-ink-soft);
+  margin: 0.5rem 0 0;
+  font-family: var(--font-label);
+  line-height: 1.45;
+}
+
+/* ============================================================
+   SIGNED-IN STATE
+   ============================================================ */
+
+/* ---------- Top strip: greeting + report count ---------- */
+.activity-topstrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.activity-topstrip__label {
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.2rem;
+}
+
+.activity-topstrip__title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.activity-count-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #00464f 0%, #005f6b 100%);
+  box-shadow: 0 4px 12px rgba(0, 70, 79, 0.35);
+  flex-shrink: 0;
+}
+
+.activity-count-pill__num {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.activity-count-pill__label {
+  font-family: var(--font-label);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Feedback banner ---------- */
+.activity-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  background: var(--semantic-success-bg);
+  color: var(--semantic-success-text);
+  border: 1px solid var(--semantic-success-border);
+}
+
+/* ---------- Empty state ---------- */
+.activity-empty-icon {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0 1rem;
+}
+
+.activity-empty-icon__wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(0, 70, 79, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00464f;
+}
+
+.activity-empty-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-align: center;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.015em;
+}
+
+.activity-empty-sub {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  text-align: center;
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}
+
+/* ---------- Inner report list ---------- */
+.activity-inner-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-height: 0;
+  margin-bottom: 1rem;
+  padding-right: 2px; /* room for scrollbar */
+}
+
+/* Subtle custom scrollbar */
+.activity-inner-list::-webkit-scrollbar {
+  width: 3px;
+}
+.activity-inner-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.activity-inner-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 70, 79, 0.2);
+  border-radius: 99px;
+}
+
+/* ---------- Report item card ---------- */
+.activity-item {
+  background: #f8fcff;
+  border: 1px solid rgba(0, 70, 79, 0.1);
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 150ms, background 150ms;
+}
+
+.activity-item:hover {
+  border-color: rgba(0, 70, 79, 0.22);
+  background: #f0f9ff;
+}
+
+.activity-item__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.activity-item__ref-label {
+  font-family: var(--font-label);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.1rem;
+}
+
+.activity-item__ref {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.activity-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  font-family: var(--font-label);
+}
+
+.activity-item__meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.activity-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.activity-item__view-btn {
+  flex: 1;
+  height: 36px;
+  background: rgba(0, 70, 79, 0.09);
+  color: #00464f;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  text-decoration: none;
+  transition: background 150ms, transform 150ms;
+}
+
+.activity-item__view-btn:hover {
+  background: rgba(0, 70, 79, 0.14);
+  transform: translateY(-1px);
+}
+
+.activity-item__remove-btn {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid rgba(0, 70, 79, 0.12);
+  border-radius: 10px;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms, color 150ms, border-color 150ms;
+  flex-shrink: 0;
+}
+
+.activity-item__remove-btn:hover {
+  background: var(--semantic-danger-bg);
+  color: var(--semantic-danger-text);
+  border-color: var(--semantic-danger-border);
+}
+
+/* Missing report state */
+.activity-item--missing {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.activity-item__missing-note {
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ---------- Loading state ---------- */
+.activity-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: var(--color-ink-soft);
+  font-size: 0.88rem;
+  font-family: var(--font-label);
+}
+
+.activity-loading__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(0, 70, 79, 0.15);
+  border-top-color: #00464f;
+  border-radius: 50%;
+  animation: activitySpin 0.75s linear infinite;
+}
+
+@keyframes activitySpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Bottom actions (always at card bottom) ---------- */
+.activity-bottom-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+/* ---------- Shared button styles ---------- */
+.activity-primary-btn {
+  width: 100%;
+  height: 52px;
+  background: linear-gradient(135deg, #00464f 0%, #005f6b 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-label);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: opacity 200ms, transform 150ms, box-shadow 200ms;
+  box-shadow: 0 4px 16px rgba(0, 70, 79, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.activity-primary-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: 0 6px 24px rgba(0, 70, 79, 0.5);
+  transform: translateY(-1px);
+}
+
+.activity-primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 70, 79, 0.3);
+}
+
+.activity-ghost-btn {
+  width: 100%;
+  height: 48px;
+  background: transparent;
+  border: 1.5px solid rgba(0, 70, 79, 0.18);
+  border-radius: 14px;
+  font-family: var(--font-label);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 150ms, border-color 150ms, transform 150ms;
+  text-decoration: none;
+}
+
+.activity-ghost-btn:hover {
+  background: rgba(0, 70, 79, 0.04);
+  border-color: rgba(0, 70, 79, 0.28);
+  transform: translateY(-1px);
+}
+
+/* ---------- Responsive ---------- */
+@media (min-height: 720px) {
+  .activity-brand {
+    padding: 2rem 0 2rem;
+  }
+  .activity-card {
+    padding: 2rem 2rem 2.25rem;
+  }
+  .activity-inner-list {
+    max-height: min(55dvh, 420px);
+  }
+}
+
+@media (min-width: 480px) {
+  .activity-scroll {
+    padding: 0 1.5rem 2.5rem;
+  }
+}

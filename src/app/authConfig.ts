@@ -44,13 +44,13 @@ function readCognitoConfig(): CognitoConfig | null {
 }
 
 const cognito = readCognitoConfig()
-const isHostedUiReady = Boolean(
+const isOAuthConfigured = Boolean(
   cognito?.hostedUiDomain && cognito.redirectSignIn && cognito.redirectSignOut,
 )
 
 export const authRuntimeConfig: AuthRuntimeConfig = {
   providerTarget: cognito ? 'cognito' : 'mock',
-  sessionMode: isHostedUiReady ? 'cognito' : 'local',
+  sessionMode: cognito ? 'cognito' : 'local',
   cognito,
-  isHostedUiReady,
+  isHostedUiReady: isOAuthConfigured,
 }

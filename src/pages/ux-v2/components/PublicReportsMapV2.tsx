@@ -4,6 +4,7 @@ import {
 	MapContainer,
 	Marker,
 	TileLayer,
+	Tooltip,
 	useMap,
 	useMapEvents,
 	ZoomControl,
@@ -28,7 +29,7 @@ interface PublicReportsMapV2Props {
 type TileStatus = "loading" | "ready" | "fallback";
 
 const PUBLIC_MAP_MIN_ZOOM = 11;
-const PUBLIC_MAP_MAX_ZOOM = 19;
+const PUBLIC_MAP_MAX_ZOOM = 22;
 const REPORT_COLLISION_RADIUS_PX = 36;
 const EXACT_LOCATION_DECIMALS = 6;
 
@@ -378,7 +379,8 @@ export function PublicReportsMapV2({
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-					maxNativeZoom={PUBLIC_MAP_MAX_ZOOM}
+					maxNativeZoom={18}
+					maxZoom={PUBLIC_MAP_MAX_ZOOM}
 					eventHandlers={{
 						loading: () =>
 							setTileStatus((currentStatus) =>
@@ -400,7 +402,13 @@ export function PublicReportsMapV2({
 								position={toLeafletPosition(hotspot.center)}
 								icon={hotspotMarkerIcon}
 								eventHandlers={{ click: () => onSelectHotspot?.(hotspot) }}
-							/>
+							>
+								<Tooltip direction="top" offset={[0, -10]}>
+									<span style={{ fontWeight: 800, fontSize: "0.8rem", textTransform: "uppercase" }}>
+										{hotspot.locality}
+									</span>
+								</Tooltip>
+							</Marker>
 						))
 					: null}
 

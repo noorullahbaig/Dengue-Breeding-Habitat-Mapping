@@ -19,10 +19,8 @@ import type {
 	HabitatClass,
 	PublicHotspot,
 	PublicMapReport,
-	SubmissionStatus,
 } from "@/types/report";
 
-type StatusFilter = SubmissionStatus | "all";
 type HabitatFilter = HabitatClass | "all";
 
 function reportGroupHeading(group: PublicReportGroupSelection) {
@@ -39,7 +37,6 @@ export function PublicMapExperienceV2() {
 	const { mapService } = useServices();
 	const [reports, setReports] = useState<PublicMapReport[]>([]);
 	const [hotspots, setHotspots] = useState<PublicHotspot[]>([]);
-	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 	const [habitatFilter, setHabitatFilter] = useState<HabitatFilter>("all");
 	const [isReportsLoading, setIsReportsLoading] = useState(true);
 	const [hotspotError, setHotspotError] = useState("");
@@ -67,7 +64,7 @@ export function PublicMapExperienceV2() {
 			hotspotError,
 		]
 			.filter(Boolean)
-			.join("|") || `${statusFilter}:${habitatFilter}:empty`;
+			.join("|") || `${habitatFilter}:empty`;
 
 	const selectedReports = selectedReportGroup?.reports ?? [];
 	const activeReport =
@@ -81,7 +78,6 @@ export function PublicMapExperienceV2() {
 	useEffect(() => {
 		let isMounted = true;
 		const reportsPromise = mapService.listPublicReports(undefined, {
-			status: statusFilter,
 			habitatClass: habitatFilter,
 		});
 
@@ -105,7 +101,7 @@ export function PublicMapExperienceV2() {
 		return () => {
 			isMounted = false;
 		};
-	}, [habitatFilter, mapService, statusFilter]);
+	}, [habitatFilter, mapService]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -172,17 +168,6 @@ export function PublicMapExperienceV2() {
 			}
 		};
 	}, []);
-
-	function handleStatusFilterChange(nextStatus: StatusFilter) {
-		if (statusFilter === nextStatus) return;
-		setIsReportsLoading(true);
-		setStatusFilter(nextStatus);
-		setCenterOverride(undefined);
-		setSelectedHotspotId(undefined);
-		setSelectedReportGroup(undefined);
-		setActiveReportIndex(0);
-		setShowReportEvidence(false);
-	}
 
 	function handleHabitatFilterChange(nextHabitat: HabitatFilter) {
 		if (habitatFilter === nextHabitat) return;
@@ -253,16 +238,15 @@ export function PublicMapExperienceV2() {
 			{/* Background Interactive Map */}
 			<div className="map-fullscreen-container">
 				{!isReportsLoading ? (
-					<PublicReportsMapV2
-						key={mapSignature}
-						reports={reports}
-						hotspots={hotspots}
-						showHotspots={showHotspots}
-						hotspotError={hotspotError}
-						centerOverride={centerOverride}
-						onSelectHotspot={handleHotspotClick}
-						onSelectReportGroup={handleReportGroupClick}
-					/>
+						<PublicReportsMapV2
+							key={mapSignature}
+							reports={reports}
+							hotspots={hotspots}
+							showHotspots={showHotspots}
+							centerOverride={centerOverride}
+							onSelectHotspot={handleHotspotClick}
+							onSelectReportGroup={handleReportGroupClick}
+						/>
 				) : (
 					<div className="loading-state map-fullscreen-loading">
 						Updating report markers...
@@ -280,31 +264,6 @@ export function PublicMapExperienceV2() {
 
 			{/* Floating Filters (Scrolling Pills) */}
 			<div className="floating-filter-container">
-				{/* Status Filter */}
-				<div className="filter-pill-group">
-					<span className="filter-pill-label">STATUS</span>
-					<div className="filter-pills-list">
-						{(
-							[
-								"all",
-								"submitted",
-								"under_review",
-								"prioritized",
-								"action_recorded",
-								"closed",
-							] as StatusFilter[]
-						).map((status) => (
-							<button
-								key={status}
-								type="button"
-								className={`filter-pill-button ${statusFilter === status ? "filter-pill-button--active" : ""}`}
-								onClick={() => handleStatusFilterChange(status)}
-							>
-								{status === "all" ? "All" : formatStatusLabel(status)}
-							</button>
-						))}
-					</div>
-				</div>
 
 				{/* Habitat Class Filter */}
 				<div className="filter-pill-group">
