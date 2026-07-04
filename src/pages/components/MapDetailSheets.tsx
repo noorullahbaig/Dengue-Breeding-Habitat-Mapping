@@ -171,6 +171,13 @@ export function MapReportSheet({
 								to={`/map/reports/${selectedReport.reference}`}
 								variant="primary"
 								className="map-detail-sheet__primary-action"
+								style={{
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "100%",
+									gap: "8px"
+								}}
 							>
 								<Navigation size={17} /> View report details
 							</ButtonLink>
