@@ -31,10 +31,6 @@ vi.mock('@/pages/PublicReportDetailPage', () => ({
 vi.mock('@/pages/LearnPage', () => ({
   LearnPage: () => <div>learn-page</div>,
 }))
-vi.mock('@/pages/OfficerDashboardPage', () => ({
-  OfficerDashboardPage: () => <div>officer-page</div>,
-}))
-
 describe('canonical routes', () => {
   beforeEach(() => {
     vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
@@ -86,7 +82,7 @@ describe('canonical routes', () => {
   })
 
   it('renders the learn route', async () => {
-    const view = renderRoutes('/learn')
+		renderRoutes('/learn')
     expect(await screen.findByText('learn-page')).toBeInTheDocument()
   })
 

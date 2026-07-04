@@ -89,6 +89,7 @@ export interface SubmittedReport {
   imageUrl?: string
   publicConsent?: PublicConsent
   hotspotPriority?: HotspotPriority
+  claimToken?: string | null
 }
 
 export interface ReportStatus {
@@ -186,29 +187,6 @@ export interface PublicHotspot {
   reportCountWithinWarning?: number | null
 }
 
-export interface StackParentSummary {
-  reference: string
-  createdAt: string
-  status: SubmissionStatus
-  prediction: PredictionSummary
-  imageUrl: string
-  thumbnailUrl: string
-}
-
-export interface HotspotMirrorStatus {
-  hotspotCount: number
-  latestSnapshotDate?: string | null
-  lastSyncedAt?: string | null
-  sourceLabel: string
-}
-
-export interface HotspotSyncResult {
-  syncedCount: number
-  snapshotDate?: string | null
-  sourceLabel: string
-  syncedAt: string
-}
-
 export interface ApiHealthStatus {
   ok: boolean
   database: boolean
@@ -217,35 +195,4 @@ export interface ApiHealthStatus {
   modelPath: string
   postgis: boolean
   details: Record<string, string>
-}
-
-export interface OfficerReport {
-  id: string
-  reference: string
-  createdAt: string
-  capturedAt: string
-  reportLocation: LocationPoint
-  publicLocation: LocationPoint
-  status: SubmissionStatus
-  prediction: PredictionSummary
-  neighborhood: string
-  statusMessage: string
-  notes?: string | null
-  imageUrl: string
-  thumbnailUrl: string
-  stackedOnReference?: string | null
-  publicConsent: PublicConsent
-  hotspotPriority: HotspotPriority
-  officerNotes?: string | null
-  followUpAction?: string | null
-  reviewedAt?: string | null
-  reviewedBy?: string | null
-  stackParent?: StackParentSummary | null
-}
-
-export interface OfficerReportUpdate {
-  status: SubmissionStatus
-  officerNotes?: string | null
-  followUpAction?: string | null
-  reviewedBy?: string | null
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db, SessionLocal
 from app.auth import get_current_user, get_current_user_optional
+from app.claims import create_claim_token, hash_claim_token
 from app.domain import (
     PUBLIC_CONSENT_TEXT,
     PUBLIC_CONSENT_VERSION,
@@ -30,7 +32,6 @@ from app.domain import (
 from app.hotspots import (
     HOTSPOT_WARNING_RADIUS_METERS,
     assess_hotspot_priority,
-    hotspot_mirror_status,
     stored_hotspots,
     sync_current_hotspots,
 )
@@ -49,8 +50,7 @@ from app.inference import ModelInference
 from app.models import Report, User
 from app.schemas import (
     HealthOut,
-    HotspotMirrorStatusOut,
-    HotspotSyncOut,
+    ClaimReportIn,
     NearbyCandidatesOut,
     NearbyReportOut,
     PublicHotspotOut,
@@ -68,8 +68,6 @@ from app.serializers import (
     public_report_out,
     status_report_out,
     submitted_report_out,
-    hotspot_mirror_status_out,
-    hotspot_sync_out,
 )
 
 
@@ -493,6 +491,7 @@ async def create_report(
         for detection in prediction.detections
     ]
 
+    claim_token = create_claim_token() if current_user is None else None
     report = Report(
         id=str(uuid4()),
         parent_report_id=stack_parent.id if stack_parent else None,
@@ -539,6 +538,8 @@ async def create_report(
         hotspot_priority_level=hotspot_priority.priority_level,
         hotspot_priority_reason=hotspot_priority.priority_reason,
         user_id=current_user.id if current_user else None,  # Associate with user if authenticated
+        claim_token_hash=hash_claim_token(claim_token) if claim_token else None,
+        claim_token_created_at=now if claim_token else None,
     )
 
     try:
@@ -564,7 +565,7 @@ async def create_report(
             detail="The report could not be stored. The uploaded files were removed.",
         ) from exc
 
-    return submitted_report_out(report)
+    return submitted_report_out(report, claim_token=claim_token)
 
 
 async def _precheck_report(
@@ -670,6 +671,59 @@ def precheck_image(storage_key: str) -> FileResponse:
 def report_status(reference: str, db: Session = Depends(get_db)) -> StatusReportOut | None:
     report = _report_by_reference(db, reference)
     return status_report_out(report) if report else None
+
+
+@app.get("/api/my-reports", response_model=list[StatusReportOut])
+def list_my_reports(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[StatusReportOut]:
+    reports = db.scalars(
+        select(Report)
+        .where(Report.user_id == current_user.id)
+        .order_by(Report.created_at.desc())
+    ).all()
+    return [status_report_out(report) for report in reports]
+
+
+@app.post("/api/my-reports/claim", response_model=StatusReportOut)
+def claim_my_report(
+    payload: ClaimReportIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> StatusReportOut:
+    reference = payload.reference.strip().upper()
+    report = db.scalar(
+        select(Report).where(Report.reference == reference).with_for_update()
+    )
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
+
+    if report.user_id == current_user.id:
+        return status_report_out(report)
+    if report.user_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This report is already attached to another account.",
+        )
+
+    supplied_hash = hash_claim_token(payload.claimToken)
+    if not report.claim_token_hash or not hmac.compare_digest(
+        report.claim_token_hash,
+        supplied_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This report could not be attached with the supplied claim token.",
+        )
+
+    report.user_id = current_user.id
+    report.claim_token_hash = None
+    report.claim_token_created_at = None
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return status_report_out(report)
 
 
 @app.get("/api/hotspots/current", response_model=list[PublicHotspotOut])

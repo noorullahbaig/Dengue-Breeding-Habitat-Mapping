@@ -326,7 +326,7 @@ export function LocationReviewMap({
 							}}
 						>
 							<Popup>
-								Drag this pin to the exact point you want officers to review.
+								Drag this pin to the exact point you consent to publish.
 							</Popup>
 						</Marker>
 					) : null}

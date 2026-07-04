@@ -5,8 +5,6 @@ import type {
   ApiHealthStatus,
   NearbyReportCheck,
   NearbyReportCandidate,
-  HotspotMirrorStatus,
-  HotspotSyncResult,
   PublicMapReport,
   PublicReportDetail,
   PublicReportObservation,
@@ -265,7 +263,7 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
     if (includeAuth && getAuthToken) {
       const token = await getAuthToken()
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`
+			headers.Authorization = `Bearer ${token}`
       }
     }
     
@@ -322,21 +320,6 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
     }
   }
 
-  function normalizeOfficerReport(report: OfficerReport): OfficerReport {
-    return {
-      ...report,
-      thumbnailUrl: publicUrl(report.thumbnailUrl),
-      imageUrl: publicUrl(report.imageUrl),
-      stackParent: report.stackParent
-        ? {
-            ...report.stackParent,
-            thumbnailUrl: publicUrl(report.stackParent.thumbnailUrl),
-            imageUrl: publicUrl(report.stackParent.imageUrl),
-          }
-        : report.stackParent,
-    }
-  }
-
   return {
     reportsService: {
       async getMyReports() {
@@ -345,6 +328,18 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
           headers,
         })
         return parseJsonResponse(response, baseUrl)
+      },
+      async claimReport(reference, claimToken) {
+        const headers = await buildHeaders(true)
+        const response = await fetch(`${baseUrl}/my-reports/claim`, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reference, claimToken }),
+        })
+        return parseJsonResponse<ReportStatus>(response, baseUrl)
       },
       async createReport(draft, options) {
         try {

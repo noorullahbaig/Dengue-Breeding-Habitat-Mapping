@@ -7,23 +7,33 @@ import {
 	ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/app/useAuth";
+import { useServices } from "@/app/useServices";
+import {
+	clearPendingReportClaim,
+	readPendingReportClaim,
+} from "@/lib/pendingReportClaim";
 import "@/styles/profile.css";
 
 export function ProfilePage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const {
 		isAuthenticated,
+		isAuthLoading = false,
+		isAccountAvailable = true,
+		accountUnavailableReason,
+		sessionMode,
 		signOut,
 		signInWithGoogle,
 		signInWithHostedUI,
-		trackReport,
 		trackedReferences,
 		user,
 	} = useAuth();
+	const { reportsService } = useServices();
 
 	const [mounted, setMounted] = useState(false);
 	const [feedback, setFeedback] = useState("");
 	const [error, setError] = useState("");
+	const [reportCount, setReportCount] = useState(0);
 
 	const attachRef = searchParams.get("attachRef")?.trim().toUpperCase() ?? "";
 	const redirectPath = searchParams.get("redirect") ?? "/activity";
@@ -33,18 +43,60 @@ export function ProfilePage() {
 	}, []);
 
 	useEffect(() => {
-		if (!isAuthenticated || !attachRef) {
+		if (!isAuthenticated || sessionMode === "local") {
+			setReportCount(trackedReferences.length);
 			return;
 		}
+		let isMounted = true;
+		void reportsService.getMyReports().then((reports) => {
+			if (isMounted) setReportCount(reports.length);
+		}).catch(() => {
+			if (isMounted) setReportCount(0);
+		});
+		return () => {
+			isMounted = false;
+		};
+	}, [isAuthenticated, reportsService, sessionMode, trackedReferences.length]);
 
-		trackReport(attachRef);
-		setFeedback(`Report ${attachRef} saved to your activity.`);
+	useEffect(() => {
+		let isMounted = true;
+		if (!isAuthenticated || !attachRef) {
+			return () => {
+				isMounted = false;
+			};
+		}
 
-		const nextParams = new URLSearchParams(searchParams);
-		nextParams.delete("attachRef");
-		nextParams.delete("mode");
-		setSearchParams(nextParams, { replace: true });
-	}, [attachRef, isAuthenticated, searchParams, setSearchParams, trackReport]);
+		const claimToken = readPendingReportClaim(attachRef);
+		if (!claimToken) {
+			setError("This report can no longer be attached from this browser session.");
+			return () => {
+				isMounted = false;
+			};
+		}
+
+		async function attachReport() {
+			setError("");
+			try {
+				await reportsService.claimReport(attachRef, claimToken as string);
+				if (!isMounted) return;
+				clearPendingReportClaim(attachRef);
+				setFeedback(`Report ${attachRef} saved to your account.`);
+				const nextParams = new URLSearchParams(searchParams);
+				nextParams.delete("attachRef");
+				nextParams.delete("mode");
+				setSearchParams(nextParams, { replace: true });
+			} catch {
+				if (isMounted) {
+					setError("This report could not be attached to your account. Please try again.");
+				}
+			}
+		}
+
+		void attachReport();
+		return () => {
+			isMounted = false;
+		};
+	}, [attachRef, isAuthenticated, reportsService, searchParams, setSearchParams]);
 
 	function handleSignOut() {
 		signOut();
@@ -88,7 +140,13 @@ export function ProfilePage() {
 			</div>
 
 			<div className="profile-scroll">
-				{!isAuthenticated ? (
+				{isAuthLoading ? (
+					<main className="profile-card">
+						<div className="profile-card-top" role="status">
+							<p className="profile-card__sub">Restoring your account…</p>
+						</div>
+					</main>
+				) : !isAuthenticated ? (
 					/* ── NOT SIGNED IN ── */
 					<main className="profile-card">
 						{/* Top content — centred in the upper half */}
@@ -110,8 +168,14 @@ export function ProfilePage() {
 									: "Private updates on every report you submit."}
 							</p>
 
-							{/* Error alert */}
-							{error && (
+								{/* Error alert */}
+								{!isAccountAvailable && (
+									<div className="profile-alert profile-alert--error" role="alert">
+										<span className="profile-alert__dot" />
+										{accountUnavailableReason ?? "Account sign-in is temporarily unavailable."}
+									</div>
+								)}
+								{error && (
 								<div className="profile-alert profile-alert--error" role="alert">
 									<span className="profile-alert__dot" />
 									{error}
@@ -125,7 +189,8 @@ export function ProfilePage() {
 							<button
 								type="button"
 								className="profile-google-btn"
-								onClick={handleGoogleSignIn}
+									onClick={handleGoogleSignIn}
+									disabled={!isAccountAvailable}
 							>
 								<svg
 									viewBox="0 0 24 24"
@@ -162,7 +227,8 @@ export function ProfilePage() {
 							<button
 								type="button"
 								className="profile-primary-btn"
-								onClick={handleEmailSignIn}
+									onClick={handleEmailSignIn}
+									disabled={!isAccountAvailable}
 							>
 								<Mail size={18} />
 								Continue with Email
@@ -175,8 +241,14 @@ export function ProfilePage() {
 					</main>
 				) : (
 					/* ── SIGNED IN ── */
-					<main className="profile-card">
-						{/* Feedback banner */}
+						<main className="profile-card">
+							{error && (
+								<div className="profile-alert profile-alert--error" role="alert">
+									<span className="profile-alert__dot" />
+									{error}
+								</div>
+							)}
+							{/* Feedback banner */}
 						{feedback && (
 							<div
 								className="profile-alert profile-alert--success"
@@ -210,7 +282,7 @@ export function ProfilePage() {
 							<li className="profile-stat-card profile-stat-card--accent">
 								<span className="profile-stat-card__label">Reports</span>
 								<span className="profile-stat-card__value">
-									{trackedReferences.length}
+										{reportCount}
 								</span>
 								<span className="profile-stat-card__sub">saved</span>
 							</li>

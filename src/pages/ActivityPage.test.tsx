@@ -8,6 +8,7 @@ const reportsService = {
 
 const guestAuthState = {
   isAuthenticated: false,
+  isAuthLoading: false,
   sessionMode: 'local',
   trackedReferences: [] as string[],
   untrackReport: vi.fn(),
@@ -24,6 +25,22 @@ vi.mock('@/app/useServices', () => ({
 }))
 
 describe('ActivityPage guest state', () => {
+  beforeEach(() => {
+    guestAuthState.isAuthLoading = false
+  })
+
+  it('waits for session restoration before showing the signed-out gate', () => {
+    guestAuthState.isAuthLoading = true
+    render(
+      <MemoryRouter initialEntries={['/activity']}>
+        <ActivityPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Restoring your account…')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Your Report Activity' })).not.toBeInTheDocument()
+  })
+
   it('keeps the sign-in prompt concise and avoids implementation-detail copy', () => {
     render(
       <MemoryRouter initialEntries={['/activity']}>

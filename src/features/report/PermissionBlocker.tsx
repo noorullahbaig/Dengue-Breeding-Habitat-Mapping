@@ -178,7 +178,7 @@ export function PermissionBlocker({ permission, onRetry }: PermissionBlockerProp
 
       <p className="permission-blocker__reason">
         {isLocation
-          ? 'Your device location is required to verify that you are physically at the reported site. This prevents false reports and ensures officers can act on accurate data.'
+          ? 'Your device location is required to verify that you are physically at the reported site and to reduce remote or false submissions.'
           : 'A live camera photo is required to submit a dengue breeding habitat report. The photo confirms the site exists and helps classify the habitat type.'}
       </p>
 

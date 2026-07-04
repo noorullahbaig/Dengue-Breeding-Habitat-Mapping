@@ -1,4 +1,6 @@
-# ✅ Implementation Complete: User Authentication & Report Association
+# Historical implementation notes
+
+> This document records the July 2026 implementation attempt and contains claims that were not validated at the time. Use `AUTHENTICATION_AND_REPORT_OWNERSHIP.md` for the current contract and deployment procedure.
 
 ## 🎯 Task Completion Summary
 

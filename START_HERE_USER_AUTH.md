@@ -1,4 +1,6 @@
-# 🚀 START HERE - User Authentication Implementation
+# Historical authentication documentation index
+
+> Start with `AUTHENTICATION_AND_REPORT_OWNERSHIP.md`. The documents indexed below were produced during the original implementation attempt and may contain outdated completion claims.
 
 ## ✅ Status: COMPLETE & READY TO DEPLOY
 

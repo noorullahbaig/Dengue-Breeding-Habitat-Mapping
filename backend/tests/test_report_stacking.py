@@ -19,7 +19,7 @@ from app.config import settings
 from app.database import Base
 from app.domain import distance_meters
 from app.inference import Detection, PredictionSummary
-from app.hotspots import HotspotMirrorStatus, HotspotPriority, HotspotSyncResult
+from app.hotspots import HotspotPriority
 from app.main import app, get_db
 from app.models import Report
 
@@ -162,8 +162,8 @@ def make_report(
         public_longitude=longitude,
         status=status,
         neighborhood="Bukit Jalil",
-        status_message="Received and awaiting officer review.",
-        notes="Officer-only resident note",
+        status_message="Report received and available for tracking.",
+        notes="Resident note",
         image_original_filename="sample.jpg",
         image_mime_type="image/jpeg",
         image_size_bytes=123,
@@ -570,5 +570,4 @@ def test_storage_key_paths_resolve_inside_upload_root(tmp_path: Path, monkeypatc
     monkeypatch.setattr(image_storage, "settings", replace(settings, upload_root=upload_root))
 
     assert image_storage.resolve_public_upload_path("evidence/sample.jpg") == image_path
-
 

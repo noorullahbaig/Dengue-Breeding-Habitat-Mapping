@@ -307,8 +307,7 @@ img {
 .page--resident-home,
 .page--learn,
 .page--map-home,
-.page--status,
-.page--officer {
+.page--status {
   gap: 1.1rem;
 }
 
@@ -843,8 +842,7 @@ img {
 
 .report-step-layout,
 .report-step-layout--map,
-.public-detail-layout,
-.officer-layout {
+.public-detail-layout {
   display: grid;
   gap: 1rem;
 }
@@ -1170,9 +1168,6 @@ img {
 .home-activity,
 .map-toolbar,
 .hotspot-table-section,
-.officer-hotspot-sync,
-.officer-queue,
-.officer-detail,
 .public-gallery,
 .public-detail-side,
 .report-submit-panel {
@@ -1318,7 +1313,6 @@ img {
 .learn-grid,
 .home-card-grid,
 .data-list,
-.officer-detail__grid,
 .hotspot-grid,
 .timeline-gallery-wrap {
   display: grid;
@@ -1464,9 +1458,7 @@ img {
 .report-wizard__main,
 .report-wizard__aside,
 .public-detail-main,
-.public-detail-side,
-.officer-queue,
-.officer-detail {
+.public-detail-side {
   align-content: start;
 }
 
@@ -1548,94 +1540,6 @@ img {
 
 .hotspot-table__row:hover {
   background: rgba(0, 70, 79, 0.04);
-}
-
-.officer-hotspot-sync {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-}
-
-.officer-queue {
-  display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
-}
-
-.officer-queue__list {
-  display: grid;
-  gap: 0.6rem;
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.officer-queue__item {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.85rem;
-  border: 1px solid rgba(2, 31, 41, 0.1);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.88);
-  text-align: left;
-}
-
-.officer-queue__item--active {
-  border-color: rgba(0, 70, 79, 0.18);
-  background: rgba(0, 70, 79, 0.07);
-}
-
-.officer-queue__copy {
-  display: grid;
-  gap: 0.12rem;
-}
-
-.officer-queue__meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  color: var(--color-ink-soft);
-  font-size: 0.8rem;
-}
-
-.officer-detail {
-  padding: 1rem;
-}
-
-.officer-detail__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.officer-detail__grid {
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-}
-
-.officer-triage {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.officer-triage > div {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.85rem;
-  border-radius: 16px;
-  border: 1px solid rgba(2, 31, 41, 0.1);
-}
-
-.officer-review-form {
-  display: grid;
-  gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(2, 31, 41, 0.1);
-}
-
-.officer-evidence-column .prediction-evidence {
-  min-height: 100%;
 }
 
 .public-detail-layout {
@@ -1838,10 +1742,6 @@ img {
     align-items: start;
   }
 
-  .officer-layout {
-    grid-template-columns: minmax(280px, 0.34fr) minmax(0, 0.66fr);
-    align-items: start;
-  }
 }
 
 @media (max-width: 1023px) {
@@ -1856,9 +1756,6 @@ img {
   .report-step-layout,
   .report-step-layout--map,
   .public-detail-layout,
-  .officer-layout,
-  .officer-detail__grid,
-  .officer-triage,
   .home-hero__visual-grid,
   .home-card-grid,
   .learn-grid,
@@ -1966,8 +1863,7 @@ img {
 
   .public-gallery__header,
   .home-activity__header,
-  .hotspot-table-section__header,
-  .officer-detail__header {
+  .hotspot-table-section__header {
     align-items: start;
   }
 }

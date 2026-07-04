@@ -39,10 +39,10 @@ const statusLabels: Record<string, string> = {
 };
 const statusDescriptions: Record<string, string> = {
 	submitted: "Received by the system.",
-	under_review: "Officer is auditing details.",
-	prioritized: "Flagged as high priority.",
-	action_recorded: "Follow-up action taken.",
-	closed: "Lifecycle completed.",
+	under_review: "A legacy review status is recorded.",
+	prioritized: "A legacy priority status is recorded.",
+	action_recorded: "A legacy follow-up status is recorded.",
+	closed: "This report is recorded as closed.",
 };
 
 export function StatusPage() {
@@ -132,7 +132,7 @@ export function StatusPage() {
 					>
 						<p className="status-hero-subtitle">
 							Enter your secure reference code to check triage updates and
-							officer notes anonymously.
+							status information by reference code.
 						</p>
 
 						<form className="status-hero-form" onSubmit={handleSearchSubmit}>

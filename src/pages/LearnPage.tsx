@@ -148,12 +148,12 @@ const reportingSteps = [
 	{
 		step: "3",
 		title: "Confirm Your Pin",
-		desc: "In the Report tab, drag the map pin to the exact GPS location of the site. Precision helps officers find it quickly.",
+		desc: "In the Report tab, drag the map pin to the exact GPS location you consent to publish.",
 	},
 	{
 		step: "4",
 		title: "Submit Anonymously",
-		desc: "AI instantly analyzes your photo for habitat classification. Your report is anonymous and goes directly to vector control.",
+		desc: "AI analyzes your photo for habitat classification before the report is added to the public evidence map.",
 	},
 	{
 		step: "5",
@@ -388,7 +388,7 @@ export function LearnPage() {
 					One report can stop an outbreak before it starts.
 				</h2>
 				<p className="lv2-cta__desc">
-					Every habitat you flag goes directly to KL vector control officers for
+					Every habitat you flag contributes to the public evidence map for
 					field verification and action. Anonymous. Free. Takes 2 minutes.
 				</p>
 				<div className="lv2-cta__actions">

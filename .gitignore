@@ -56,3 +56,6 @@ output/
 .playwright-cli/
 .kiro/
 
+# AWS Keys and Credentials
+*.pem
+*.ppk

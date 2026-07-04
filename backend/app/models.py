@@ -90,6 +90,11 @@ class Report(Base):
         nullable=True,
         index=True,
     )
+    claim_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    claim_token_created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     user: Mapped["User | None"] = relationship("User", back_populates="reports")
     parent_report: Mapped["Report | None"] = relationship(

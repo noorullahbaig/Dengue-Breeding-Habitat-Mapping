@@ -1,0 +1,128 @@
+@startdot
+digraph ReportSubmissionFlowchart {
+  graph [
+    rankdir=TB,
+    bgcolor="white",
+    pad="0.12",
+    margin="0",
+    nodesep="0.22",
+    ranksep="0.10 equally",
+    splines=ortho,
+    outputorder=edgesfirst,
+    fontname="Arial"
+  ];
+
+  node [
+    shape=box,
+    width=2.50,
+    height=0.30,
+    margin="0.10,0.04",
+    style="filled",
+    fillcolor="white",
+    color="#334155",
+    fontcolor="#0F172A",
+    fontname="Arial",
+    fontsize=11.5,
+    penwidth=1.25,
+    group="main"
+  ];
+
+  edge [
+    color="#475569",
+    fontcolor="#334155",
+    fontname="Arial",
+    fontsize=10,
+    penwidth=1.15,
+    arrowsize=0.65
+  ];
+
+  start [label="Start", shape=oval, width=1.10, height=0.30, fillcolor="#0F172A", fontcolor="white", color="#0F172A"];
+  photo [label="Capture or upload evidence photo"];
+  location [label="Confirm report location"];
+  location_valid [label="Is the location\nvalid?", shape=diamond, width=1.85, height=0.50, fixedsize=true, fillcolor="#F8FAFC"];
+  correct_location [label="Correct report location", group="exceptions"];
+
+  consent [label="Review consent for public display"];
+  consent_valid [label="Is consent\naccepted?", shape=diamond, width=1.85, height=0.50, fixedsize=true, fillcolor="#F8FAFC"];
+  consent_required [label="Consent is required", group="exceptions"];
+
+  precheck [
+    shape=plain,
+    group="main",
+    label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" COLOR="#1D4ED8" BGCOLOR="#EFF6FF">
+      <TR>
+        <TD BORDER="1" SIDES="R" WIDTH="9"></TD>
+        <TD WIDTH="180" HEIGHT="25"><FONT FACE="Arial" POINT-SIZE="11" COLOR="#0F172A">Perform AI pre-check</FONT></TD>
+        <TD BORDER="1" SIDES="L" WIDTH="9"></TD>
+      </TR>
+    </TABLE>>
+  ];
+  precheck_valid [label="Is the pre-check\nsuccessful?", shape=diamond, width=2.05, height=0.54, fixedsize=true, fillcolor="#F8FAFC"];
+  precheck_error [label="Show pre-check error and retry", group="exceptions"];
+
+  advisory [label="Review AI advisory"];
+  habitat [label="Is a habitat\ndetected?", shape=diamond, width=1.85, height=0.50, fixedsize=true, fillcolor="#F8FAFC"];
+  continue_without [label="Continue without a\ndetected habitat?", shape=diamond, width=2.20, height=0.56, fixedsize=true, fillcolor="#F8FAFC", group="exceptions"];
+
+  nearby [label="Is a similar report\nnearby?", shape=diamond, width=1.85, height=0.50, fixedsize=true, fillcolor="#F8FAFC"];
+  review_nearby [label="Review nearby report", group="exceptions"];
+  merge_existing [label="Merge with existing\nreport?", shape=diamond, width=2.00, height=0.54, fixedsize=true, fillcolor="#F8FAFC", group="exceptions"];
+  create_separate [label="Create separate report"];
+  link_stacked [label="Link as stacked evidence", group="exceptions"];
+
+  summary [label="Review report summary"];
+  submit [label="Submit report"];
+  store [
+    shape=plain,
+    group="main",
+    label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" COLOR="#1D4ED8" BGCOLOR="#EFF6FF">
+      <TR>
+        <TD BORDER="1" SIDES="R" WIDTH="9"></TD>
+        <TD WIDTH="180" HEIGHT="25"><FONT FACE="Arial" POINT-SIZE="11" COLOR="#0F172A">Process and store report</FONT></TD>
+        <TD BORDER="1" SIDES="L" WIDTH="9"></TD>
+      </TR>
+    </TABLE>>
+  ];
+  reference [label="Display report reference ID", shape=parallelogram, width=2.90, height=0.34, fillcolor="white"];
+  finish [label="End", shape=oval, width=1.10, height=0.30, fillcolor="#0F172A", fontcolor="white", color="#0F172A"];
+
+  start -> photo -> location -> location_valid;
+  location_valid -> consent [xlabel="Yes"];
+  location_valid -> correct_location [xlabel="No", constraint=false];
+  correct_location -> location [constraint=false];
+
+  consent -> consent_valid;
+  consent_valid -> precheck [xlabel="Yes"];
+  consent_valid -> consent_required [xlabel="No", constraint=false];
+  consent_required -> consent [constraint=false];
+
+  precheck -> precheck_valid;
+  precheck_valid -> advisory [xlabel="Yes"];
+  precheck_valid -> precheck_error [xlabel="No", constraint=false];
+  precheck_error -> precheck [constraint=false];
+
+  advisory -> habitat;
+  habitat -> nearby [xlabel="Yes"];
+  habitat -> continue_without [xlabel="No", constraint=false];
+  continue_without -> summary [xlabel="Yes", constraint=false];
+  continue_without -> finish [xlabel="No", constraint=false];
+
+  nearby -> create_separate [xlabel="No"];
+  nearby -> review_nearby [xlabel="Yes", constraint=false];
+  review_nearby -> merge_existing [constraint=false];
+  merge_existing -> link_stacked [xlabel="Yes"];
+  merge_existing -> create_separate [xlabel="No", constraint=false];
+  link_stacked -> summary [constraint=false];
+
+  create_separate -> summary -> submit -> store -> reference -> finish;
+
+  { rank=same; location_valid; correct_location; }
+  { rank=same; consent_valid; consent_required; }
+  { rank=same; precheck_valid; precheck_error; }
+  { rank=same; habitat; continue_without; }
+  { rank=same; nearby; review_nearby; }
+  { rank=same; create_separate; link_stacked; }
+
+  habitat -> continue_without [style=invis, weight=12];
+}
+@enddot

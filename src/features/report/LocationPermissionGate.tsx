@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui'
 import { queryPermissionState, watchPermissionState, type PermissionQueryState } from '@/lib/permissions'
 import { requestCurrentPosition } from '@/lib/geolocation'
@@ -36,18 +36,18 @@ export function LocationPermissionGate({ onLocationObtained, children }: Locatio
   const [locationError, setLocationError] = useState('')
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false)
 
-  async function fetchLocation() {
+  const fetchLocation = useCallback(async () => {
     setIsLocating(true)
+    setHasFetchedOnce(true)
     setLocationError('')
     try {
       const position = await requestCurrentPosition()
       onLocationObtained(position)
-      setHasFetchedOnce(true)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Location access failed.'
       // GeolocationPositionError carries a `code` property; PERMISSION_DENIED === 1
       const isPermissionDenied =
-        (err instanceof GeolocationPositionError && err.code === 1) ||
+        (typeof err === 'object' && err !== null && 'code' in err && err.code === 1) ||
         (err instanceof Error && err.message.toLowerCase().includes('blocked'))
       if (isPermissionDenied) {
         setPhase('blocked')
@@ -57,7 +57,7 @@ export function LocationPermissionGate({ onLocationObtained, children }: Locatio
     } finally {
       setIsLocating(false)
     }
-  }
+  }, [onLocationObtained])
 
   async function checkAndTransition() {
     const state = await queryPermissionState('geolocation')
@@ -94,8 +94,7 @@ export function LocationPermissionGate({ onLocationObtained, children }: Locatio
     if (phase === 'ready' && !hasFetchedOnce && !isLocating) {
       void fetchLocation()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, hasFetchedOnce])
+  }, [phase, hasFetchedOnce, isLocating, fetchLocation])
 
   async function handleRetry() {
     setLocationError('')
@@ -150,7 +149,7 @@ export function LocationPermissionGate({ onLocationObtained, children }: Locatio
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Your exact coordinates are never shared publicly
+          Your selected exact pin is published only after you consent
         </div>
         {locationError && (
           <p className="permission-priming__error">{locationError}</p>

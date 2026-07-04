@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="827" height="1169" viewBox="0 0 827 1169" role="img" aria-labelledby="title desc">
+  <title id="title">Report Submission Flowchart</title>
+  <desc id="desc">Resident-facing report submission flow with location, consent, AI advisory, nearby-report, and final submission decisions.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .edge{fill:none;stroke:#475569;stroke-width:1.5;stroke-linejoin:miter;stroke-linecap:square;marker-end:url(#arrow)}
+      .node{fill:#fff;stroke:#334155;stroke-width:1.5}
+      .decision{fill:#f8fafc;stroke:#334155;stroke-width:1.5}
+      .system{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5}
+      .terminal{fill:#0f172a;stroke:#0f172a;stroke-width:1.5}
+      .label{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#0f172a;text-anchor:middle;dominant-baseline:middle}
+      .decision-label{font-family:Arial,Helvetica,sans-serif;font-size:13px;fill:#0f172a;text-anchor:middle}
+      .terminal-label{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#fff;text-anchor:middle;dominant-baseline:middle}
+      .branch{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#334155;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+    </style>
+  </defs>
+
+  <rect width="827" height="1169" fill="#ffffff"/>
+
+  <g id="connectors">
+    <path class="edge" d="M330 46V65"/>
+    <path class="edge" d="M330 101V120"/>
+    <path class="edge" d="M330 156V172"/>
+    <path class="edge" d="M330 232V252"/>
+    <path class="edge" d="M405 202H510"/>
+    <path class="edge" d="M625 184V168H480V138H460"/>
+
+    <path class="edge" d="M330 288V304"/>
+    <path class="edge" d="M330 364V384"/>
+    <path class="edge" d="M405 334H510"/>
+    <path class="edge" d="M625 316V300H480V270H460"/>
+
+    <path class="edge" d="M330 422V438"/>
+    <path class="edge" d="M330 502V520"/>
+    <path class="edge" d="M415 470H500"/>
+    <path class="edge" d="M625 452V432H480V403H460"/>
+
+    <path class="edge" d="M330 556V572"/>
+    <path class="edge" d="M330 632V652"/>
+    <path class="edge" d="M405 602H500"/>
+    <path class="edge" d="M605 634V650H765V875H460"/>
+    <path class="edge" d="M710 602H795V1118H370"/>
+
+    <path class="edge" d="M330 712V800"/>
+    <path class="edge" d="M405 682H510"/>
+    <path class="edge" d="M625 700V716"/>
+    <path class="edge" d="M625 780V800"/>
+    <path class="edge" d="M545 748H480V818H460"/>
+    <path class="edge" d="M330 836V866"/>
+    <path class="edge" d="M625 836V850H440V866"/>
+
+    <path class="edge" d="M330 902V922"/>
+    <path class="edge" d="M330 958V978"/>
+    <path class="edge" d="M330 1016V1034"/>
+    <path class="edge" d="M330 1078V1100"/>
+  </g>
+
+  <g id="nodes">
+    <ellipse class="terminal" cx="330" cy="28" rx="40" ry="18"/>
+    <text class="terminal-label" x="330" y="28">Start</text>
+
+    <rect class="node" x="200" y="65" width="260" height="36"/>
+    <text class="label" x="330" y="83">Capture or upload evidence photo</text>
+    <rect class="node" x="200" y="120" width="260" height="36"/>
+    <text class="label" x="330" y="138">Confirm report location</text>
+    <polygon class="decision" points="330,172 405,202 330,232 255,202"/>
+    <text class="decision-label" x="330" y="198"><tspan x="330">Is the location</tspan><tspan x="330" dy="15">valid?</tspan></text>
+    <rect class="node" x="510" y="184" width="230" height="36"/>
+    <text class="label" x="625" y="202">Correct report location</text>
+
+    <rect class="node" x="200" y="252" width="260" height="36"/>
+    <text class="label" x="330" y="270">Review consent for public display</text>
+    <polygon class="decision" points="330,304 405,334 330,364 255,334"/>
+    <text class="decision-label" x="330" y="330"><tspan x="330">Is consent</tspan><tspan x="330" dy="15">accepted?</tspan></text>
+    <rect class="node" x="510" y="316" width="230" height="36"/>
+    <text class="label" x="625" y="334">Consent is required</text>
+
+    <rect class="system" x="200" y="384" width="260" height="38"/>
+    <line class="system" x1="212" y1="384" x2="212" y2="422"/>
+    <line class="system" x1="448" y1="384" x2="448" y2="422"/>
+    <text class="label" x="330" y="403">Perform AI pre-check</text>
+    <polygon class="decision" points="330,438 415,470 330,502 245,470"/>
+    <text class="decision-label" x="330" y="466"><tspan x="330">Is the pre-check</tspan><tspan x="330" dy="15">successful?</tspan></text>
+    <rect class="node" x="500" y="452" width="250" height="36"/>
+    <text class="label" x="625" y="470">Show pre-check error and retry</text>
+
+    <rect class="node" x="200" y="520" width="260" height="36"/>
+    <text class="label" x="330" y="538">Review AI advisory</text>
+    <polygon class="decision" points="330,572 405,602 330,632 255,602"/>
+    <text class="decision-label" x="330" y="598"><tspan x="330">Is a habitat</tspan><tspan x="330" dy="15">detected?</tspan></text>
+    <polygon class="decision" points="605,570 710,602 605,634 500,602"/>
+    <text class="decision-label" x="605" y="598"><tspan x="605">Continue without a</tspan><tspan x="605" dy="15">detected habitat?</tspan></text>
+
+    <polygon class="decision" points="330,652 405,682 330,712 255,682"/>
+    <text class="decision-label" x="330" y="678"><tspan x="330">Is a similar report</tspan><tspan x="330" dy="15">nearby?</tspan></text>
+    <rect class="node" x="510" y="664" width="230" height="36"/>
+    <text class="label" x="625" y="682">Review nearby report</text>
+    <polygon class="decision" points="625,716 705,748 625,780 545,748"/>
+    <text class="decision-label" x="625" y="744"><tspan x="625">Merge with existing</tspan><tspan x="625" dy="15">report?</tspan></text>
+    <rect class="node" x="200" y="800" width="260" height="36"/>
+    <text class="label" x="330" y="818">Create separate report</text>
+    <rect class="node" x="510" y="800" width="230" height="36"/>
+    <text class="label" x="625" y="818">Link as stacked evidence</text>
+
+    <rect class="node" x="200" y="866" width="260" height="36"/>
+    <text class="label" x="330" y="884">Review report summary</text>
+    <rect class="node" x="200" y="922" width="260" height="36"/>
+    <text class="label" x="330" y="940">Submit report</text>
+    <rect class="system" x="200" y="978" width="260" height="38"/>
+    <line class="system" x1="212" y1="978" x2="212" y2="1016"/>
+    <line class="system" x1="448" y1="978" x2="448" y2="1016"/>
+    <text class="label" x="330" y="997">Process and store report</text>
+    <polygon class="node" points="200,1034 480,1034 460,1078 180,1078"/>
+    <text class="label" x="330" y="1056">Display report reference ID</text>
+    <ellipse class="terminal" cx="330" cy="1118" rx="40" ry="18"/>
+    <text class="terminal-label" x="330" y="1118">End</text>
+  </g>
+
+  <g id="branch-labels">
+    <text class="branch" x="315" y="244">Yes</text>
+    <text class="branch" x="454" y="196">No</text>
+    <text class="branch" x="315" y="376">Yes</text>
+    <text class="branch" x="454" y="328">No</text>
+    <text class="branch" x="315" y="514">Yes</text>
+    <text class="branch" x="455" y="464">No</text>
+    <text class="branch" x="315" y="646">Yes</text>
+    <text class="branch" x="454" y="596">No</text>
+    <text class="branch" x="625" y="647">Yes</text>
+    <text class="branch" x="752" y="596">No</text>
+    <text class="branch" x="315" y="728">No</text>
+    <text class="branch" x="455" y="676">Yes</text>
+    <text class="branch" x="640" y="793">Yes</text>
+    <text class="branch" x="520" y="741">No</text>
+  </g>
+</svg>

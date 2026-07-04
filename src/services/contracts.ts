@@ -1,7 +1,5 @@
 import type {
   HabitatClass,
-  HotspotMirrorStatus,
-  HotspotSyncResult,
   PublicHotspot,
   PublicReportDetail,
   PublicMapReport,
@@ -33,6 +31,7 @@ export interface CreateReportOptions {
 
 export interface ReportsService {
   getMyReports(): Promise<ReportStatus[]>
+  claimReport(reference: string, claimToken: string): Promise<ReportStatus>
   createReport(
     draft: ReportDraft,
     options?: CreateReportOptions,

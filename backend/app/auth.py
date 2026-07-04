@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -30,17 +31,27 @@ else:
     COGNITO_ISSUER = None
 
 
+@lru_cache(maxsize=1)
+def get_jwks_client() -> PyJWKClient:
+    if not COGNITO_JWKS_URL:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Cognito authentication is not configured on the server",
+        )
+    return PyJWKClient(COGNITO_JWKS_URL)
+
+
 def verify_cognito_token(token: str) -> dict:
     """Verify and decode Cognito JWT token."""
-    if not COGNITO_JWKS_URL or not COGNITO_ISSUER:
+    if not COGNITO_JWKS_URL or not COGNITO_ISSUER or not COGNITO_APP_CLIENT_ID:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Cognito authentication not configured on server",
         )
     
     try:
         # Get signing key from Cognito JWKS
-        jwks_client = PyJWKClient(COGNITO_JWKS_URL)
+        jwks_client = get_jwks_client()
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         
         # Verify and decode token
@@ -49,6 +60,7 @@ def verify_cognito_token(token: str) -> dict:
             signing_key.key,
             algorithms=["RS256"],
             issuer=COGNITO_ISSUER,
+            audience=COGNITO_APP_CLIENT_ID,
             options={"verify_exp": True},
         )
         
@@ -59,15 +71,10 @@ def verify_cognito_token(token: str) -> dict:
                 detail="Invalid token type. Expected ID token.",
             )
         
-        # Verify audience (client ID)
-        if COGNITO_APP_CLIENT_ID and payload.get("aud") != COGNITO_APP_CLIENT_ID:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token audience",
-            )
-        
         return payload
         
+    except HTTPException:
+        raise
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -191,8 +198,4 @@ async def get_current_user_optional(
     if not authorization:
         return None
     
-    try:
-        return await get_current_user(authorization, db)
-    except HTTPException:
-        # Invalid/expired token = treat as anonymous
-        return None
+    return await get_current_user(authorization, db)

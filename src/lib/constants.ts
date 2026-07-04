@@ -13,4 +13,3 @@ export const STORAGE_KEY = 'dengue-prototype-submissions-v1'
 export const LAST_REFERENCE_KEY = 'dengue-prototype-last-reference'
 export const PUBLIC_REPORT_CONSENT_TEXT =
   'I confirm this image, exact pin, computer-vision advisory result, confidence, and detection evidence can be shown publicly on the prototype map as crowdsourced dengue habitat evidence.'
-export const OFFICER_DEMO_TOKEN = 'local-officer-demo-token'

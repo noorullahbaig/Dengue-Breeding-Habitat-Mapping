@@ -48,13 +48,13 @@ export function LowConfidenceWarningSheet({
 	const isNearLimit = charsLeft <= 30;
 
 	return (
-		<div
-			className={`lc-sheet-backdrop${isClosing ? " lc-sheet-backdrop--closing" : ""}`}
-			role="presentation"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) handleCancel();
-			}}
-		>
+		<div className={`lc-sheet-backdrop${isClosing ? " lc-sheet-backdrop--closing" : ""}`}>
+			<button
+				type="button"
+				className="lc-sheet-backdrop__dismiss"
+				aria-label="Close low-confidence review"
+				onClick={handleCancel}
+			/>
 			<div
 				className={`lc-sheet${isClosing ? " lc-sheet--closing" : ""}`}
 				role="dialog"
@@ -81,9 +81,8 @@ export function LowConfidenceWarningSheet({
 					Our AI couldn't confirm a habitat
 				</h2>
 				<p className="lc-sheet__body">
-					Your report will still be reviewed by our team. You can add a brief
-					note to help them understand what you observed — this is entirely
-					optional.
+					Your report can still be submitted to the public evidence map. Add a
+					brief optional note to explain what you observed.
 				</p>
 
 				{/* Optional note */}
@@ -97,7 +96,7 @@ export function LowConfidenceWarningSheet({
 						rows={3}
 						value={note}
 						onChange={(e) => setNote(e.target.value)}
-						aria-label="Optional note for reviewing officers"
+						aria-label="Optional note about this report"
 					/>
 					<p
 						className={`lc-sheet__char-count${isNearLimit ? " lc-sheet__char-count--warn" : ""}`}

@@ -66,14 +66,6 @@ class HotspotSyncResult:
     synced_at: datetime
 
 
-@dataclass(frozen=True)
-class HotspotMirrorStatus:
-    hotspot_count: int
-    latest_snapshot_date: datetime | None
-    last_synced_at: datetime | None
-    source_label: str
-
-
 def _get_string(attributes: dict[str, Any], field: str) -> str:
     value = attributes.get(field)
     return value.strip() if isinstance(value, str) else ""
@@ -364,28 +356,6 @@ def sync_current_hotspots(db: Session) -> HotspotSyncResult:
         snapshot_date=latest_snapshot,
         source_label=hotspots[0].source_label,
         synced_at=synced_at,
-    )
-
-
-def hotspot_mirror_status(db: Session) -> HotspotMirrorStatus:
-    row = db.execute(
-        text(
-            """
-            SELECT
-                count(*) AS hotspot_count,
-                max(snapshot_date) AS latest_snapshot_date,
-                max(synced_at) AS last_synced_at,
-                coalesce(max(source_label), 'iDengue hotspot context') AS source_label
-            FROM hotspots
-            """
-        )
-    ).mappings().one()
-
-    return HotspotMirrorStatus(
-        hotspot_count=int(row["hotspot_count"]),
-        latest_snapshot_date=row["latest_snapshot_date"],
-        last_synced_at=row["last_synced_at"],
-        source_label=row["source_label"],
     )
 
 

@@ -1,4 +1,6 @@
-# User Authentication Implementation - Complete
+# Historical user-authentication implementation notes
+
+> Superseded by `AUTHENTICATION_AND_REPORT_OWNERSHIP.md`. Completion claims below describe the original implementation attempt and are not the current source of truth.
 
 ## ✅ Implementation Status: COMPLETE
 

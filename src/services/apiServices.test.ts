@@ -131,3 +131,50 @@ describe('createApiAppServices precheck errors', () => {
     })
   })
 })
+
+describe('createApiAppServices account reports', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('claims a report with the current bearer token', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      jsonResponse({
+        id: 'report-1',
+        reference: 'KL-TEST-0001',
+        createdAt: '2026-07-04T10:00:00Z',
+        status: 'submitted',
+        prediction: {
+          label: 'tire',
+          confidence: 0.9,
+          confidenceBand: 'high',
+          advisoryText: 'Advisory only.',
+        },
+        neighborhood: 'Sentul',
+        statusMessage: 'Report received.',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const services = createApiAppServices(
+      'http://localhost:8000/api',
+      async () => 'id-token',
+    )
+
+    await services.reportsService.claimReport('KL-TEST-0001', 'private-claim-token')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8000/api/my-reports/claim',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer id-token',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({
+          reference: 'KL-TEST-0001',
+          claimToken: 'private-claim-token',
+        }),
+      }),
+    )
+  })
+})

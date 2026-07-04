@@ -10,7 +10,6 @@ const containmentRoutes = [
   '/learn',
   '/map',
   '/map/reports/KL-KC8P-6230',
-  '/officer',
 ]
 
 for (const width of mobileWidths) {

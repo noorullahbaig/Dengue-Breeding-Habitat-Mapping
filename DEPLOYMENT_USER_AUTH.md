@@ -1,4 +1,6 @@
-# Quick Deployment Guide - User Authentication
+# Historical user-authentication deployment guide
+
+> Superseded by `AUTHENTICATION_AND_REPORT_OWNERSHIP.md`. Do not deploy from this document without reconciling it with the authoritative guide.
 
 ## 🎯 What's Ready to Deploy
 

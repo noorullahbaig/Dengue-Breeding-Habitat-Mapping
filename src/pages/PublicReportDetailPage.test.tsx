@@ -1,7 +1,7 @@
 import { getPublicHotspotContext } from "@/pages/PublicReportDetailPage";
 
 describe("getPublicHotspotContext", () => {
-	it("presents core and warning with identical high-priority language", () => {
+	it("presents core and warning with the same concise prioritized label", () => {
 		const core = getPublicHotspotContext({
 			priorityLevel: "core",
 			priorityReason: "Within core radius.",
@@ -12,25 +12,25 @@ describe("getPublicHotspotContext", () => {
 		});
 
 		expect(core).toEqual(warning);
-		expect(core).toMatchObject({
-			state: "high",
-			message: "Within 400 m of an iDengue hotspot when reported.",
+		expect(core).toEqual({
+			state: "prioritized",
+			badge: "Prioritized report",
 		});
 	});
 
-	it("distinguishes routine from unavailable hotspot context", () => {
+	it("presents every non-prioritized value as a normal report", () => {
 		expect(
 			getPublicHotspotContext({
 				priorityLevel: "routine",
 				priorityReason: "Outside warning radius.",
 			}),
-		).toMatchObject({
-			state: "routine",
-			message: "No iDengue hotspot recorded within 400 m when reported.",
+		).toEqual({
+			state: "normal",
+			badge: "Normal report",
 		});
-		expect(getPublicHotspotContext(undefined)).toMatchObject({
-			state: "unknown",
-			message: "Hotspot priority could not be assessed.",
+		expect(getPublicHotspotContext(undefined)).toEqual({
+			state: "normal",
+			badge: "Normal report",
 		});
 		expect(
 			getPublicHotspotContext({
@@ -38,5 +38,6 @@ describe("getPublicHotspotContext", () => {
 				priorityReason: "Mirror unavailable.",
 			}),
 		).toEqual(getPublicHotspotContext(undefined));
+		expect(JSON.stringify(getPublicHotspotContext(undefined))).not.toContain("400");
 	});
 });

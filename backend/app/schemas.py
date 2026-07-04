@@ -68,6 +68,12 @@ class SubmittedReportOut(BaseModel):
     stackedOnReference: str | None = None
     publicConsent: PublicConsentOut
     hotspotPriority: HotspotPriorityOut
+    claimToken: str | None = None
+
+
+class ClaimReportIn(BaseModel):
+    reference: str = Field(min_length=1, max_length=32)
+    claimToken: str = Field(min_length=20, max_length=256)
 
 
 class StatusReportOut(BaseModel):
@@ -170,20 +176,6 @@ class StackParentSummaryOut(BaseModel):
     prediction: PredictionSummaryOut
     imageUrl: str
     thumbnailUrl: str
-
-
-class HotspotMirrorStatusOut(BaseModel):
-    hotspotCount: int
-    latestSnapshotDate: datetime | None = None
-    lastSyncedAt: datetime | None = None
-    sourceLabel: str
-
-
-class HotspotSyncOut(BaseModel):
-    syncedCount: int
-    snapshotDate: datetime | None = None
-    sourceLabel: str
-    syncedAt: datetime
 
 
 

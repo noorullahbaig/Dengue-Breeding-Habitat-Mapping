@@ -10,12 +10,9 @@ import { fetchCurrentIdengueHotspots } from '@/services/idengueHotspots'
 import { pointInBounds } from '@/services/mapBounds'
 import type { AppServices, PublicReportFilters } from '@/services/contracts'
 import type {
-  HotspotMirrorStatus,
   LocationPoint,
   NearbyReportCheck,
   NearbyReportCandidate,
-  OfficerReport,
-  OfficerReportUpdate,
   PublicReportDetail,
   PublicReportObservation,
   PublicMapReport,
@@ -118,12 +115,7 @@ function pickNeighborhood(point: LocationPoint) {
 }
 
 function getStatusMessage(index: number) {
-  const messages = [
-    'Received and awaiting officer review.',
-    'Queued for officer review with map context.',
-    'Flagged for faster follow-up because the area aligns with active hotspot context.',
-    'An officer logged follow-up activity for this report.',
-  ]
+  const messages = ['Report received and available for tracking.']
 
   return messages[index % messages.length]
 }
@@ -299,7 +291,7 @@ function createSubmittedReport(
     createdAt: new Date().toISOString(),
     reportLocation,
     publicLocation: publicLocation(reportLocation),
-    status: existingCount % 2 === 0 ? 'submitted' : 'under_review',
+    status: 'submitted',
     prediction,
     neighborhood: pickNeighborhood(reportLocation),
     statusMessage: stackParentReference
@@ -380,64 +372,6 @@ function validateTrustedLocationDraft(draft: ReportDraft) {
 export function createMockAppServices(
   options: MockServicesOptions = {},
 ): AppServices {
-  let hotspotMirrorStatus: HotspotMirrorStatus = {
-    hotspotCount: 0,
-    latestSnapshotDate: null,
-    lastSyncedAt: null,
-    sourceLabel: 'iDengue hotspot context',
-  }
-
-  function toOfficerReport(report: SubmittedReport): OfficerReport {
-    return {
-      id: report.id,
-      reference: report.reference,
-      createdAt: report.createdAt,
-      capturedAt: report.createdAt,
-      reportLocation: report.reportLocation,
-      publicLocation: report.publicLocation,
-      status: report.status,
-      prediction: report.prediction,
-      neighborhood: report.neighborhood,
-      statusMessage: report.statusMessage,
-      notes: report.notes,
-      imageUrl: report.imageUrl ?? placeholderEvidenceImage,
-      thumbnailUrl: report.thumbnailUrl ?? placeholderEvidenceImage,
-      stackedOnReference: report.stackedOnReference,
-      publicConsent: report.publicConsent ?? {
-        accepted: true,
-        acceptedAt: report.createdAt,
-        version: 'public-image-pin-ai-v2',
-      },
-      hotspotPriority: report.hotspotPriority ?? defaultHotspotPriority(report.publicLocation),
-      officerNotes: undefined,
-      followUpAction: undefined,
-      reviewedAt: undefined,
-      reviewedBy: undefined,
-    }
-  }
-
-  function applyOfficerUpdate(
-    report: SubmittedReport,
-    update: OfficerReportUpdate,
-  ): SubmittedReport {
-    const statusMessage =
-      update.status === 'submitted'
-        ? 'Received and awaiting officer review.'
-        : update.status === 'under_review'
-          ? 'Queued for officer review with map context.'
-          : update.status === 'prioritized'
-            ? 'Flagged for faster follow-up because the area aligns with active hotspot context.'
-            : update.status === 'action_recorded'
-              ? 'An officer logged follow-up activity for this report.'
-              : 'The report lifecycle has been completed for this prototype.'
-
-    return {
-      ...report,
-      status: update.status,
-      statusMessage,
-    }
-  }
-
   return {
     reportsService: {
       async getMyReports() {
@@ -446,12 +380,33 @@ export function createMockAppServices(
         // In real implementation, this would filter by authenticated user
         const reports = readStoredReports()
         return reports.map((report) => ({
+          id: report.id,
           reference: report.reference,
           status: report.status,
           createdAt: report.createdAt,
+          prediction: report.prediction,
           neighborhood: report.neighborhood,
           statusMessage: report.statusMessage,
+          stackedOnReference: report.stackedOnReference,
         }))
+      },
+      async claimReport(reference) {
+        const report = readStoredReports().find(
+          (item) => item.reference.toUpperCase() === reference.trim().toUpperCase(),
+        )
+        if (!report) {
+          throw new Error('Report not found.')
+        }
+        return {
+          id: report.id,
+          reference: report.reference,
+          createdAt: report.createdAt,
+          status: report.status,
+          prediction: report.prediction,
+          neighborhood: report.neighborhood,
+          statusMessage: report.statusMessage,
+          stackedOnReference: report.stackedOnReference,
+        }
       },
       async createReport(draft, createOptions) {
         await delay()
@@ -546,7 +501,5 @@ export function createMockAppServices(
         return fetchCurrentIdengueHotspots(options.hotspotFetchImpl ?? fetch, bounds)
       },
     },
-  }
-}    },
   }
 }

@@ -40,6 +40,9 @@ export interface SignUpInput {
 export interface AuthContextValue {
   user: AuthUser | null
   isAuthenticated: boolean
+  isAuthLoading: boolean
+  isAccountAvailable: boolean
+  accountUnavailableReason: string | null
   providerTarget: 'mock' | 'cognito'
   sessionMode: 'local' | 'cognito'
   signIn: (input: SignInInput) => Promise<AuthUser>
@@ -261,12 +264,30 @@ const authAdapter = authRuntimeConfig.sessionMode === 'cognito'
   : createLocalSessionAdapter()
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [trackedReferences, setTrackedReferences] = useState<string[]>([])
+  const [user, setUser] = useState<AuthUser | null>(() =>
+    authRuntimeConfig.sessionMode === 'local' ? readStoredSession() : null,
+  )
+  const [isAuthLoading, setIsAuthLoading] = useState(
+    authRuntimeConfig.sessionMode === 'cognito',
+  )
+  const [trackedReferences, setTrackedReferences] = useState<string[]>(() => {
+    if (!user) return []
+    return readTrackedReportsMap()[user.id] ?? []
+  })
 
   const navigate = useNavigate()
 
+  function requireAccountConfiguration() {
+    if (!authRuntimeConfig.isAccountAvailable) {
+      throw new Error(authRuntimeConfig.configurationError ?? 'Account sign-in is unavailable.')
+    }
+  }
+
   useEffect(() => {
+    if (authRuntimeConfig.sessionMode === 'local') {
+      return undefined
+    }
+
     let isMounted = true
 
     async function initSession() {
@@ -285,6 +306,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           navigate(pendingRedirect)
         }
       }
+      setIsAuthLoading(false)
     }
     
     initSession()
@@ -309,6 +331,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [navigate])
 
   async function signIn(input: SignInInput) {
+    requireAccountConfiguration()
     const nextUser = await authAdapter.signIn(input)
     if (nextUser.id) {
       setUser(nextUser)
@@ -319,14 +342,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
   
   async function signUp(input: SignUpInput) {
+    requireAccountConfiguration()
     await authAdapter.signUp(input)
   }
 
   async function confirmSignUp(email: string, code: string) {
+    requireAccountConfiguration()
     await authAdapter.confirmSignUp(email, code)
   }
 
   async function signInWithGoogle(redirectPath?: string) {
+    requireAccountConfiguration()
     if (redirectPath) {
       window.sessionStorage.setItem(OAUTH_REDIRECT_STORAGE_KEY, redirectPath)
     }
@@ -341,6 +367,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   async function signInWithHostedUI(redirectPath?: string) {
+    requireAccountConfiguration()
     if (redirectPath) {
       window.sessionStorage.setItem(OAUTH_REDIRECT_STORAGE_KEY, redirectPath)
     }
@@ -420,6 +447,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       value={{
         user,
         isAuthenticated: Boolean(user),
+        isAuthLoading,
+        isAccountAvailable: authRuntimeConfig.isAccountAvailable,
+        accountUnavailableReason: authRuntimeConfig.configurationError,
         providerTarget: authRuntimeConfig.providerTarget,
         sessionMode: authRuntimeConfig.sessionMode,
         signIn,

@@ -6,9 +6,7 @@ from app.models import Report
 from app.inference import PredictionSummary
 from app.schemas import (
     DetectionOut,
-    HotspotMirrorStatusOut,
     HotspotPriorityOut,
-    HotspotSyncOut,
     LocationPoint,
     PredictionSummaryOut,
     NearbyReportOut,
@@ -21,7 +19,7 @@ from app.schemas import (
     StatusReportOut,
     SubmittedReportOut,
 )
-from app.hotspots import HotspotMirrorStatus, HotspotSyncResult, PublicHotspot
+from app.hotspots import PublicHotspot
 
 
 PRIVACY_NOTE = (
@@ -96,7 +94,7 @@ def prediction_summary_out(prediction: PredictionSummary) -> PredictionSummaryOu
     )
 
 
-def submitted_report_out(report: Report) -> SubmittedReportOut:
+def submitted_report_out(report: Report, claim_token: str | None = None) -> SubmittedReportOut:
     stacked_on_reference = report.parent_report.reference if report.parent_report else None
 
     return SubmittedReportOut(
@@ -122,6 +120,7 @@ def submitted_report_out(report: Report) -> SubmittedReportOut:
         stackedOnReference=stacked_on_reference,
         publicConsent=_public_consent(report),
         hotspotPriority=_hotspot_priority(report),
+        claimToken=claim_token,
     )
 
 
@@ -264,24 +263,6 @@ def public_hotspot_out(hotspot: PublicHotspot) -> PublicHotspotOut:
         snapshotDate=hotspot.snapshot_date,
         sourceLabel=hotspot.source_label,
         reportCountWithinWarning=hotspot.report_count_within_warning,
-    )
-
-
-def hotspot_mirror_status_out(status: HotspotMirrorStatus) -> HotspotMirrorStatusOut:
-    return HotspotMirrorStatusOut(
-        hotspotCount=status.hotspot_count,
-        latestSnapshotDate=status.latest_snapshot_date,
-        lastSyncedAt=status.last_synced_at,
-        sourceLabel=status.source_label,
-    )
-
-
-def hotspot_sync_out(result: HotspotSyncResult) -> HotspotSyncOut:
-    return HotspotSyncOut(
-        syncedCount=result.synced_count,
-        snapshotDate=result.snapshot_date,
-        sourceLabel=result.source_label,
-        syncedAt=result.synced_at,
     )
 
 

@@ -1,0 +1,111 @@
+@startuml
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam actorStyle stickman
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam dpi 160
+skinparam usecase {
+  BackgroundColor white
+  BorderColor #1f2937
+  ArrowColor #334155
+}
+skinparam rectangle {
+  BorderColor #0f172a
+}
+
+actor "Resident /\nPublic User" as Resident
+actor "Authenticated\nResident" as AuthResident
+actor "AWS Cognito\n(external system)" as Cognito
+actor "Browser Geolocation API\n(external service)" as Geo
+actor "iDengue Hotspot Data\n(external data source)" as IDengue
+
+AuthResident --|> Resident
+
+rectangle "DengueWatch KL Prototype" {
+  usecase "View breeding-habitat\nguidance" as UC_Learn
+  usecase "View report and\nhotspot map" as UC_Map
+  usecase "View public\nreport summary" as UC_Summary
+  usecase "Access report by\nreference ID" as UC_Status
+
+  usecase "Capture or upload\nphoto evidence" as UC_Photo
+  usecase "Submit suspected breeding-\nhabitat report" as UC_Submit
+  usecase "Provide public\ndisplay consent" as UC_Consent
+  usecase "Run advisory\nAI inference" as UC_AI
+
+  usecase "Confirm\nreport location" as UC_Location
+  usecase "Generate unique\nreference ID" as UC_Reference
+  usecase "Apply hotspot\ncontext" as UC_Hotspot
+
+  usecase "Authenticate user" as UC_Auth
+  usecase "Save submission to\naccount history" as UC_Save
+  usecase "View report\nhistory" as UC_History
+  usecase "Remove report from\naccount history" as UC_Remove
+}
+
+Resident --> UC_Learn
+Resident --> UC_Map
+Resident --> UC_Submit
+Resident --> UC_Status
+
+AuthResident --> UC_Auth
+AuthResident --> UC_Save
+AuthResident --> UC_History
+AuthResident --> UC_Remove
+
+UC_Summary .> UC_Map : <<extend>>
+UC_Submit .> UC_Photo : <<include>>
+UC_Submit .> UC_Location : <<include>>
+UC_Submit .> UC_Consent : <<include>>
+UC_Submit .> UC_AI : <<include>>
+UC_Submit .> UC_Hotspot : <<include>>
+UC_Submit .> UC_Reference : <<include>>
+
+Cognito --> UC_Auth
+Geo --> UC_Location
+IDengue --> UC_Hotspot
+
+Resident -[hidden]r- UC_Learn
+AuthResident -[hidden]r- UC_Auth
+Cognito -[hidden]l- UC_Auth
+Geo -[hidden]l- UC_Location
+IDengue -[hidden]l- UC_Hotspot
+
+UC_Learn -[hidden]r- UC_Map
+UC_Map -[hidden]r- UC_Summary
+UC_Summary -[hidden]r- UC_Status
+
+UC_Learn -[hidden]d- UC_Photo
+UC_Map -[hidden]d- UC_Submit
+UC_Summary -[hidden]d- UC_Consent
+UC_Status -[hidden]d- UC_AI
+
+UC_Photo -[hidden]r- UC_Submit
+UC_Submit -[hidden]r- UC_Consent
+UC_Consent -[hidden]r- UC_AI
+
+UC_Photo -[hidden]d- UC_Location
+UC_Submit -[hidden]d- UC_Reference
+UC_Consent -[hidden]d- UC_Hotspot
+
+UC_Location -[hidden]r- UC_Reference
+UC_Reference -[hidden]r- UC_Hotspot
+
+UC_Location -[hidden]d- UC_Auth
+UC_Reference -[hidden]d- UC_Save
+UC_Hotspot -[hidden]d- UC_History
+UC_AI -[hidden]d- UC_Remove
+
+UC_Auth -[hidden]r- UC_Save
+UC_Save -[hidden]r- UC_History
+UC_History -[hidden]r- UC_Remove
+
+note top of UC_Status
+Implemented resident-facing scope only.
+Officer verification, field investigation,
+and enforcement workflow are excluded
+and discussed as future work.
+end note
+
+@enduml

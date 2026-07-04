@@ -60,7 +60,9 @@ export function CameraPermissionGate({ children }: CameraPermissionGateProps) {
       cleanup()
       // Stop any open stream on unmount
       setStream((prev) => {
-        prev?.getTracks().forEach((t) => t.stop())
+        prev?.getTracks().forEach((track) => {
+          track.stop()
+        })
         return null
       })
     }
@@ -78,7 +80,9 @@ export function CameraPermissionGate({ children }: CameraPermissionGateProps) {
       const nextStream = await requestCameraStream()
       // Stop any previous stream before replacing
       setStream((prev) => {
-        prev?.getTracks().forEach((t) => t.stop())
+        prev?.getTracks().forEach((track) => {
+          track.stop()
+        })
         return nextStream
       })
       setPhase('ready')
@@ -132,7 +136,7 @@ export function CameraPermissionGate({ children }: CameraPermissionGateProps) {
         </div>
         <h2 className="permission-priming__heading">Live photo required</h2>
         <p className="permission-priming__body">
-          A camera photo is needed to document the breeding habitat and help officers verify
+          A camera photo is needed to document the breeding habitat and support the public report
           the report on-site. The photo is analysed by our AI model and is not used for
           any other purpose.
         </p>

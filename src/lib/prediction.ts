@@ -49,6 +49,6 @@ export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
       },
     ],
     advisoryText:
-      'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
+      'Advisory only. The computer-vision result does not confirm official action.',
   }
 }

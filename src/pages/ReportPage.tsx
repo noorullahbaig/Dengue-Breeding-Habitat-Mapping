@@ -21,6 +21,7 @@ import {
 	reportSteps,
 } from "@/pages/reportWizard";
 import { PUBLIC_REPORT_CONSENT_TEXT, KL_CENTER } from "@/lib/constants";
+import { storePendingReportClaim } from "@/lib/pendingReportClaim";
 import { formatCoordinate, formatTimestamp } from "@/lib/formatters";
 import {
 	MAX_DETECTED_ACCURACY_METERS,
@@ -602,6 +603,9 @@ export function ReportPage({
 				},
 			);
 			setLastSubmittedReference(submitted.reference);
+			if (submitted.claimToken) {
+				storePendingReportClaim(submitted.reference, submitted.claimToken);
+			}
 			navigate(`/report/success?ref=${submitted.reference}`);
 		} catch (error) {
 			if (error instanceof AppApiError && error.kind === "stale_file") {
@@ -927,7 +931,7 @@ export function ReportPage({
 													<p>
 														Tires, drain inlets, buckets, and containers are
 														most useful when the image includes enough
-														surrounding context for officers to recognize and
+													surrounding context for people to recognize and
 														locate the site.
 													</p>
 												</Surface>
@@ -1040,7 +1044,7 @@ export function ReportPage({
 													<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
 													<p>
 														This prototype publishes the exact pin, photo, and
-														AI evidence together so residents and officers can
+													AI evidence together so residents can
 														review the same report context.
 													</p>
 													<p>
@@ -1086,7 +1090,7 @@ export function ReportPage({
 													<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
 													<p>
 														This prototype publishes the exact pin, photo, and
-														AI evidence together so residents and officers can
+													AI evidence together so residents can
 														review the same report context.
 													</p>
 													<p>

@@ -155,23 +155,26 @@ describe("PublicReportsMap marker grouping", () => {
 		expect(groups[0]?.reports.map((item) => item.id)).toEqual(["2", "1"]);
 	});
 
-	it("collapses core and warning into the same high-priority public state", () => {
+	it("collapses core and warning into the same prioritized public state", () => {
 		expect(getPublicPriorityState({ priorityLevel: "core", priorityReason: "" })).toBe(
-			"high",
+			"prioritized",
 		);
 		expect(
 			getPublicPriorityState({ priorityLevel: "warning", priorityReason: "" }),
-		).toBe("high");
+		).toBe("prioritized");
 		expect(
 			getPublicPriorityState({ priorityLevel: "routine", priorityReason: "" }),
-		).toBe("routine");
+		).toBe("normal");
 		expect(
 			getPublicPriorityState({ priorityLevel: "unavailable", priorityReason: "" }),
-		).toBe("unknown");
-		expect(getPublicPriorityState(undefined)).toBe("unknown");
+		).toBe("normal");
+		expect(
+			getPublicPriorityState({ priorityLevel: "unassessed", priorityReason: "" }),
+		).toBe("normal");
+		expect(getPublicPriorityState(undefined)).toBe("normal");
 	});
 
-	it("uses high then unknown then routine precedence for grouped markers", () => {
+	it("marks a group prioritized when any included report is prioritized", () => {
 		const baseOptions = {
 			zoom: 13,
 			maxZoom: 19,
@@ -189,22 +192,22 @@ describe("PublicReportsMap marker grouping", () => {
 				[atSameLocation("1", "routine"), atSameLocation("2", "warning")],
 				baseOptions,
 			)[0]?.priorityState,
-		).toBe("high");
+		).toBe("prioritized");
 		expect(
 			buildPublicReportMarkerGroups(
 				[atSameLocation("1", "routine"), atSameLocation("2")],
 				baseOptions,
 			)[0]?.priorityState,
-		).toBe("unknown");
+		).toBe("normal");
 		expect(
 			buildPublicReportMarkerGroups(
 				[atSameLocation("1", "routine"), atSameLocation("2", "routine")],
 				baseOptions,
 			)[0]?.priorityState,
-		).toBe("routine");
+		).toBe("normal");
 	});
 
-	it("renders priority classes, accessible descriptions, and a compact legend", () => {
+	it("renders concise marker labels and an exact three-item map key", () => {
 		render(
 			<PublicReportsMap
 				reports={[
@@ -228,11 +231,11 @@ describe("PublicReportsMap marker grouping", () => {
 		);
 
 		const highPriorityMarker = screen.getByRole("button", {
-			name: "High priority. Open report KL-1. Within 400 m of an iDengue hotspot when reported.",
+			name: "Prioritized report. Open report KL-1.",
 		});
 		expect(highPriorityMarker).toHaveAttribute(
 			"data-icon-class",
-			expect.stringContaining("map-pin--priority-high"),
+			expect.stringContaining("map-pin--priority-prioritized"),
 		);
 		expect(highPriorityMarker).not.toHaveAttribute(
 			"data-icon-class",
@@ -240,13 +243,28 @@ describe("PublicReportsMap marker grouping", () => {
 		);
 		expect(highPriorityMarker).toHaveAttribute(
 			"data-marker-alt",
-			expect.stringContaining("High priority"),
+			"Prioritized report. Open report KL-1.",
+		);
+		expect(
+			screen.getByRole("button", { name: "Normal report. Open report KL-2." }),
+		).toHaveAttribute(
+			"data-icon-class",
+			expect.stringContaining("map-pin--priority-normal"),
+		);
+		expect(
+			screen.getByRole("button", { name: "Normal report. Open report KL-3." }),
+		).toHaveAttribute(
+			"data-icon-class",
+			expect.stringContaining("map-pin--priority-normal"),
 		);
 
-		const legend = screen.getByRole("region", { name: "Report priority legend" });
-		expect(legend).toHaveTextContent("Within 400 m of a hotspot when reported");
-		expect(legend).toHaveTextContent("Other assessed reports");
-		expect(legend).toHaveTextContent("Priority unavailable");
+		const legend = screen.getByRole("region", { name: "Map legend" });
+		expect(legend.querySelectorAll(".map-priority-legend__item")).toHaveLength(3);
+		expect(legend).toHaveTextContent("Prioritized report");
+		expect(legend).toHaveTextContent("Normal report");
+		expect(legend).toHaveTextContent("Active hotspot");
+		expect(legend.querySelector(".map-priority-legend__diamond")).not.toBeNull();
+		expect(legend).not.toHaveTextContent("400 m");
 	});
 
 	it("groups nearby coordinates at low zoom and splits them at higher zoom", () => {
@@ -293,7 +311,7 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Priority unavailable. 2 reports in this area.",
+				name: "Normal report. 2 reports in this area.",
 			}),
 		);
 
@@ -323,7 +341,7 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Priority unavailable. 2 reports at this public location.",
+				name: "Normal report. 2 reports at this public location.",
 			}),
 		);
 
@@ -351,7 +369,7 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Priority unavailable. 2 reports in this area.",
+				name: "Normal report. 2 reports in this area.",
 			}),
 		);
 

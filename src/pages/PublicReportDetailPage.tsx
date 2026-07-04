@@ -22,24 +22,14 @@ export function getPublicHotspotContext(priority?: HotspotPriority) {
 		priority?.priorityLevel === "warning"
 	) {
 		return {
-			state: "high" as const,
-			badge: "High priority",
-			message: "Within 400 m of an iDengue hotspot when reported.",
-		};
-	}
-
-	if (priority?.priorityLevel === "routine") {
-		return {
-			state: "routine" as const,
-			badge: "Standard priority",
-			message: "No iDengue hotspot recorded within 400 m when reported.",
+			state: "prioritized" as const,
+			badge: "Prioritized report",
 		};
 	}
 
 	return {
-		state: "unknown" as const,
-		badge: "Priority unavailable",
-		message: "Hotspot priority could not be assessed.",
+		state: "normal" as const,
+		badge: "Normal report",
 	};
 }
 
@@ -308,7 +298,6 @@ export function PublicReportDetailPage() {
 									<div className="detail-outbreak-alert__badge">
 										{hotspotContext.badge}
 									</div>
-									<p>{hotspotContext.message}</p>
 								</div>
 							</Surface>
 

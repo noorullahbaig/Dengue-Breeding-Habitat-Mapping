@@ -11,8 +11,7 @@ from app.models import Report
 
 
 ADVISORY_TEXT = (
-    "Advisory only. The image, location, and hotspot context are analyzed "
-    "before any action is recorded."
+    "Advisory only. The computer-vision result does not confirm official action."
 )
 PUBLIC_CONSENT_VERSION = "public-image-pin-ai-v2"
 PUBLIC_CONSENT_TEXT = (
@@ -85,10 +84,10 @@ def build_reference(db: Session) -> str:
 
 def status_message_for(status: str) -> str:
     messages = {
-        "submitted": "Received and awaiting review.",
-        "under_review": "Queued for review with map context.",
-        "prioritized": "Flagged for faster follow-up because the area aligns with active hotspot context.",
-        "action_recorded": "Follow-up activity logged for this report.",
-        "closed": "The report lifecycle has been completed for this prototype.",
+        "submitted": "Report received and available for tracking.",
+        "under_review": "A legacy review status is recorded for this report.",
+        "prioritized": "A legacy priority status is recorded for this report.",
+        "action_recorded": "A legacy follow-up status is recorded for this report.",
+        "closed": "This report is recorded as closed.",
     }
     return messages.get(status, messages["submitted"])

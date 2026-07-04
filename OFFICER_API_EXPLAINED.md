@@ -1,4 +1,6 @@
-# Officer API - What It Is and Why It's Optional
+# Historical officer API notes
+
+> Officer APIs and the officer console have been removed from the prototype. This document is retained only as historical context.
 
 ## 📋 Summary
 

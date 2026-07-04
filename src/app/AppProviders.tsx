@@ -5,10 +5,10 @@ import { ServicesProvider } from '@/app/ServicesContext'
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
-    <ServicesProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <ServicesProvider>
         <ReportDraftProvider>{children}</ReportDraftProvider>
-      </AuthProvider>
-    </ServicesProvider>
+      </ServicesProvider>
+    </AuthProvider>
   )
 }

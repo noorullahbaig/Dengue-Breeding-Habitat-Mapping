@@ -16,7 +16,7 @@ export const seededReports: SubmittedReport[] = [
       longitude: 101.745,
       source: 'public',
     },
-    status: 'under_review',
+    status: 'submitted',
     prediction: {
       label: 'drain_inlet',
       confidence: 0.62,
@@ -24,10 +24,10 @@ export const seededReports: SubmittedReport[] = [
       topRawLabel: 'Drain-Inlet',
       detections: [{ rawLabel: 'Drain-Inlet', confidence: 0.62, bbox: [36, 30, 280, 210] }],
       advisoryText:
-        'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
+        'Advisory only. The computer-vision result does not confirm official action.',
     },
     neighborhood: 'Cheras',
-    statusMessage: 'Queued for officer review with map context.',
+    statusMessage: 'Report received and available for tracking.',
     notes: 'Drain inlet with standing water near a walkway.',
   },
   {
@@ -44,7 +44,7 @@ export const seededReports: SubmittedReport[] = [
       longitude: 101.685,
       source: 'public',
     },
-    status: 'prioritized',
+    status: 'submitted',
     prediction: {
       label: 'tire',
       confidence: 0.88,
@@ -52,7 +52,7 @@ export const seededReports: SubmittedReport[] = [
       topRawLabel: 'Tire',
       detections: [{ rawLabel: 'Tire', confidence: 0.88, bbox: [54, 42, 300, 238] }],
       advisoryText:
-        'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
+        'Advisory only. The computer-vision result does not confirm official action.',
     },
     neighborhood: 'Bukit Jalil',
     statusMessage: 'Flagged for faster follow-up because the area aligns with active hotspot context.',
@@ -73,7 +73,7 @@ export const seededReports: SubmittedReport[] = [
       longitude: 101.63,
       source: 'public',
     },
-    status: 'action_recorded',
+    status: 'submitted',
     prediction: {
       label: 'artificial_container',
       confidence: 0.67,
@@ -81,10 +81,10 @@ export const seededReports: SubmittedReport[] = [
       topRawLabel: 'Bottle',
       detections: [{ rawLabel: 'Bottle', confidence: 0.67, bbox: [70, 52, 250, 230] }],
       advisoryText:
-        'Advisory only. Officers still review the image, location, and hotspot context before any action is recorded.',
+        'Advisory only. The computer-vision result does not confirm official action.',
     },
     neighborhood: 'Kepong',
-    statusMessage: 'An officer logged follow-up activity for this report.',
+    statusMessage: 'Report received and available for tracking.',
     notes: 'Plastic container collecting rainwater.',
   },
 ]

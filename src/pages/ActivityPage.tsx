@@ -23,10 +23,11 @@ interface ActivityItem {
 
 export function ActivityPage() {
 	const location = useLocation();
-	const { isAuthenticated, trackedReferences, untrackReport } = useAuth();
+	const { isAuthenticated, isAuthLoading, sessionMode, trackedReferences, untrackReport } = useAuth();
 	const { reportsService } = useServices();
 	const [items, setItems] = useState<ActivityItem[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [loadError, setLoadError] = useState("");
 	const [mounted, setMounted] = useState(false);
 	const feedback = (location.state as { feedback?: string } | null)?.feedback;
 
@@ -43,7 +44,8 @@ export function ActivityPage() {
 				return;
 			}
 
-			setIsLoading(true);
+				setIsLoading(true);
+				setLoadError("");
 
 			try {
 				// Fetch user's reports from backend API
@@ -61,7 +63,7 @@ export function ActivityPage() {
 				console.error("Failed to load user reports from API:", err);
 				
 				// Fallback to localStorage-tracked reports if API fails
-				if (isMounted && trackedReferences.length > 0) {
+					if (isMounted && sessionMode === "local" && trackedReferences.length > 0) {
 					console.log("Falling back to localStorage-tracked reports");
 					const reports = await Promise.all(
 						trackedReferences.map(async (reference) => ({
@@ -70,8 +72,11 @@ export function ActivityPage() {
 						})),
 					);
 					setItems(reports);
-				} else {
-					setItems([]);
+					} else {
+						setItems([]);
+						if (isMounted) {
+							setLoadError("Your reports could not be loaded. Please try again.");
+						}
 				}
 			} finally {
 				if (isMounted) {
@@ -85,7 +90,7 @@ export function ActivityPage() {
 		return () => {
 			isMounted = false;
 		};
-	}, [isAuthenticated, trackedReferences, reportsService]);
+		}, [isAuthenticated, sessionMode, trackedReferences, reportsService]);
 
 	return (
 		<div
@@ -101,7 +106,14 @@ export function ActivityPage() {
 
 			<div className="activity-scroll">
 
-				{!isAuthenticated ? (
+					{isAuthLoading ? (
+						<main className="activity-card">
+							<div className="activity-loading" role="status">
+								<div className="activity-loading__spinner" aria-hidden="true" />
+								<span>Restoring your account…</span>
+							</div>
+						</main>
+					) : !isAuthenticated ? (
 					/* ── GATE: NOT SIGNED IN ── */
 					<main className="activity-card">
 						{/* Top centred content */}
@@ -149,11 +161,16 @@ export function ActivityPage() {
 						</div>
 
 						{/* Feedback banner */}
-						{feedback && (
-							<div className="activity-feedback" role="status">
-								{feedback}
-							</div>
-						)}
+							{feedback && (
+								<div className="activity-feedback" role="status">
+									{feedback}
+								</div>
+							)}
+							{loadError && (
+								<div className="activity-feedback" role="alert">
+									{loadError}
+								</div>
+							)}
 
 						{isLoading ? (
 							/* Loading */
@@ -226,14 +243,14 @@ export function ActivityPage() {
 												View Status
 												<ChevronRight size={14} />
 											</Link>
-											<button
+												{sessionMode === "local" && <button
 												type="button"
 												className="activity-item__remove-btn"
 												onClick={() => untrackReport(reference)}
 												aria-label={`Remove ${reference}`}
 											>
 												<Trash2 size={14} />
-											</button>
+												</button>}
 										</div>
 									</li>
 								))}

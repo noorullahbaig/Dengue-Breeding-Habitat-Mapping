@@ -16,11 +16,6 @@ const ProfilePage = lazy(() =>
 const PublicMapPage = lazy(() =>
   import('@/pages/PublicMapPage').then((module) => ({ default: module.PublicMapPage })),
 )
-const OfficerDashboardPage = lazy(() =>
-  import('@/pages/OfficerDashboardPage').then((module) => ({
-    default: module.OfficerDashboardPage,
-  })),
-)
 const PublicReportDetailPage = lazy(() =>
   import('@/pages/PublicReportDetailPage').then((module) => ({
     default: module.PublicReportDetailPage,
@@ -63,8 +58,6 @@ export function AppRoutes() {
         <Route path="/learn" element={<LearnPage />} />
         <Route path="/map" element={<PublicMapPage />} />
         <Route path="/map/reports/:reference" element={<PublicReportDetailPage />} />
-        <Route path="/officer" element={<OfficerDashboardPage />} />
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

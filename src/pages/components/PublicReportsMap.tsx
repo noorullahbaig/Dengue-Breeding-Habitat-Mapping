@@ -74,7 +74,7 @@ interface MutableReportGroup {
 	longitudeSum: number;
 }
 
-export type PublicPriorityState = "high" | "routine" | "unknown";
+export type PublicPriorityState = "prioritized" | "normal";
 
 export function getPublicPriorityState(
 	priority?: HotspotPriority,
@@ -83,10 +83,10 @@ export function getPublicPriorityState(
 		priority?.priorityLevel === "core" ||
 		priority?.priorityLevel === "warning"
 	) {
-		return "high";
+		return "prioritized";
 	}
 
-	return priority?.priorityLevel === "routine" ? "routine" : "unknown";
+	return "normal";
 }
 
 function getGroupPriorityState(reports: PublicMapReport[]): PublicPriorityState {
@@ -94,9 +94,7 @@ function getGroupPriorityState(reports: PublicMapReport[]): PublicPriorityState 
 		getPublicPriorityState(report.hotspotPriority),
 	);
 
-	if (states.includes("high")) return "high";
-	if (states.includes("unknown")) return "unknown";
-	return "routine";
+	return states.includes("prioritized") ? "prioritized" : "normal";
 }
 
 function buildPublicIcon(priorityState: PublicPriorityState) {
@@ -170,15 +168,9 @@ function markerPriorityDescription(
 	priorityState: PublicPriorityState,
 	title: string,
 ) {
-	if (priorityState === "high") {
-		return `High priority. ${title}. Within 400 m of an iDengue hotspot when reported.`;
-	}
-
-	if (priorityState === "routine") {
-		return `Standard priority. ${title}. No iDengue hotspot recorded within 400 m when reported.`;
-	}
-
-	return `Priority unavailable. ${title}.`;
+	const label =
+		priorityState === "prioritized" ? "Prioritized report" : "Normal report";
+	return `${label}. ${title}.`;
 }
 
 function toMarkerGroup(
@@ -410,28 +402,28 @@ export function PublicReportsMap({
 
 			<section
 				className="map-priority-legend"
-				aria-label="Report priority legend"
+				aria-label="Map legend"
 			>
 				<div className="map-priority-legend__item">
 					<span
-						className="map-priority-legend__dot map-priority-legend__dot--high"
+						className="map-priority-legend__dot map-priority-legend__dot--prioritized"
 						aria-hidden="true"
 					/>
-					<span>Within 400 m of a hotspot when reported</span>
+					<span>Prioritized report</span>
 				</div>
 				<div className="map-priority-legend__item">
 					<span
-						className="map-priority-legend__dot map-priority-legend__dot--routine"
+						className="map-priority-legend__dot map-priority-legend__dot--normal"
 						aria-hidden="true"
 					/>
-					<span>Other assessed reports</span>
+					<span>Normal report</span>
 				</div>
 				<div className="map-priority-legend__item">
 					<span
-						className="map-priority-legend__dot map-priority-legend__dot--unknown"
+						className="map-priority-legend__diamond"
 						aria-hidden="true"
 					/>
-					<span>Priority unavailable</span>
+					<span>Active hotspot</span>
 				</div>
 			</section>
 

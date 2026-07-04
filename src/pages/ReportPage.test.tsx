@@ -55,6 +55,11 @@ vi.mock('@/pages/components/LocationReviewMap', () => ({
   LocationReviewMap: () => <div>Location map</div>,
 }))
 
+vi.mock('@/features/report/LocationPermissionGate', () => ({
+  LocationPermissionGate: ({ children }: { children: (props: { isLocating: boolean; onRetryLocation: () => void; locationError: string }) => React.ReactNode }) =>
+    children({ isLocating: false, onRetryLocation: vi.fn(), locationError: '' }),
+}))
+
 vi.mock('@/pages/components/NearbyReportPrompt', () => ({
   NearbyReportPrompt: () => null,
 }))

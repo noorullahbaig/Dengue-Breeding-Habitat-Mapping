@@ -13,20 +13,22 @@ export interface AuthRuntimeConfig {
   sessionMode: 'local' | 'cognito'
   cognito: CognitoConfig | null
   isHostedUiReady: boolean
+  isAccountAvailable: boolean
+  configurationError: string | null
 }
 
 function readStringEnv(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : ''
 }
 
-function readCognitoConfig(): CognitoConfig | null {
-  const region = readStringEnv(import.meta.env.VITE_COGNITO_REGION)
-  const userPoolId = readStringEnv(import.meta.env.VITE_COGNITO_USER_POOL_ID)
-  const userPoolClientId = readStringEnv(import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID)
-  const identityPoolId = readStringEnv(import.meta.env.VITE_COGNITO_IDENTITY_POOL_ID)
-  const hostedUiDomain = readStringEnv(import.meta.env.VITE_COGNITO_HOSTED_UI_DOMAIN)
-  const redirectSignIn = readStringEnv(import.meta.env.VITE_COGNITO_REDIRECT_SIGN_IN)
-  const redirectSignOut = readStringEnv(import.meta.env.VITE_COGNITO_REDIRECT_SIGN_OUT)
+function readCognitoConfig(env: Record<string, unknown>): CognitoConfig | null {
+  const region = readStringEnv(env.VITE_COGNITO_REGION)
+  const userPoolId = readStringEnv(env.VITE_COGNITO_USER_POOL_ID)
+  const userPoolClientId = readStringEnv(env.VITE_COGNITO_USER_POOL_CLIENT_ID)
+  const identityPoolId = readStringEnv(env.VITE_COGNITO_IDENTITY_POOL_ID)
+  const hostedUiDomain = readStringEnv(env.VITE_COGNITO_HOSTED_UI_DOMAIN)
+  const redirectSignIn = readStringEnv(env.VITE_COGNITO_REDIRECT_SIGN_IN)
+  const redirectSignOut = readStringEnv(env.VITE_COGNITO_REDIRECT_SIGN_OUT)
 
   if (!region || !userPoolId || !userPoolClientId) {
     return null
@@ -43,14 +45,34 @@ function readCognitoConfig(): CognitoConfig | null {
   }
 }
 
-const cognito = readCognitoConfig()
-const isOAuthConfigured = Boolean(
-  cognito?.hostedUiDomain && cognito.redirectSignIn && cognito.redirectSignOut,
-)
+export function resolveAuthRuntimeConfig(
+  env: Record<string, unknown>,
+  isProduction: boolean,
+): AuthRuntimeConfig {
+  const cognito = readCognitoConfig(env)
+  const requestedMode = readStringEnv(env.VITE_AUTH_MODE)
+  const productionRequiresCognito = isProduction && requestedMode !== 'local'
+  const wantsCognito = requestedMode === 'local'
+    ? false
+    : requestedMode === 'cognito' || productionRequiresCognito || Boolean(cognito)
+  const isOAuthConfigured = Boolean(
+    cognito?.hostedUiDomain && cognito.redirectSignIn && cognito.redirectSignOut,
+  )
 
-export const authRuntimeConfig: AuthRuntimeConfig = {
-  providerTarget: cognito ? 'cognito' : 'mock',
-  sessionMode: cognito ? 'cognito' : 'local',
-  cognito,
-  isHostedUiReady: isOAuthConfigured,
+  return {
+    providerTarget: wantsCognito ? 'cognito' : 'mock',
+    sessionMode: cognito && wantsCognito ? 'cognito' : 'local',
+    cognito,
+    isHostedUiReady: isOAuthConfigured,
+    isAccountAvailable: !wantsCognito || Boolean(cognito),
+    configurationError: wantsCognito && !cognito
+      ? 'Account sign-in is unavailable because Cognito is not fully configured.'
+      : null,
+  }
 }
+
+const runtimeEnv = import.meta.env.MODE === 'test'
+  ? { ...import.meta.env, VITE_AUTH_MODE: 'local' }
+  : import.meta.env
+
+export const authRuntimeConfig = resolveAuthRuntimeConfig(runtimeEnv, import.meta.env.PROD)

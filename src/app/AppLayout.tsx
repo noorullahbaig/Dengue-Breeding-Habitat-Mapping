@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { BookOpen, CircleUserRound, Clock3, FileText, Home, Map as MapIcon, ShieldCheck, User } from 'lucide-react'
+import { BookOpen, CircleUserRound, Clock3, FileText, Home, Map as MapIcon, User } from 'lucide-react'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { useAuth } from '@/app/useAuth'
 import { hasReportDraft } from '@/app/reportOverlayState'
@@ -88,16 +88,6 @@ export function AppLayout() {
           })}
         </nav>
         <div className="app-rail__footer">
-          <div className="app-rail__meta">
-            <span className="app-rail__meta-label">Operations</span>
-            <NavLink
-              to="/officer"
-              className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
-            >
-              <ShieldCheck size={18} aria-hidden="true" />
-              <span className="app-nav-link__label">Officer Portal</span>
-            </NavLink>
-          </div>
           <div className="app-rail__meta">
             <span className="app-rail__meta-label">Resident tools</span>
             <NavLink

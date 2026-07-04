@@ -827,6 +827,15 @@
   align-items: flex-end;
 }
 
+.lc-sheet-backdrop__dismiss {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	border: 0;
+	background: transparent;
+	cursor: default;
+}
+
 .lc-sheet-backdrop--closing {
   animation: lc-backdrop-out 220ms ease-in both;
 }
