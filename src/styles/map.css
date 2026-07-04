@@ -3161,9 +3161,13 @@
 }
 
 .map-detail-sheet__primary-action {
+  display: flex;
   width: 100%;
   min-height: 48px;
+  align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 .report-cluster-list {
