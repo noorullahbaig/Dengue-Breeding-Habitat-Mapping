@@ -1,4 +1,5 @@
 import { resolveAuthRuntimeConfig } from '@/app/authConfig'
+import { cognitoOAuthScopes } from '@/app/authConfig'
 
 describe('resolveAuthRuntimeConfig', () => {
   it('does not silently enable mock accounts in an unconfigured production build', () => {
@@ -33,5 +34,9 @@ describe('resolveAuthRuntimeConfig', () => {
 
     expect(config.sessionMode).toBe('cognito')
     expect(config.isAccountAvailable).toBe(true)
+  })
+
+  it('always requests the Google profile scope needed for name and picture claims', () => {
+    expect(cognitoOAuthScopes).toEqual(expect.arrayContaining(['openid', 'email', 'profile']))
   })
 })

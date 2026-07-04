@@ -17,6 +17,8 @@ export interface AuthRuntimeConfig {
   configurationError: string | null
 }
 
+export const cognitoOAuthScopes = ['openid', 'email', 'profile', 'phone'] as const
+
 function readStringEnv(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : ''
 }
