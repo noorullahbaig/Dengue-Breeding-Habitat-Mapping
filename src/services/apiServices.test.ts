@@ -178,3 +178,28 @@ describe('createApiAppServices account reports', () => {
     )
   })
 })
+
+describe('createApiAppServices report notes', () => {
+  it('sends the trimmed resident note in report form data', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ reference: 'KL-TEST-0001' }, 201))
+    vi.stubGlobal('fetch', fetchMock)
+    const services = createApiAppServices('http://localhost:8000/api')
+    const draft: ReportDraft = {
+      ...createDraft(),
+      capturedAt: '2026-07-05T10:00:00.000Z',
+      correctedLocation: {
+        latitude: 3.139,
+        longitude: 101.6869,
+        accuracyMeters: 42,
+        source: 'browser',
+      },
+      notes: '  Water beneath drain cover  ',
+    }
+
+    await services.reportsService.createReport(draft, { publicConsentAccepted: true })
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(request.body).toBeInstanceOf(FormData)
+    expect((request.body as FormData).get('notes')).toBe('Water beneath drain cover')
+  })
+})

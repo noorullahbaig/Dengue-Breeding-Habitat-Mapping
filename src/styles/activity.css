@@ -582,3 +582,12 @@
     padding: 0 1.5rem 2.5rem;
   }
 }
+.activity-item__resident-note {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-ink-soft);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}

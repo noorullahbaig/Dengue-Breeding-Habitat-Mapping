@@ -6,6 +6,7 @@ import type {
   ReportDraft,
   ReportPrecheck,
   ReportStatus,
+  OwnerReport,
   NearbyReportCheck,
   SubmissionStatus,
   SubmittedReport,
@@ -30,7 +31,7 @@ export interface CreateReportOptions {
 }
 
 export interface ReportsService {
-  getMyReports(): Promise<ReportStatus[]>
+  getMyReports(): Promise<OwnerReport[]>
   claimReport(reference: string, claimToken: string): Promise<ReportStatus>
   createReport(
     draft: ReportDraft,

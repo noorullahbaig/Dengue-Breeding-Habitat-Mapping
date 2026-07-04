@@ -378,6 +378,50 @@ def test_create_report_rejects_outside_kuala_lumpur_before_inference(client):
     assert not list(upload_root.rglob("*.jpg"))
 
 
+def test_create_report_persists_trimmed_resident_note(client):
+    test_client, session_factory, _model, _upload_root = client
+    response = test_client.post(
+        "/api/reports",
+        data={
+            "captured_at": "2026-04-20T01:00:00.000Z",
+            "latitude": "3.13901",
+            "longitude": "101.68691",
+            "source": "browser",
+            "notes": "  Water beneath drain cover  ",
+            **trusted_detected_payload(latitude="3.13901", longitude="101.68691"),
+            "public_consent_accepted": "true",
+        },
+        files={"image": ("sample.jpg", jpeg_bytes(), "image/jpeg")},
+    )
+
+    assert response.status_code == 201
+    with session_factory() as db:
+        report = db.scalar(select(Report).where(Report.reference == response.json()["reference"]))
+        assert report is not None
+        assert report.notes == "Water beneath drain cover"
+
+
+def test_create_report_rejects_overlong_note_before_image_processing(client):
+    test_client, _session_factory, model, upload_root = client
+    response = test_client.post(
+        "/api/reports",
+        data={
+            "captured_at": "2026-04-20T01:00:00.000Z",
+            "latitude": "3.13901",
+            "longitude": "101.68691",
+            "source": "browser",
+            "notes": "x" * 151,
+            **trusted_detected_payload(latitude="3.13901", longitude="101.68691"),
+            "public_consent_accepted": "true",
+        },
+        files={"image": ("sample.jpg", jpeg_bytes(), "image/jpeg")},
+    )
+
+    assert response.status_code == 422
+    assert model.predict_calls == 0
+    assert not list(upload_root.rglob("*.jpg"))
+
+
 def test_create_report_requires_public_consent_before_inference(client):
     test_client, _session_factory, model, upload_root = client
 

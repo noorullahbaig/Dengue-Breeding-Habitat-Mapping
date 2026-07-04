@@ -17,6 +17,7 @@ from app.schemas import (
     PublicMapReportOut,
     StackParentSummaryOut,
     StatusReportOut,
+    OwnerReportOut,
     SubmittedReportOut,
 )
 from app.hotspots import PublicHotspot
@@ -144,6 +145,11 @@ def status_report_out(report: Report) -> StatusReportOut:
     )
 
 
+def owner_report_out(report: Report) -> OwnerReportOut:
+    status = status_report_out(report)
+    return OwnerReportOut(**status.model_dump(), notes=report.notes)
+
+
 def public_report_out(
     report: Report,
     *,
@@ -264,5 +270,4 @@ def public_hotspot_out(hotspot: PublicHotspot) -> PublicHotspotOut:
         sourceLabel=hotspot.source_label,
         reportCountWithinWarning=hotspot.report_count_within_warning,
     )
-
 

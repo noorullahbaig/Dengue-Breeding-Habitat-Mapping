@@ -18,6 +18,7 @@ class Settings:
     model_path: Path
     upload_root: Path
     cors_origins: list[str]
+    app_env: str = "development"
     idengue_hotspot_endpoint: str = "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query"
     max_upload_bytes: int = 10 * 1024 * 1024
     storage_backend: str = "local"
@@ -60,6 +61,7 @@ def get_settings() -> Settings:
         ),
         upload_root=_resolve_path(os.getenv("UPLOAD_ROOT", "./uploads")),
         cors_origins=cors_origins,
+        app_env=os.getenv("APP_ENV", "development").strip().lower(),
         idengue_hotspot_endpoint=os.getenv(
             "IDENGUE_HOTSPOT_ENDPOINT",
             "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query",

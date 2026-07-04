@@ -12,12 +12,12 @@ import { useAuth } from "@/app/useAuth";
 import { useServices } from "@/app/useServices";
 import { StatusBadge } from "@/features/shared/StatusBadge";
 import { formatTimestamp } from "@/lib/formatters";
-import type { ReportStatus } from "@/types/report";
+import type { OwnerReport } from "@/types/report";
 import "@/styles/activity.css";
 
 interface ActivityItem {
 	reference: string;
-	report: ReportStatus | null;
+	report: OwnerReport | null;
 }
 
 export function ActivityPage() {
@@ -226,6 +226,12 @@ export function ActivityPage() {
 												<span>{formatTimestamp(report.createdAt)}</span>
 											</div>
 										)}
+
+										{report?.notes ? (
+											<p className="activity-item__resident-note">
+												<strong>Your note:</strong> {report.notes}
+											</p>
+										) : null}
 
 										{!report && (
 											<p className="activity-item__missing-note">

@@ -35,8 +35,6 @@ export interface ReportDraft {
   wizardStep?: number
   hasConfirmedPin?: boolean
   hasPublicConsent?: boolean
-  residentNote?: string
-  lowAiConfidence?: boolean
 }
 
 export interface PredictionSummary {
@@ -101,6 +99,10 @@ export interface ReportStatus {
   neighborhood: string
   statusMessage: string
   stackedOnReference?: string | null
+}
+
+export interface OwnerReport extends ReportStatus {
+  notes?: string | null
 }
 
 export interface PublicMapReport {

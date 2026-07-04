@@ -125,7 +125,6 @@ export function ReportPage({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [locationRequestError, setLocationRequestError] = useState("");
 	const [isLowConfirmOpen, setIsLowConfirmOpen] = useState(false);
-	const [residentNote, setResidentNote] = useState("");
 
 	const isMobile = useMobileViewport();
 
@@ -599,8 +598,6 @@ export function ReportPage({
 				{
 					...draft,
 					correctedLocation: finalLocation,
-					residentNote: residentNote || undefined,
-					lowAiConfidence: isLowAiConfidence,
 				},
 				{
 					stackParentReference: selectedStackReference || undefined,
@@ -650,7 +647,7 @@ export function ReportPage({
 	}
 
 	function handleLowConfidenceConfirm(note: string) {
-		setResidentNote(note);
+		updateDraft({ notes: note });
 		setIsLowConfirmOpen(false);
 		setCurrentStep(4);
 	}

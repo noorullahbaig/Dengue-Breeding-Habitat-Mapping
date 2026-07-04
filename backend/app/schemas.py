@@ -87,6 +87,10 @@ class StatusReportOut(BaseModel):
     stackedOnReference: str | None = None
 
 
+class OwnerReportOut(StatusReportOut):
+    notes: str | None = None
+
+
 class PublicMapReportOut(BaseModel):
     id: str
     reference: str
@@ -186,6 +190,7 @@ class HealthOut(BaseModel):
     uploadRoot: str
     modelPath: str
     postgis: bool = False
+    migrationReady: bool = False
     storageBackend: str
     s3Bucket: str | None = None
     s3Ready: bool | None = None

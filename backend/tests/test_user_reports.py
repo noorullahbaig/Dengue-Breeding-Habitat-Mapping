@@ -27,7 +27,7 @@ def make_user(user_id: str) -> User:
     )
 
 
-def make_report(reference: str, created_at: datetime, *, user_id: str | None = None) -> Report:
+def make_report(reference: str, created_at: datetime, *, user_id: str | None = None, notes: str | None = None) -> Report:
     return Report(
         id=f"id-{reference}",
         reference=reference,
@@ -41,6 +41,7 @@ def make_report(reference: str, created_at: datetime, *, user_id: str | None = N
         status="submitted",
         neighborhood="Kuala Lumpur",
         status_message="Report received.",
+        notes=notes,
         image_original_filename="evidence.jpg",
         image_mime_type="image/jpeg",
         image_size_bytes=10,
@@ -76,7 +77,7 @@ def test_my_reports_returns_only_current_users_reports_newest_first(db: Session)
             user,
             other,
             make_report("KL-OLD-0001", now - timedelta(days=1), user_id=user.id),
-            make_report("KL-NEW-0002", now, user_id=user.id),
+            make_report("KL-NEW-0002", now, user_id=user.id, notes="Water beneath drain cover"),
             make_report("KL-OTHER-0003", now + timedelta(days=1), user_id=other.id),
         ]
     )
@@ -85,6 +86,8 @@ def test_my_reports_returns_only_current_users_reports_newest_first(db: Session)
     reports = list_my_reports(current_user=user, db=db)
 
     assert [report.reference for report in reports] == ["KL-NEW-0002", "KL-OLD-0001"]
+    assert reports[0].notes == "Water beneath drain cover"
+    assert reports[1].notes is None
 
 
 def test_anonymous_report_can_be_claimed_once_by_its_private_token(db: Session):

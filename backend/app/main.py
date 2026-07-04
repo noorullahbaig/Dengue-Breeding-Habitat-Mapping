@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hmac
+import logging
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -59,6 +60,7 @@ from app.schemas import (
     PublicMapReportOut,
     PublicReportDetailOut,
     StatusReportOut,
+    OwnerReportOut,
     SubmittedReportOut,
 )
 from app.service_area import ensure_within_service_area, is_within_service_area
@@ -69,14 +71,33 @@ from app.serializers import (
     public_report_detail_out,
     public_report_out,
     status_report_out,
+    owner_report_out,
     submitted_report_out,
 )
+
+
+logger = logging.getLogger(__name__)
+EXPECTED_MIGRATION_REVISION = "0007_annotated_evidence"
+
+
+def migration_is_ready(db: Session) -> bool:
+    try:
+        revision = db.scalar(text("select version_num from alembic_version limit 1"))
+        return revision == EXPECTED_MIGRATION_REVISION
+    except Exception:
+        db.rollback()
+        return False
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_upload_dirs()
     cleanup_precheck_uploads()
+
+    if settings.app_env == "production":
+        with SessionLocal() as db:
+            if not migration_is_ready(db):
+                raise RuntimeError("Database schema is not at the required migration revision.")
     
     # Validate storage configuration on startup
     if settings.storage_backend == "s3":
@@ -354,10 +375,12 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
     details: dict[str, str] = {}
     database_ready = False
     postgis_ready = False
+    migration_ready = False
 
     try:
         db.execute(text("select 1"))
         database_ready = True
+        migration_ready = migration_is_ready(db)
     except Exception as exc:
         details["database"] = str(exc)
     else:
@@ -370,6 +393,8 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
 
         if not postgis_ready:
             details["postgis"] = "PostGIS is not enabled locally; migration will enable it when available."
+        if not migration_ready:
+            details["migration"] = "Database schema upgrade required."
 
     if model_inference.load_error:
         details["model"] = model_inference.load_error
@@ -378,7 +403,7 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
     if not upload_ready:
         details["uploads"] = "Upload root does not exist."
 
-    ok = database_ready and postgis_ready and model_inference.ready and upload_ready
+    ok = database_ready and migration_ready and postgis_ready and model_inference.ready and upload_ready
 
     s3_ready = None
     if settings.storage_backend == "s3":
@@ -394,6 +419,7 @@ def health(db: Session = Depends(get_db)) -> HealthOut:
         uploadRoot=str(settings.upload_root),
         modelPath=str(settings.model_path),
         postgis=postgis_ready,
+        migrationReady=migration_ready,
         storageBackend=settings.storage_backend,
         s3Bucket=settings.s3_bucket,
         s3Ready=s3_ready,
@@ -420,6 +446,12 @@ async def create_report(
     current_user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ) -> SubmittedReportOut:
+    normalized_notes = notes.strip() if notes and notes.strip() else None
+    if normalized_notes and len(normalized_notes) > 150:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Resident note must be 150 characters or fewer.",
+        )
     ensure_within_service_area(latitude, longitude)
     _validate_detected_fix(
         detected_latitude=detected_latitude,
@@ -514,7 +546,7 @@ async def create_report(
             if stack_parent
             else status_message_for(report_status)
         ),
-        notes=notes.strip() if notes and notes.strip() else None,
+        notes=normalized_notes,
         image_original_filename=stored_image.original_filename,
         image_mime_type=stored_image.mime_type,
         image_size_bytes=stored_image.size_bytes,
@@ -566,6 +598,7 @@ async def create_report(
             cleanup_local_stored_image(stored_image)
     except Exception as exc:
         db.rollback()
+        logger.exception("Report persistence failed for generated reference %s", reference)
         delete_stored_image(stored_image)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -682,17 +715,17 @@ def report_status(reference: str, db: Session = Depends(get_db)) -> StatusReport
     return status_report_out(report) if report else None
 
 
-@app.get("/api/my-reports", response_model=list[StatusReportOut])
+@app.get("/api/my-reports", response_model=list[OwnerReportOut])
 def list_my_reports(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[StatusReportOut]:
+) -> list[OwnerReportOut]:
     reports = db.scalars(
         select(Report)
         .where(Report.user_id == current_user.id)
         .order_by(Report.created_at.desc())
     ).all()
-    return [status_report_out(report) for report in reports]
+    return [owner_report_out(report) for report in reports]
 
 
 @app.post("/api/my-reports/claim", response_model=StatusReportOut)
