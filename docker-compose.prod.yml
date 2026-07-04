@@ -30,17 +30,13 @@ services:
       COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID:-}
       
       # S3 storage for permanent uploaded evidence images
-      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
-      S3_BUCKET: ${S3_BUCKET:-}
+      STORAGE_BACKEND: s3
+      S3_BUCKET: ${S3_BUCKET:?Set S3_BUCKET in .env.production}
       S3_REGION: ${S3_REGION:-ap-southeast-1}
       S3_PRESIGNED_URL_EXPIRES_SECONDS: ${S3_PRESIGNED_URL_EXPIRES_SECONDS:-3600}
       
       # iDengue hotspot endpoint (optional override)
       IDENGUE_HOTSPOT_ENDPOINT: ${IDENGUE_HOTSPOT_ENDPOINT:-https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query}
-    
-    volumes:
-      # Persistent storage for uploaded images on EBS
-      - /var/denguewatch/uploads:/app/uploads
     
     # DO NOT expose port 8000 publicly - nginx reaches backend internally via Docker network
     expose:
@@ -101,6 +97,4 @@ networks:
   denguewatch-network:
     driver: bridge
 
-# Volumes for persistent data
-# Note: /var/denguewatch/uploads should be created on the EC2 host
-# or backed by an EBS volume for persistence
+# Image files are request-scoped scratch data on EC2. Permanent media is stored in S3.

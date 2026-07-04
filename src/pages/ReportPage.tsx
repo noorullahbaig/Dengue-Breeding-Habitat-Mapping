@@ -213,6 +213,12 @@ export function ReportPage({
 		nearbyCandidates.length > 0 &&
 		decisionLocationSignature === activeLocationSignature &&
 		!selectedStackReference;
+
+	useEffect(() => {
+		if (currentStep === 3 && precheckReady && needsStackDecision) {
+			setIsNearbyPromptOpen(true);
+		}
+	}, [currentStep, needsStackDecision, precheckReady]);
 	const isMobileLocationStep = isMobile && currentStep === 1;
 	const isMobileConsentStep = isMobile && currentStep === 2;
 	const stepState = {
@@ -774,8 +780,7 @@ export function ReportPage({
 															aria-label="Retake photo"
 															className="u-static-5790ffba"
 															onClick={(e) => {
-																// @ts-expect-error - reset value to allow same file selection
-																e.target.value = null;
+																e.currentTarget.value = "";
 															}}
 															onChange={handleFileSelection}
 														/>
@@ -837,8 +842,7 @@ export function ReportPage({
 																capture="environment"
 																className="u-static-5790ffba"
 																onClick={(e) => {
-																	// @ts-expect-error - reset value to allow same file selection
-																	e.target.value = null;
+																	e.currentTarget.value = "";
 																}}
 																onChange={handleFileSelection}
 															/>
@@ -1248,17 +1252,6 @@ export function ReportPage({
 											✓ You chose to file a separate report for this nearby
 											location.
 										</Notice>
-									) : null}
-
-									{precheckReady && needsStackDecision ? (
-										<div className="stack-md">
-											<NearbyReportPrompt
-												variant="inline"
-												candidates={nearbyCandidates}
-												onStack={handleStackDecision}
-												onCreateSeparate={handleSeparateDecision}
-											/>
-										</div>
 									) : null}
 
 									{precheckReady && precheck ? (

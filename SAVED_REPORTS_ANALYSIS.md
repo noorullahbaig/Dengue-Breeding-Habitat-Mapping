@@ -1,10 +1,12 @@
 # Saved Reports Functionality Analysis
 
-## ⚠️ CRITICAL FINDING: Reports Are NOT Saved to Database
+> Historical analysis. The current implementation now persists resident accounts and report ownership in the backend database.
 
-### Summary
+## Summary
 
-The "Save to My Reports" functionality **ONLY exists in the frontend** using **localStorage**. There is **NO user association** in the database, and reports are **NOT attached to user profiles** in any backend table.
+The original localStorage-only analysis is no longer accurate. Reports and resident profiles are now associated in the backend database, and the current app uses Cognito-backed user records rather than browser-only tracking.
+
+The historical localStorage-only behavior described below applied before resident account persistence was implemented.
 
 ---
 
@@ -17,7 +19,7 @@ Located in: `src/app/AuthContext.tsx`
 - **Local mode** (development): Mock authentication, everything stored in browser
 - **Cognito mode** (production): AWS Cognito for authentication, but report tracking still local
 
-**Key finding:**
+**Historical key finding:**
 ```typescript
 // localStorage key for tracked reports
 const AUTH_ACTIVITY_STORAGE_KEY = 'dwkl.auth.activity'
@@ -41,11 +43,11 @@ useEffect(() => {
 }, [isAuthenticated, reference, alreadySaved, savedToActivity, trackReport]);
 ```
 
-**What actually happens:**
+**What happened historically:**
 1. User submits report → gets reference ID (e.g., "KL-ABCD-1234")
 2. If user is authenticated, reference is saved to localStorage
 3. localStorage stores: `{ "user-id": ["KL-ABCD-1234", "KL-EFGH-5678"] }`
-4. No database update!
+4. No database update in the historical implementation.
 
 ### 3. **Viewing "My Reports"**
 Located in: `src/pages/ActivityPage.tsx`
@@ -60,7 +62,7 @@ const reports = await Promise.all(
 );
 ```
 
-**How it works:**
+**How it worked historically:**
 1. Read tracked references from localStorage
 2. For each reference, fetch report details from API using public endpoint
 3. Display in "My Reports" page
@@ -69,7 +71,7 @@ const reports = await Promise.all(
 
 ## Database Reality Check
 
-### ❌ What's NOT in the Database
+### ❌ Historical State That No Longer Applies
 
 **Report Model** (`backend/app/models.py`):
 ```python
@@ -86,28 +88,15 @@ class Report(Base):
     # ❌ NO relationship to users
 ```
 
-**No User Model exists:**
-```python
-# ❌ No User table
-# ❌ No Profile table
-# ❌ No UserReports relationship table
-```
+### ✅ Current State
 
-### ✅ What IS in the Database
-
-Reports are **completely anonymous** in the database:
-- Report data (location, image, prediction, status)
-- Hotspot context
-- Public consent
-- Officer review notes
-
-But **zero connection to who submitted it**.
+The live schema now includes a `users` table with `display_name` and `photo_url`, plus a `reports.user_id` association for authenticated submissions.
 
 ---
 
 ## Implications & Limitations
 
-### ❌ Current Limitations
+### ❌ Historical Limitations
 
 1. **No Cross-Device Sync**
    - User signs in on phone → saves reports to phone's localStorage
@@ -129,7 +118,7 @@ But **zero connection to who submitted it**.
    - No "show all reports I've submitted" functionality possible
    - Data analytics can't track user behavior patterns
 
-### ✅ What Works
+### ✅ What Worked in the Historical Version
 
 1. **Basic tracking on same device**
    - User can save references to localStorage
@@ -145,7 +134,7 @@ But **zero connection to who submitted it**.
 
 ## Is This A Problem for Prototype?
 
-### For Prototype: **Acceptable**
+### For Prototype: **Acceptable at the Time**
 
 **Pros:**
 - ✅ Simple implementation (no user database needed)
@@ -158,7 +147,7 @@ But **zero connection to who submitted it**.
 - ❌ Data lost on browser clear
 - ❌ Can't track across devices
 
-### For Production: **Must Be Fixed**
+### For Production: **Was Fixed Later**
 
 Users expect "save to my account" to mean:
 - ✅ Works across all my devices
@@ -173,7 +162,7 @@ Users expect "save to my account" to mean:
 
 #### 1. Create User table and add relationship
 
-**New migration needed:**
+**Historical migration proposal:**
 ```python
 # backend/migrations/versions/0005_add_user_reports.py
 
@@ -328,10 +317,9 @@ Users get a secret claim token when submitting, can associate with account later
 ```markdown
 ## User Report Tracking (Frontend Only)
 
-### Current Implementation
+### Historical Implementation
 
-Reports are **NOT associated with users in the database**. The "My Reports" 
-feature uses **browser localStorage** to track report references locally.
+In the historical version, reports were **not** associated with users in the database. The "My Reports" feature used **browser localStorage** to track report references locally.
 
 **Storage location:** `localStorage['dwkl.auth.activity']`
 
@@ -349,15 +337,14 @@ feature uses **browser localStorage** to track report references locally.
 - ❌ No server-side verification
 - ❌ No user attribution in database
 
-**For production:** Would require adding User table and `user_id` foreign 
-key to reports table.
+**For production at the time:** Would require adding a User table and `user_id` foreign key to the reports table.
 ```
 
 ---
 
 ## Testing "Save to My Reports"
 
-### Current Behavior (localStorage)
+### Historical Behavior (localStorage)
 
 ```javascript
 // Open browser console
@@ -376,29 +363,29 @@ localStorage.getItem('dwkl.auth.activity')
 // /activity shows empty (localStorage cleared)
 ```
 
-### Database Check
+### Historical Database Check
 
 ```sql
--- No user association exists
+-- No user association existed in the historical implementation
 SELECT id, reference, created_at, user_id FROM reports;
--- user_id column doesn't exist!
+-- user_id column didn't exist then
 
--- No User table exists
+-- No User table existed
 SELECT * FROM users;
--- Table doesn't exist!
+-- Table didn't exist then
 ```
 
 ---
 
 ## Conclusion
 
-**The "Save to My Reports" button works** ✅ - but only locally in the browser.
+**The "Save to My Reports" button worked** ✅ - but only locally in the browser.
 
-**Database does NOT accommodate user association** ❌ - reports are completely anonymous.
+**Database did not accommodate user association** ❌ - reports were completely anonymous.
 
-**For prototype:** Acceptable, but should be documented clearly.
+**For prototype at the time:** Acceptable, but should have been documented clearly.
 
-**For production:** Requires significant backend changes:
+**For production at the time:** Required significant backend changes:
 1. Add User table
 2. Add user_id to reports
 3. Implement authentication middleware
@@ -407,8 +394,8 @@ SELECT * FROM users;
 
 **Effort estimate:** 2-4 hours for production-ready implementation.
 
-**Your current implementation is:**
+**This historical analysis described:**
 - ✅ Functional for prototype
 - ✅ Privacy-preserving
 - ❌ Not suitable for production without changes
-- ❌ Will confuse users expecting cloud sync
+- ❌ Would confuse users expecting cloud sync

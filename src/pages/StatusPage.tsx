@@ -325,7 +325,6 @@ export function StatusPage() {
 									imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/image`}
 									imageAlt="Citizen evidence thumbnail"
 									compact
-									showDetections
 								/>
 							</div>
 						</div>

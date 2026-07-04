@@ -4,7 +4,21 @@
 
 ### 📊 PostgreSQL Database
 
-#### `reports` table (Main entity - 40+ columns)
+#### `users` table (resident profile storage)
+```
+┌─────────────────────────────────────────────────────────────┐
+│ • id (VARCHAR) - Primary key                                │
+│ • cognito_sub (VARCHAR) - Cognito subject - UNIQUE          │
+│ • email (VARCHAR) - Resident email                          │
+│ • display_name (VARCHAR) - Google/Cognito display name      │
+│ • photo_url (TEXT) - Google/Cognito profile image           │
+│ • provider (VARCHAR) - cognito or local                     │
+│ • created_at (TIMESTAMPTZ) - Creation time                  │
+│ • updated_at (TIMESTAMPTZ) - Last update time               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### `reports` table (Main entity - current columns)
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ IDENTITY & TIMESTAMPS                                       │
@@ -85,16 +99,15 @@
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│ STATUS & WORKFLOW (7 columns)                               │
+│ STATUS & WORKFLOW (current columns)                         │
 ├─────────────────────────────────────────────────────────────┤
 │ • status (VARCHAR) - submitted, under_review, etc.          │
 │ • neighborhood (VARCHAR) - Area name                        │
 │ • status_message (TEXT) - Human-readable status             │
 │ • notes (TEXT) - User notes - NULLABLE                      │
-│ • officer_notes (TEXT) - Officer review - NULLABLE          │
-│ • follow_up_action (TEXT) - Officer action - NULLABLE       │
-│ • reviewed_at (TIMESTAMPTZ) - Review time - NULLABLE        │
-│ • reviewed_by (VARCHAR) - Officer name - NULLABLE           │
+│                                                              │
+│ NOTE: officer_notes/follow_up_action/reviewed_at/reviewed_  │
+│ by were removed from the live schema.                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 

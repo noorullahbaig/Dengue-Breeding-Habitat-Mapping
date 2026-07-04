@@ -195,7 +195,6 @@ export function ReportSuccessPage() {
 							imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/image`}
 							imageAlt="Your submitted photo evidence"
 							compact
-							showDetections
 						/>
 					</div>
 

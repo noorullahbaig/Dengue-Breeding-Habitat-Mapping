@@ -214,14 +214,13 @@ def test_nearby_candidates_return_only_active_same_class_parents(client):
     assert body["prediction"]["label"] == "tire"
     assert [item["reference"] for item in body["candidates"]] == ["KL-PARENT-0001"]
     assert body["candidates"][0]["reportCount"] == 2
-    assert body["imageUrl"].startswith("/api/reports/precheck-images/prechecks/")
-    assert test_client.get(body["imageUrl"]).status_code == 200
-    assert list((upload_root / "prechecks").glob("*.jpg"))
+    assert body["imageUrl"] is None
+    assert not list((upload_root / "prechecks").glob("*.jpg"))
     assert not list((upload_root / "evidence").glob("*.jpg"))
     assert not list((upload_root / "thumbnails").glob("*.jpg"))
 
 
-def test_precheck_alias_runs_inference_and_returns_temp_image_url(client):
+def test_precheck_alias_runs_inference_without_persisting_temp_image(client):
     test_client, _session_factory, model, upload_root = client
     model.label = "drain_inlet"
 
@@ -241,10 +240,9 @@ def test_precheck_alias_runs_inference_and_returns_temp_image_url(client):
     assert body["prediction"]["detections"][0]["imageWidth"] == 100
     assert body["prediction"]["detections"][0]["imageHeight"] == 100
     assert body["candidates"] == []
-    assert body["imageUrl"].startswith("/api/reports/precheck-images/prechecks/")
-    assert test_client.get(body["imageUrl"]).status_code == 200
+    assert body["imageUrl"] is None
     assert model.predict_calls == 1
-    assert list((upload_root / "prechecks").glob("*.jpg"))
+    assert not list((upload_root / "prechecks").glob("*.jpg"))
     assert not list((upload_root / "evidence").glob("*.jpg"))
     assert not list((upload_root / "thumbnails").glob("*.jpg"))
 
@@ -267,9 +265,8 @@ def test_nearby_candidates_exclude_unclassified_predictions(client):
     body = response.json()
     assert body["prediction"]["label"] == "unclassified"
     assert body["candidates"] == []
-    assert body["imageUrl"].startswith("/api/reports/precheck-images/prechecks/")
-    assert test_client.get(body["imageUrl"]).status_code == 200
-    assert list((upload_root / "prechecks").glob("*.jpg"))
+    assert body["imageUrl"] is None
+    assert not list((upload_root / "prechecks").glob("*.jpg"))
     assert not list((upload_root / "evidence").glob("*.jpg"))
     assert not list((upload_root / "thumbnails").glob("*.jpg"))
 
@@ -570,4 +567,3 @@ def test_storage_key_paths_resolve_inside_upload_root(tmp_path: Path, monkeypatc
     monkeypatch.setattr(image_storage, "settings", replace(settings, upload_root=upload_root))
 
     assert image_storage.resolve_public_upload_path("evidence/sample.jpg") == image_path
-

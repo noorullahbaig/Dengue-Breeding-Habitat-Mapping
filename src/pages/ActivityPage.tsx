@@ -6,7 +6,6 @@ import {
 	Search,
 	Trash2,
 	ChevronRight,
-	Plus,
 	ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/app/useAuth";
@@ -258,18 +257,14 @@ export function ActivityPage() {
 						)}
 
 						{/* Bottom actions — always visible */}
-						<div className="activity-bottom-actions">
-							<Link to="/report" className="activity-primary-btn">
-								<Plus size={18} />
-								{items.length > 0 ? "Start Another Report" : "Start a Report"}
-							</Link>
-							{items.length === 0 && (
+						{items.length === 0 && (
+							<div className="activity-bottom-actions">
 								<Link to="/status" className="activity-ghost-btn">
 									<Search size={16} />
 									Track by Reference Code
 								</Link>
-							)}
-						</div>
+							</div>
+						)}
 					</main>
 				)}
 			</div>

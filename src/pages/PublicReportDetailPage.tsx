@@ -190,8 +190,7 @@ export function PublicReportDetailPage() {
 										imageUrl={activeImageUrl}
 										imageAlt={`AI bounding boxes for ${selectedObsRef}`}
 										compact
-										showDetections
-									/>
+								/>
 								) : null}
 							</Surface>
 

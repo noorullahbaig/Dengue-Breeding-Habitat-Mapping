@@ -99,8 +99,10 @@ def validate_production_env(values: dict[str, str], *, duplicates: dict[str, lis
             if not _is_http_url(origin):
                 errors.append(f"CORS_ORIGINS contains an invalid origin: {origin}")
 
-    storage_backend = values.get("STORAGE_BACKEND", "local").strip().lower()
-    if storage_backend == "s3":
+    storage_backend = values.get("STORAGE_BACKEND", "").strip().lower()
+    if storage_backend != "s3":
+        errors.append("STORAGE_BACKEND must be s3 in production")
+    else:
         if not _has_value(values, "S3_BUCKET"):
             errors.append("S3_BUCKET is required when STORAGE_BACKEND=s3")
         if not _has_value(values, "S3_REGION"):

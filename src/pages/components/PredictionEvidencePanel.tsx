@@ -49,6 +49,7 @@ function detectionKey(detection: DetectionSummary) {
 
 export function PredictionEvidencePanel({
 	prediction,
+	title,
 	imageUrl,
 	imageAlt = "Evidence image with computer-vision detections",
 	showDetections = false,
@@ -68,19 +69,13 @@ export function PredictionEvidencePanel({
 			detection.bboxNormalized?.length === 4 || detection.bbox.length >= 4,
 	);
 
-	const bandColors: Record<string, string> = {
-		low: "#f59e0b", // vibrant amber
-		moderate: "#3b82f6", // vibrant blue
-		high: "#10b981", // vibrant green
-	};
-	const activeColor = bandColors[prediction.confidenceBand] || "#6b7280";
-
 	return (
 		<section
-			className={`prediction-evidence--premium${compact ? " compact" : ""}`}
+			className={`prediction-evidence prediction-evidence--${prediction.confidenceBand}${compact ? " prediction-evidence--compact" : ""}`}
+			aria-label={title ?? "AI evidence analysis"}
 		>
 			{imageUrl ? (
-				<div className="prediction-evidence__media-premium">
+				<div className="prediction-evidence__media">
 					<img
 						src={imageUrl}
 						alt={imageAlt}
@@ -96,14 +91,13 @@ export function PredictionEvidencePanel({
 						? validDetections.map((detection) => (
 								<span
 									key={detectionKey(detection)}
-									className="prediction-evidence__box-premium"
+									className="prediction-evidence__box"
 									style={{
 										...boxStyle(detection, imageSize),
-										color: activeColor,
 									}}
 									title={`${formatHabitatLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
 								>
-									<span style={{ background: activeColor }}>
+									<span>
 										{formatHabitatLabel(detection.rawLabel)}{" "}
 										{formatConfidenceScore(detection.confidence)}
 									</span>

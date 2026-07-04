@@ -45,6 +45,8 @@ from app.image_storage import (
     store_upload,
     check_s3_ready,
     get_s3_presigned_url,
+    persist_stored_image,
+    cleanup_local_stored_image,
 )
 from app.inference import ModelInference
 from app.models import Report, User
@@ -443,6 +445,7 @@ async def create_report(
     stored_image = await store_upload(image)
     try:
         prediction = model_inference.predict(stored_image.image_path)
+        persist_stored_image(stored_image, prediction.detections)
     except Exception as exc:
         delete_stored_image(stored_image)
         raise HTTPException(
@@ -520,6 +523,8 @@ async def create_report(
         thumbnail_path=str(stored_image.thumbnail_path),
         image_storage_key=stored_image.image_storage_key,
         thumbnail_storage_key=stored_image.thumbnail_storage_key,
+        annotated_image_storage_key=stored_image.annotated_image_storage_key,
+        annotated_thumbnail_storage_key=stored_image.annotated_thumbnail_storage_key,
         prediction_label=prediction.label,
         prediction_confidence=prediction.confidence,
         prediction_confidence_band=prediction.confidence_band,
@@ -557,6 +562,8 @@ async def create_report(
         db.refresh(report)
         if stack_parent:
             report.parent_report = stack_parent
+        if settings.storage_backend == "s3":
+            cleanup_local_stored_image(stored_image)
     except Exception as exc:
         db.rollback()
         delete_stored_image(stored_image)
@@ -598,7 +605,7 @@ async def _precheck_report(
     stored_image = await store_precheck_image(image)
     try:
         prediction = model_inference.predict(stored_image.image_path)
-        return NearbyCandidatesOut(
+        result = NearbyCandidatesOut(
             prediction=prediction_summary_out(prediction),
             candidates=_nearby_candidates_for_prediction(
                 db,
@@ -606,7 +613,7 @@ async def _precheck_report(
                 longitude=longitude,
                 prediction_label=prediction.label,
             ),
-            imageUrl=f"/api/reports/precheck-images/{stored_image.storage_key}",
+            imageUrl=None,
         )
     except Exception as exc:
         delete_precheck_image(stored_image)
@@ -614,6 +621,8 @@ async def _precheck_report(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="The detection model could not process the uploaded image.",
         ) from exc
+    delete_precheck_image(stored_image)
+    return result
 
 
 @app.post("/api/reports/precheck", response_model=NearbyCandidatesOut)
@@ -836,23 +845,22 @@ def public_report_thumbnail(reference: str, db: Session = Depends(get_db)) -> Fi
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
 
     if settings.storage_backend == "s3":
-        storage_key = report.thumbnail_storage_key
+        storage_key = report.annotated_thumbnail_storage_key or report.thumbnail_storage_key
         if storage_key:
             try:
                 url = get_s3_presigned_url(storage_key)
                 return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
             except HTTPException:
-                # S3 unavailable - fallback to local file if it exists
-                try:
-                    local_path = resolve_public_upload_path(report.thumbnail_storage_key or report.thumbnail_path)
-                    return FileResponse(local_path, media_type="image/jpeg")
-                except HTTPException:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found.")
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Image storage is unavailable.")
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
 
     return FileResponse(
-        resolve_public_upload_path(report.thumbnail_storage_key or report.thumbnail_path),
+        resolve_public_upload_path(
+            report.annotated_thumbnail_storage_key
+            or report.thumbnail_storage_key
+            or report.thumbnail_path
+        ),
         media_type="image/jpeg",
     )
 
@@ -868,23 +876,18 @@ def public_report_image(reference: str, db: Session = Depends(get_db)) -> FileRe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
 
     if settings.storage_backend == "s3":
-        storage_key = report.image_storage_key
+        storage_key = report.annotated_image_storage_key or report.image_storage_key
         if storage_key:
             try:
                 url = get_s3_presigned_url(storage_key)
                 return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
             except HTTPException:
-                # S3 unavailable - fallback to local file if it exists
-                try:
-                    local_path = resolve_public_upload_path(report.image_storage_key or report.image_path)
-                    return FileResponse(local_path, media_type="image/jpeg")
-                except HTTPException:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found.")
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Image storage is unavailable.")
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
 
     return FileResponse(
-        resolve_public_upload_path(report.image_storage_key or report.image_path),
+        resolve_public_upload_path(report.annotated_image_storage_key or report.image_storage_key or report.image_path),
         media_type="image/jpeg",
     )
 

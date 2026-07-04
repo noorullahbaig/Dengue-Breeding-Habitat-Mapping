@@ -23,7 +23,7 @@ export function NearbyReportPrompt({
 					<article className="nearby-card" key={candidate.reference}>
 						<img
 							src={candidate.thumbnailUrl}
-							alt=""
+							alt={`Annotated evidence for nearby report ${candidate.reference}`}
 							className="nearby-card__image"
 						/>
 						<div className="nearby-card__body">
@@ -99,7 +99,7 @@ export function NearbyReportPrompt({
 								fullWidth
 								onClick={() => onStack(candidate.reference)}
 							>
-								Merge report
+								Add to this report
 							</Button>
 						</div>
 					</article>
@@ -112,7 +112,7 @@ export function NearbyReportPrompt({
 					fullWidth
 					onClick={onCreateSeparate}
 				>
-					No, this is separate
+					Create separate report
 				</Button>
 			</div>
 		</div>

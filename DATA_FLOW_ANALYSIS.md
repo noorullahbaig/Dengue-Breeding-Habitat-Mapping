@@ -152,7 +152,20 @@ LIMIT 1
 
 **PostgreSQL tables:**
 
-#### **reports table** (40+ columns):
+#### **users table** (resident profile storage)
+
+- `id`: Primary key
+- `cognito_sub`: Cognito subject identifier
+- `email`: Resident email address
+- `display_name`: Persisted profile name from Cognito claims
+- `photo_url`: Persisted profile image URL from Cognito claims
+- `provider`: `cognito` or `local`
+- `created_at`: Creation timestamp
+- `updated_at`: Last update timestamp
+
+**✅ STORED CORRECTLY** - Google `name` and `picture` claims are written into `display_name` and `photo_url` when available.
+
+#### **reports table** (current live columns)
 
 **Identity:**
 - `id`: UUID primary key
@@ -240,14 +253,11 @@ LIMIT 1
 
 **✅ STORED CORRECTLY** - Audit trail for consent
 
-**Status & workflow (7 columns):**
+**Status & workflow (current live columns):**
 - `status`: "submitted", "under_review", "prioritized", "action_recorded", "closed"
 - `neighborhood`: Geographic area name
 - `status_message`: Human-readable status
 - `notes`: User-submitted notes (optional)
-- `officer_notes`: Officer review notes (nullable)
-- `follow_up_action`: Officer action taken (nullable)
-- `reviewed_at`, `reviewed_by`: Review audit trail
 
 **✅ STORED CORRECTLY**
 

@@ -57,6 +57,8 @@ class Report(Base):
     thumbnail_path: Mapped[str] = mapped_column(Text, nullable=False)
     image_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     thumbnail_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    annotated_image_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    annotated_thumbnail_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     prediction_label: Mapped[str] = mapped_column(String(64), nullable=False)
     prediction_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)

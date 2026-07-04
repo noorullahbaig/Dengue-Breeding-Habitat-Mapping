@@ -166,23 +166,11 @@ OFFICER_API_TOKEN=abc123def456...
 
 ## 📊 Database Fields Related to Officers
 
-Your `reports` table has these officer-related fields:
+The current `reports` table no longer has these officer-related fields. They are kept here only as historical context for the removed officer workflow. The removed fields were the officer review notes, follow-up action, reviewer name, and review timestamp.
 
-```sql
-officer_notes       TEXT     -- Internal notes from health officers
-follow_up_action    TEXT     -- What action officer took
-reviewed_by         VARCHAR  -- Officer name who reviewed
-reviewed_at         TIMESTAMP -- When reviewed
-```
+**Status**: These fields were removed from the live schema by the officer-column cleanup migration and should not be assumed to exist in the database.
 
-**Status**: These fields exist but are **optional (NULL)** and **unused** in the public app.
-
-They would only be filled if:
-1. Someone built an admin dashboard
-2. Officers used it to review reports
-3. Officer endpoints were called
-
-For your prototype: **These fields remain NULL, which is fine!**
+If you are building a replacement officer workflow, add the fields back explicitly in a new migration instead of relying on this document.
 
 ---
 

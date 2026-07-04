@@ -11,7 +11,9 @@ from uuid import uuid4
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException, UploadFile, status
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
+
+from app.inference import Detection
 
 from app.config import settings
 
@@ -35,6 +37,10 @@ class StoredImage:
     thumbnail_storage_key: str
     image_path: Path
     thumbnail_path: Path
+    annotated_image_storage_key: str = ""
+    annotated_thumbnail_storage_key: str = ""
+    annotated_image_path: Path | None = None
+    annotated_thumbnail_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -47,6 +53,8 @@ def ensure_upload_dirs() -> None:
     (settings.upload_root / "evidence").mkdir(parents=True, exist_ok=True)
     (settings.upload_root / "thumbnails").mkdir(parents=True, exist_ok=True)
     (settings.upload_root / "prechecks").mkdir(parents=True, exist_ok=True)
+    (settings.upload_root / "annotated").mkdir(parents=True, exist_ok=True)
+    (settings.upload_root / "annotated-thumbnails").mkdir(parents=True, exist_ok=True)
 
 
 def _get_s3_client():
@@ -118,7 +126,14 @@ def check_s3_ready() -> bool:
 
 
 def delete_stored_image(stored_image: StoredImage) -> None:
-    for path in (stored_image.image_path, stored_image.thumbnail_path):
+    for path in (
+        stored_image.image_path,
+        stored_image.thumbnail_path,
+        stored_image.annotated_image_path,
+        stored_image.annotated_thumbnail_path,
+    ):
+        if path is None:
+            continue
         try:
             path.unlink(missing_ok=True)
         except OSError:
@@ -129,6 +144,10 @@ def delete_stored_image(stored_image: StoredImage) -> None:
             _delete_from_s3(stored_image.image_storage_key)
         if stored_image.thumbnail_storage_key:
             _delete_from_s3(stored_image.thumbnail_storage_key)
+        if stored_image.annotated_image_storage_key:
+            _delete_from_s3(stored_image.annotated_image_storage_key)
+        if stored_image.annotated_thumbnail_storage_key:
+            _delete_from_s3(stored_image.annotated_thumbnail_storage_key)
 
 
 def delete_precheck_image(precheck_image: PrecheckImage) -> None:
@@ -210,6 +229,86 @@ def _save_jpeg(image: Image.Image, path: Path, *, quality: int) -> None:
     image.save(path, format="JPEG", quality=quality, optimize=True)
 
 
+def render_annotated_image(
+    source_path: Path,
+    annotated_path: Path,
+    thumbnail_path: Path,
+    detections: list[Detection],
+) -> None:
+    with Image.open(source_path) as source:
+        image = source.convert("RGB")
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default()
+    line_width = max(2, round(min(image.size) * 0.008))
+
+    for detection in detections:
+        if len(detection.bbox) < 4:
+            continue
+        left, top, right, bottom = detection.bbox[:4]
+        box = (
+            max(0, round(left)),
+            max(0, round(top)),
+            min(image.width - 1, round(right)),
+            min(image.height - 1, round(bottom)),
+        )
+        if box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        color = (0, 70, 79)
+        draw.rectangle(box, outline=color, width=line_width)
+        label = f"{detection.raw_label} {detection.confidence:.0%}"
+        label_box = draw.textbbox((box[0], box[1]), label, font=font)
+        label_height = label_box[3] - label_box[1] + 6
+        label_top = max(0, box[1] - label_height)
+        label_width = label_box[2] - label_box[0] + 8
+        draw.rectangle((box[0], label_top, box[0] + label_width, box[1]), fill=color)
+        draw.text((box[0] + 4, label_top + 2), label, fill="white", font=font)
+
+    _save_jpeg(image, annotated_path, quality=90)
+    thumbnail = image.copy()
+    thumbnail.thumbnail((480, 480))
+    _save_jpeg(thumbnail, thumbnail_path, quality=84)
+
+
+def persist_stored_image(stored_image: StoredImage, detections: list[Detection]) -> StoredImage:
+    render_annotated_image(
+        stored_image.image_path,
+        stored_image.annotated_image_path or stored_image.image_path,
+        stored_image.annotated_thumbnail_path or stored_image.thumbnail_path,
+        detections,
+    )
+    if settings.storage_backend == "s3":
+        keys_and_paths = (
+            (stored_image.image_storage_key, stored_image.image_path),
+            (stored_image.thumbnail_storage_key, stored_image.thumbnail_path),
+            (stored_image.annotated_image_storage_key, stored_image.annotated_image_path),
+            (stored_image.annotated_thumbnail_storage_key, stored_image.annotated_thumbnail_path),
+        )
+        try:
+            for key, path in keys_and_paths:
+                if key and path:
+                    _upload_to_s3(path, key)
+        except Exception:
+            for key, _path in keys_and_paths:
+                if key:
+                    _delete_from_s3(key)
+            raise
+    return stored_image
+
+
+def cleanup_local_stored_image(stored_image: StoredImage) -> None:
+    for path in (
+        stored_image.image_path,
+        stored_image.thumbnail_path,
+        stored_image.annotated_image_path,
+        stored_image.annotated_thumbnail_path,
+    ):
+        if path:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                logger.warning("Failed to remove local image scratch file %s", path)
+
+
 async def store_upload(upload: UploadFile) -> StoredImage:
     if upload.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
@@ -232,8 +331,12 @@ async def store_upload(upload: UploadFile) -> StoredImage:
     stem = f"{uuid4().hex}-{digest[:12]}"
     image_storage_key = f"evidence/{stem}.jpg"
     thumbnail_storage_key = f"thumbnails/{stem}.jpg"
+    annotated_image_storage_key = f"annotated/{stem}.jpg"
+    annotated_thumbnail_storage_key = f"annotated-thumbnails/{stem}.jpg"
     image_path = settings.upload_root / image_storage_key
     thumbnail_path = settings.upload_root / thumbnail_storage_key
+    annotated_image_path = settings.upload_root / annotated_image_storage_key
+    annotated_thumbnail_path = settings.upload_root / annotated_thumbnail_storage_key
 
     image = _load_image(raw)
 
@@ -242,29 +345,6 @@ async def store_upload(upload: UploadFile) -> StoredImage:
     thumbnail = image.copy()
     thumbnail.thumbnail((480, 480))
     _save_jpeg(thumbnail, thumbnail_path, quality=82)
-
-    if settings.storage_backend == "s3":
-        try:
-            _upload_to_s3(image_path, image_storage_key)
-            _upload_to_s3(thumbnail_path, thumbnail_storage_key)
-            
-            # Optional: cleanup local files after successful S3 upload
-            if settings.cleanup_local_after_s3_upload:
-                try:
-                    image_path.unlink(missing_ok=True)
-                    thumbnail_path.unlink(missing_ok=True)
-                except OSError:
-                    pass  # Keep going even if cleanup fails
-                    
-        except Exception:
-            try:
-                image_path.unlink(missing_ok=True)
-                thumbnail_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-            _delete_from_s3(image_storage_key)
-            _delete_from_s3(thumbnail_storage_key)
-            raise
 
     return StoredImage(
         original_filename=upload.filename or "evidence-image",
@@ -275,6 +355,10 @@ async def store_upload(upload: UploadFile) -> StoredImage:
         thumbnail_storage_key=thumbnail_storage_key,
         image_path=image_path,
         thumbnail_path=thumbnail_path,
+        annotated_image_storage_key=annotated_image_storage_key,
+        annotated_thumbnail_storage_key=annotated_thumbnail_storage_key,
+        annotated_image_path=annotated_image_path,
+        annotated_thumbnail_path=annotated_thumbnail_path,
     )
 
 

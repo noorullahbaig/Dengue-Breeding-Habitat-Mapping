@@ -16,7 +16,9 @@ from app.image_storage import (
     delete_stored_image,
     store_precheck_image,
     store_upload,
+    render_annotated_image,
 )
+from app.inference import Detection
 
 
 class FakeUpload:
@@ -105,3 +107,48 @@ def test_delete_stored_image_removes_evidence_and_thumbnail(tmp_path: Path):
 
     assert not evidence.exists()
     assert not thumbnail.exists()
+
+
+def test_render_annotated_image_draws_detection_and_thumbnail(tmp_path: Path):
+    source = tmp_path / "source.jpg"
+    annotated = tmp_path / "annotated.jpg"
+    thumbnail = tmp_path / "annotated-thumbnail.jpg"
+    Image.new("RGB", (200, 100), color=(255, 255, 255)).save(source, format="JPEG")
+
+    render_annotated_image(
+        source,
+        annotated,
+        thumbnail,
+        [
+            Detection(
+                raw_label="tire",
+                confidence=0.91,
+                bbox=[20, 10, 160, 80],
+                bbox_normalized=[0.1, 0.1, 0.8, 0.8],
+                image_width=200,
+                image_height=100,
+            )
+        ],
+    )
+
+    assert annotated.exists()
+    assert thumbnail.exists()
+    with Image.open(annotated) as result:
+        assert result.size == (200, 100)
+        assert result.getpixel((20, 10)) != (255, 255, 255)
+    with Image.open(thumbnail) as result:
+        assert result.width <= 480
+        assert result.height <= 480
+
+
+def test_render_annotated_image_keeps_no_detection_image_visually_unchanged(tmp_path: Path):
+    source = tmp_path / "source.jpg"
+    annotated = tmp_path / "annotated.jpg"
+    thumbnail = tmp_path / "annotated-thumbnail.jpg"
+    Image.new("RGB", (32, 32), color=(120, 80, 40)).save(source, format="JPEG")
+
+    render_annotated_image(source, annotated, thumbnail, [])
+
+    with Image.open(source) as original, Image.open(annotated) as result:
+        assert result.size == original.size
+        assert result.getpixel((16, 16)) == pytest.approx(original.getpixel((16, 16)), abs=3)

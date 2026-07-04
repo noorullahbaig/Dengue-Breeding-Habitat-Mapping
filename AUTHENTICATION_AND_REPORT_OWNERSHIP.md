@@ -35,6 +35,8 @@ VITE_COGNITO_REDIRECT_SIGN_OUT
 
 The frontend and backend values must identify the same user pool and app client. Cognito identifiers are public configuration; app-client secrets must not be placed in the browser build.
 
+Google profile name and photo claims also require the frontend OAuth request to include `profile`; the persisted user columns `display_name` and `photo_url` already exist in the backend schema.
+
 ## Deployment
 
 Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) as the authoritative production runbook.
