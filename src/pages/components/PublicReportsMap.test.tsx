@@ -41,10 +41,8 @@ vi.mock("react-leaflet", () => {
 		project: (
 			latLng: { lat: number; lng: number },
 			zoom: number,
-		): PointExpression => projectPoint(
-			{ latitude: latLng.lat, longitude: latLng.lng },
-			zoom,
-		),
+		): PointExpression =>
+			projectPoint({ latitude: latLng.lat, longitude: latLng.lng }, zoom),
 		flyTo: leafletHarness.flyTo,
 	};
 
@@ -155,9 +153,9 @@ describe("PublicReportsMap marker grouping", () => {
 	});
 
 	it("collapses core and warning into the same prioritized public state", () => {
-		expect(getPublicPriorityState({ priorityLevel: "core", priorityReason: "" })).toBe(
-			"prioritized",
-		);
+		expect(
+			getPublicPriorityState({ priorityLevel: "core", priorityReason: "" }),
+		).toBe("prioritized");
 		expect(
 			getPublicPriorityState({ priorityLevel: "warning", priorityReason: "" }),
 		).toBe("prioritized");
@@ -165,10 +163,16 @@ describe("PublicReportsMap marker grouping", () => {
 			getPublicPriorityState({ priorityLevel: "routine", priorityReason: "" }),
 		).toBe("normal");
 		expect(
-			getPublicPriorityState({ priorityLevel: "unavailable", priorityReason: "" }),
+			getPublicPriorityState({
+				priorityLevel: "unavailable",
+				priorityReason: "",
+			}),
 		).toBe("normal");
 		expect(
-			getPublicPriorityState({ priorityLevel: "unassessed", priorityReason: "" }),
+			getPublicPriorityState({
+				priorityLevel: "unassessed",
+				priorityReason: "",
+			}),
 		).toBe("normal");
 		expect(getPublicPriorityState(undefined)).toBe("normal");
 	});
@@ -258,12 +262,31 @@ describe("PublicReportsMap marker grouping", () => {
 		);
 
 		const legend = screen.getByRole("region", { name: "Map legend" });
-		expect(legend.querySelectorAll(".map-priority-legend__item")).toHaveLength(3);
+		expect(legend.querySelectorAll(".map-priority-legend__item")).toHaveLength(
+			3,
+		);
 		expect(legend).toHaveTextContent("Priority report");
 		expect(legend).toHaveTextContent("Report");
 		expect(legend).toHaveTextContent("Hotspot");
-		expect(legend.querySelector(".map-priority-legend__diamond")).not.toBeNull();
+		expect(
+			legend.querySelector(".map-priority-legend__diamond"),
+		).not.toBeNull();
 		expect(legend).not.toHaveTextContent("400 m");
+	});
+
+	it("does not render the legend while a detail sheet is open", () => {
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[]}
+				showHotspots={false}
+				showLegend={false}
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("region", { name: "Map legend" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("groups nearby coordinates at low zoom and splits them at higher zoom", () => {

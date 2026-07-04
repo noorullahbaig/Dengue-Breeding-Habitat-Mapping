@@ -9,10 +9,7 @@ import {
 	useMapEvents,
 	ZoomControl,
 } from "react-leaflet";
-import {
-	DEFAULT_MAP_ZOOM,
-	KL_CENTER,
-} from "@/lib/constants";
+import { DEFAULT_MAP_ZOOM, KL_CENTER } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
 import type {
 	HotspotPriority,
@@ -24,6 +21,7 @@ interface PublicReportsMapProps {
 	reports: PublicMapReport[];
 	hotspots: PublicHotspot[];
 	showHotspots: boolean;
+	showLegend?: boolean;
 	hotspotError?: string;
 	centerOverride?: [number, number];
 	onSelectHotspot?: (hotspot: PublicHotspot) => void;
@@ -87,7 +85,9 @@ export function getPublicPriorityState(
 	return "normal";
 }
 
-function getGroupPriorityState(reports: PublicMapReport[]): PublicPriorityState {
+function getGroupPriorityState(
+	reports: PublicMapReport[],
+): PublicPriorityState {
 	const states = reports.map((report) =>
 		getPublicPriorityState(report.hotspotPriority),
 	);
@@ -333,6 +333,7 @@ export function PublicReportsMap({
 	reports,
 	hotspots,
 	showHotspots,
+	showLegend = true,
 	hotspotError,
 	centerOverride,
 	onSelectHotspot,
@@ -379,32 +380,28 @@ export function PublicReportsMap({
 				</div>
 			) : null}
 
-			<section
-				className="map-priority-legend"
-				aria-label="Map legend"
-			>
-				<div className="map-priority-legend__item">
-					<span
-						className="map-priority-legend__dot map-priority-legend__dot--prioritized"
-						aria-hidden="true"
-					/>
-					<span>Priority report</span>
-				</div>
-				<div className="map-priority-legend__item">
-					<span
-						className="map-priority-legend__dot map-priority-legend__dot--normal"
-						aria-hidden="true"
-					/>
-					<span>Report</span>
-				</div>
-				<div className="map-priority-legend__item">
-					<span
-						className="map-priority-legend__diamond"
-						aria-hidden="true"
-					/>
-					<span>Hotspot</span>
-				</div>
-			</section>
+			{showLegend ? (
+				<section className="map-priority-legend" aria-label="Map legend">
+					<div className="map-priority-legend__item">
+						<span
+							className="map-priority-legend__dot map-priority-legend__dot--prioritized"
+							aria-hidden="true"
+						/>
+						<span>Priority report</span>
+					</div>
+					<div className="map-priority-legend__item">
+						<span
+							className="map-priority-legend__dot map-priority-legend__dot--normal"
+							aria-hidden="true"
+						/>
+						<span>Report</span>
+					</div>
+					<div className="map-priority-legend__item">
+						<span className="map-priority-legend__diamond" aria-hidden="true" />
+						<span>Hotspot</span>
+					</div>
+				</section>
+			) : null}
 
 			<MapContainer
 				center={mapCenter}
@@ -450,7 +447,13 @@ export function PublicReportsMap({
 								eventHandlers={{ click: () => onSelectHotspot?.(hotspot) }}
 							>
 								<Tooltip direction="top" offset={[0, -10]}>
-									<span style={{ fontWeight: 800, fontSize: "0.8rem", textTransform: "uppercase" }}>
+									<span
+										style={{
+											fontWeight: 800,
+											fontSize: "0.8rem",
+											textTransform: "uppercase",
+										}}
+									>
 										{hotspot.locality}
 									</span>
 								</Tooltip>

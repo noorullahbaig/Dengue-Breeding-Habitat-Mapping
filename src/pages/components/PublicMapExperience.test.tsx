@@ -1,11 +1,8 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { PublicMapExperience } from "@/pages/components/PublicMapExperience";
-import type {
-	PublicHotspot,
-	PublicMapReport,
-} from "@/types/report";
+import type { PublicHotspot, PublicMapReport } from "@/types/report";
 
 const experienceHarness = vi.hoisted(() => ({
 	group: undefined as
@@ -34,11 +31,20 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 	PublicReportsMap: ({
 		onSelectReportGroup,
 		onSelectHotspot,
+		showLegend,
 	}: {
-		onSelectReportGroup?: (group: NonNullable<typeof experienceHarness.group>) => void;
-		onSelectHotspot?: (hotspot: NonNullable<typeof experienceHarness.hotspot>) => void;
+		onSelectReportGroup?: (
+			group: NonNullable<typeof experienceHarness.group>,
+		) => void;
+		onSelectHotspot?: (
+			hotspot: NonNullable<typeof experienceHarness.hotspot>,
+		) => void;
+		showLegend?: boolean;
 	}) => (
 		<>
+			<div data-testid="legend-state">
+				{showLegend ? "legend visible" : "legend hidden"}
+			</div>
 			<button
 				type="button"
 				onClick={() => {
@@ -60,12 +66,6 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 				Select hotspot
 			</button>
 		</>
-	),
-}));
-
-vi.mock("@/pages/components/PredictionEvidencePanel", () => ({
-	PredictionEvidencePanel: ({ imageUrl }: { imageUrl?: string }) => (
-		<div>Evidence panel {imageUrl}</div>
 	),
 }));
 
@@ -145,7 +145,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		vi.clearAllMocks();
 	});
 
-	it("opens a grouped marker as a bottom report stack with carousel navigation", async () => {
+	it("opens a report cluster as a compact list and drills into a report", async () => {
 		const user = userEvent.setup();
 
 		render(
@@ -154,70 +154,54 @@ describe("PublicMapExperience report stack sheet", () => {
 			</MemoryRouter>,
 		);
 
-		await user.click(await screen.findByRole("button", { name: "Select grouped marker" }));
+		await user.click(
+			await screen.findByRole("button", { name: "Select grouped marker" }),
+		);
 
 		const reportSheet = document.querySelector(".map-mobile-sheet--report");
 		expect(reportSheet).toBeInstanceOf(HTMLElement);
 
 		expect(
 			screen.getByRole("heading", {
-				name: "3 reports at this public location",
+				name: "3 reports at this location",
 			}),
 		).toBeInTheDocument();
-		expect(screen.getByText("1 / 2")).toBeInTheDocument();
-		expect(screen.getByText("Sentul")).toBeInTheDocument();
+		expect(screen.getByTestId("legend-state")).toHaveTextContent(
+			"legend hidden",
+		);
 		expect(
-			screen.getByRole("button", { name: "View Evidence" }),
+			screen.getByRole("button", { name: /Open report for Sentul/i }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("link", { name: "View Details" }),
+			screen.getByRole("button", { name: /Open report for Wangsa Maju/i }),
 		).toBeInTheDocument();
+		expect(screen.queryByText(/Nearby reports/i)).not.toBeInTheDocument();
 		expect(
-			screen.getByText("Observations at this location"),
-		).toBeInTheDocument();
-		expect(screen.getByText("2")).toBeInTheDocument();
+			screen.queryByRole("button", { name: /Evidence/i }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Next report" }),
+		).not.toBeInTheDocument();
 
-		await user.click(screen.getByRole("button", { name: "Next report" }));
+		await user.click(
+			screen.getByRole("button", { name: /Open report for Wangsa Maju/i }),
+		);
 
-		expect(screen.getByText("2 / 2")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: "Report" })).toBeInTheDocument();
 		expect(screen.getByText("Wangsa Maju")).toBeInTheDocument();
-
-		const carousel = document.querySelector(".report-stack-sheet__carousel");
-		expect(carousel).toBeInstanceOf(HTMLElement);
-		Object.defineProperty(carousel, "clientWidth", {
-			configurable: true,
-			value: 320,
-		});
-		fireEvent.scroll(carousel as HTMLElement, {
-			target: { scrollLeft: 0 },
-		});
-		expect(screen.getByText("2 / 2")).toBeInTheDocument();
-
-		await user.click(screen.getByRole("button", { name: "View Evidence" }));
-
-		const activeEvidenceSlide = document.querySelector(
-			".report-stack-sheet__slide--active",
-		) as HTMLElement | null;
-		expect(activeEvidenceSlide).not.toBeNull();
-		expect(screen.getByText("Evidence panel /image-2.jpg")).toBeInTheDocument();
+		expect(screen.getByText("71%")).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: "Back to summary" }),
+			screen.getByRole("button", { name: "Back to report list" }),
 		).toBeInTheDocument();
 		expect(
-			within(activeEvidenceSlide as HTMLElement).queryByText("Latest update"),
-		).not.toBeInTheDocument();
+			screen.getByRole("link", { name: "View report details" }),
+		).toBeInTheDocument();
 
-		await user.click(screen.getByRole("button", { name: "Previous report" }));
-
-		expect(screen.getByText("1 / 2")).toBeInTheDocument();
-		expect(screen.getByText("Sentul")).toBeInTheDocument();
+		await user.click(
+			screen.getByRole("button", { name: "Back to report list" }),
+		);
 		expect(
-			screen.queryByText("Evidence panel /image-2.jpg"),
-		).not.toBeInTheDocument();
-		expect(
-			within(
-				document.querySelector(".report-stack-sheet__slide--active") as HTMLElement,
-			).getByText("Latest update"),
+			screen.getByRole("heading", { name: "3 reports at this location" }),
 		).toBeInTheDocument();
 	});
 
@@ -230,10 +214,12 @@ describe("PublicMapExperience report stack sheet", () => {
 			</MemoryRouter>,
 		);
 
-		await user.click(await screen.findByRole("button", { name: "Select grouped marker" }));
+		await user.click(
+			await screen.findByRole("button", { name: "Select grouped marker" }),
+		);
 		expect(
 			screen.getByRole("heading", {
-				name: "3 reports at this public location",
+				name: "3 reports at this location",
 			}),
 		).toBeInTheDocument();
 
@@ -242,7 +228,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		await waitFor(() => {
 			expect(
 				screen.queryByRole("heading", {
-					name: "3 reports at this public location",
+					name: "3 reports at this location",
 				}),
 			).not.toBeInTheDocument();
 		});
@@ -261,11 +247,16 @@ describe("PublicMapExperience report stack sheet", () => {
 			</MemoryRouter>,
 		);
 
-		await user.click(await screen.findByRole("button", { name: "Select hotspot" }));
+		await user.click(
+			await screen.findByRole("button", { name: "Select hotspot" }),
+		);
 
 		const hotspotSheet = document.querySelector(".map-mobile-sheet--hotspot");
 		expect(hotspotSheet).toBeInstanceOf(HTMLElement);
-		expect(screen.getByText("Active Outbreak")).toBeInTheDocument();
+		expect(screen.getByText("Active hotspot")).toBeInTheDocument();
+		expect(screen.getByTestId("legend-state")).toHaveTextContent(
+			"legend hidden",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Taman Melati" }),
 		).toBeInTheDocument();
@@ -282,7 +273,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		});
 	});
 
-	it("hides redundant single-observation counts and closes on Escape", async () => {
+	it("opens a single report directly without cluster copy and closes on Escape", async () => {
 		const user = userEvent.setup();
 		experienceHarness.group = {
 			reports: [report("3", { reportCount: 1, neighborhood: "Bukit Jalil" })],
@@ -297,23 +288,32 @@ describe("PublicMapExperience report stack sheet", () => {
 			</MemoryRouter>,
 		);
 
-		await user.click(await screen.findByRole("button", { name: "Select grouped marker" }));
+		await user.click(
+			await screen.findByRole("button", { name: "Select grouped marker" }),
+		);
 
+		expect(screen.getByRole("heading", { name: "Report" })).toBeInTheDocument();
+		expect(screen.queryByText(/Nearby reports/i)).not.toBeInTheDocument();
 		expect(
-			screen.getByRole("heading", { name: "Report detail" }),
-		).toBeInTheDocument();
-		expect(
-			screen.queryByText("Observations at this location"),
+			screen.queryByText(/reports at this location/i),
 		).not.toBeInTheDocument();
-		expect(screen.queryByText("1 / 1")).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /Evidence/i }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "View report details" }),
+		).toBeInTheDocument();
 
 		fireEvent.keyDown(window, { key: "Escape" });
 
 		await waitFor(() => {
 			expect(
-				screen.queryByRole("heading", { name: "Report detail" }),
+				screen.queryByRole("heading", { name: "Report" }),
 			).not.toBeInTheDocument();
 		});
+		expect(screen.getByTestId("legend-state")).toHaveTextContent(
+			"legend visible",
+		);
 	});
 
 	it("keeps the details action usable when evidence is unavailable", async () => {
@@ -337,17 +337,16 @@ describe("PublicMapExperience report stack sheet", () => {
 			</MemoryRouter>,
 		);
 
-		await user.click(await screen.findByRole("button", { name: "Select grouped marker" }));
+		await user.click(
+			await screen.findByRole("button", { name: "Select grouped marker" }),
+		);
 
 		expect(
-			screen.queryByRole("button", { name: "View Evidence" }),
+			screen.queryByRole("button", { name: /Evidence/i }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.getByRole("link", { name: "View Details" }),
+			screen.getByRole("link", { name: "View report details" }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByText("Observations at this location"),
-		).toBeInTheDocument();
-		expect(screen.getByText("3")).toBeInTheDocument();
+		expect(screen.getByText("3 observations")).toBeInTheDocument();
 	});
 });

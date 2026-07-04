@@ -90,6 +90,7 @@
   --app-rail-width: 256px;
   --app-topbar-height: 56px;
   --app-bottom-nav-height: 76px;
+  --app-bottom-nav-clearance: 104px;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Z-index */
