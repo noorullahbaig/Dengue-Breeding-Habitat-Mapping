@@ -2,9 +2,11 @@
 
 **Project:** DengueWatch KL (Dengue Breeding Habitat Mapping)  
 **Student:** Noorullah  
-**Architecture:** EC2 + Docker Compose + RDS PostgreSQL/PostGIS  
+**Architecture:** CloudFront edge + EC2 origin + Docker Compose + RDS PostgreSQL/PostGIS
 **Date:** June 25, 2026  
 **Status:** ✅ **SAFE TO PROCEED TO AWS DEPLOYMENT**
+
+Scope note: the deployment package in this repo is evaluated on the resident submission flow plus the public map/status experience. Prototype officer routes remain in the repository, but they are out of scope for deployment acceptance.
 
 ---
 
@@ -16,14 +18,15 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 
 ## 🔧 Issues Fixed
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| Critical | 5 | ✅ All Fixed |
-| High | 2 | ✅ All Fixed |
-| Medium | 1 | ✅ Fixed |
+| Severity  | Count | Status               |
+| --------- | ----- | -------------------- |
+| Critical  | 5     | ✅ All Fixed         |
+| High      | 2     | ✅ All Fixed         |
+| Medium    | 1     | ✅ Fixed             |
 | **Total** | **8** | ✅ **100% Resolved** |
 
 ### Critical Fixes
+
 1. ✅ Backend health check - fixed to use Python stdlib (not `requests`)
 2. ✅ Docker Compose health check - fixed to use Python stdlib (not `curl`)
 3. ✅ Invalid YAML syntax - removed `pass:` line
@@ -31,6 +34,7 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 5. ✅ Backend port exposure - changed to internal only (not public)
 
 ### High Priority Fixes
+
 6. ✅ Nginx nested location - moved to separate block
 7. ✅ Missing environment variables - added MODEL_PATH and UPLOAD_ROOT
 
@@ -66,6 +70,7 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 4. **DEPLOYMENT_STATUS.md** - This file (executive summary)
 
 **Existing guides (unchanged):**
+
 - AWS_SETUP_GUIDE.md - Complete deployment instructions
 - DEPLOYMENT_README.md - Quick reference
 
@@ -74,36 +79,43 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 ## 🚀 What to Do Next
 
 ### Step 1: Review (5 minutes)
+
 Read `DEPLOYMENT_READINESS_REPORT.md` to understand all fixes
 
 ### Step 2: AWS Resources (30 minutes)
+
 Follow `AWS_SETUP_GUIDE.md` to create:
+
 - RDS PostgreSQL instance with PostGIS
 - EC2 t3.medium instance
 - Security groups
 
 ### Step 3: Deploy (1-2 hours)
+
 - Install Docker on EC2
 - Upload code and YOLO model
 - Run validation commands
 - Deploy with docker-compose
 
 ### Step 4: Verify (15 minutes)
+
 - Check health endpoint
 - Submit test report
-- Verify all features work
+- Verify resident/public features work
 
 ---
 
 ## ⚠️ Important Reminders
 
 ### DO THIS FIRST:
+
 1. Create RDS separately via AWS Console (NOT in Docker)
 2. Enable PostGIS on RDS before migrations
 3. Create `/var/denguewatch/uploads` directory on EC2
 4. Verify YOLO model file before building
 
 ### DO NOT:
+
 - Expose backend port 8000 publicly (already fixed)
 - Skip validation steps on EC2
 - Forget to load .env.production before deploy
@@ -113,14 +125,14 @@ Follow `AWS_SETUP_GUIDE.md` to create:
 
 ## 📊 Confidence Assessment
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| Code Quality | ✅ High | All syntax validated |
-| Security | ✅ High | Backend internal only |
-| Configuration | ✅ High | All vars documented |
-| Documentation | ✅ High | Complete guides |
-| Dependencies | ✅ High | All verified |
-| YOLO Model | ✅ Verified | 6.0MB at correct path |
+| Category      | Status      | Notes                 |
+| ------------- | ----------- | --------------------- |
+| Code Quality  | ✅ High     | All syntax validated  |
+| Security      | ✅ High     | Backend internal only |
+| Configuration | ✅ High     | All vars documented   |
+| Documentation | ✅ High     | Complete guides       |
+| Dependencies  | ✅ High     | All verified          |
+| YOLO Model    | ✅ Verified | 6.0MB at correct path |
 
 **Overall Confidence:** ✅ **HIGH - READY TO DEPLOY**
 

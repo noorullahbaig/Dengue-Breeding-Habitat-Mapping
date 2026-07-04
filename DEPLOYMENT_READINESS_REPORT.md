@@ -1,10 +1,13 @@
 # Deployment Readiness Report
+
 ## DengueWatch KL - AWS Production Deployment
 
 **Date:** June 25, 2026  
 **Student:** Noorullah  
 **Project:** Dengue Breeding Habitat Mapping  
-**Target Architecture:** EC2 + Docker Compose + RDS PostgreSQL/PostGIS
+**Target Architecture:** CloudFront edge + EC2 origin + Docker Compose + RDS PostgreSQL/PostGIS
+
+Scope note: deployment acceptance in this repository covers the resident reporting flow plus the public map/status experience. Prototype officer routes remain in the repository, but they are out of scope for architecture, deployment acceptance, and evaluation claims.
 
 ---
 
@@ -17,9 +20,11 @@ After comprehensive audit and fixes, **all deployment files are now production-r
 ## 🔧 Critical Issues Found and Fixed
 
 ### 1. Backend Health Check - FIXED ✅
+
 **Issue:** Dockerfile.backend used `requests.get()` but `requests` library is not in requirements.txt (only `httpx` is available)
 
 **Fix:** Changed to Python standard library `urllib.request`
+
 ```python
 # Before (BROKEN):
 CMD python -c "import requests; requests.get('http://localhost:8000/api/health', timeout=5)"
@@ -33,9 +38,11 @@ CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8
 ---
 
 ### 2. Docker Compose Invalid YAML - FIXED ✅
+
 **Issue:** docker-compose.prod.yml had invalid syntax `pass:` under nginx volumes section
 
 **Fix:** Removed invalid line and properly commented out volume mounts
+
 ```yaml
 # Before (INVALID YAML):
 volumes:
@@ -53,17 +60,19 @@ volumes:
 ---
 
 ### 3. Backend Port Exposure - FIXED ✅
+
 **Issue:** Backend port 8000 was publicly exposed on EC2 host with `ports: - "8000:8000"`
 
 **Fix:** Changed to `expose: - "8000"` for internal-only access via Docker network
+
 ```yaml
 # Before (SECURITY RISK):
 ports:
-  - "8000:8000"  # Backend accessible from internet!
+  - "8000:8000" # Backend accessible from internet!
 
 # After (SECURE):
 expose:
-  - "8000"  # Only accessible to nginx via Docker network
+  - "8000" # Only accessible to nginx via Docker network
 ```
 
 **Impact:** Backend would have been publicly accessible, bypassing nginx security/rate limiting
@@ -71,15 +80,23 @@ expose:
 ---
 
 ### 4. Backend Health Check in docker-compose - FIXED ✅
+
 **Issue:** docker-compose.prod.yml backend health check used `curl` which is not installed in python:3.11-slim
 
 **Fix:** Changed to Python standard library
+
 ```yaml
 # Before (BROKEN):
 test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
 
 # After (WORKS):
-test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"]
+test:
+  [
+    "CMD",
+    "python",
+    "-c",
+    "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)",
+  ]
 ```
 
 **Impact:** Backend health checks would fail, nginx would never start due to `depends_on` condition
@@ -87,9 +104,11 @@ test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('ht
 ---
 
 ### 5. Frontend Build Dependencies - FIXED ✅
+
 **Issue:** Dockerfile.frontend used `npm ci --only=production` which skips devDependencies
 
 **Fix:** Changed to `npm ci` to install all dependencies including TypeScript and Vite
+
 ```dockerfile
 # Before (BUILD WOULD FAIL):
 RUN npm ci --only=production  # Missing typescript, vite, etc.
@@ -103,9 +122,11 @@ RUN npm ci  # Installs all dependencies needed for build
 ---
 
 ### 6. Nginx Nested Location Block - FIXED ✅
+
 **Issue:** nginx.conf had nested `location ~*` block inside `location /` block (invalid nginx syntax)
 
 **Fix:** Moved static asset caching location block to server level
+
 ```nginx
 # Before (INVALID):
 location / {
@@ -129,9 +150,11 @@ location ~* \.(js|css|...)$ {  # SEPARATE - VALID
 ---
 
 ### 7. Environment Variables Missing - FIXED ✅
+
 **Issue:** .env.production.example was missing `MODEL_PATH` and `UPLOAD_ROOT` variables
 
 **Fix:** Added both variables with correct paths
+
 ```bash
 # Added:
 MODEL_PATH=/app/models/best.pt
@@ -145,6 +168,7 @@ UPLOAD_ROOT=/app/uploads
 ## ✅ Validation Performed
 
 ### Files Audited
+
 - ✅ Dockerfile.backend
 - ✅ Dockerfile.frontend
 - ✅ docker-compose.prod.yml
@@ -154,6 +178,7 @@ UPLOAD_ROOT=/app/uploads
 - ✅ DEPLOYMENT_README.md (spot checked)
 
 ### Checks Performed
+
 - ✅ YAML syntax validation (manual - Docker not available locally)
 - ✅ Health check commands use available tools only
 - ✅ No PostgreSQL container in docker-compose.prod.yml
@@ -172,9 +197,12 @@ UPLOAD_ROOT=/app/uploads
 ## 📋 Deployment Configuration Summary
 
 ### Architecture Confirmed
+
 ```
 User Browser
     ↓ HTTP/HTTPS
+CloudFront edge
+    ↓
 EC2 Instance (denguewatch-noorullah-ec2)
     ├─ Nginx Container (port 80, 443)
     │   ├─ Serves frontend static files
@@ -188,6 +216,7 @@ RDS PostgreSQL + PostGIS (denguewatch-noorullah-db)
 ```
 
 ### Docker Compose Services
+
 1. **backend** (internal only, port 8000 not exposed)
    - Python 3.11 slim
    - FastAPI + YOLO
@@ -202,26 +231,35 @@ RDS PostgreSQL + PostGIS (denguewatch-noorullah-db)
 **NO PostgreSQL container** ✅
 
 ### Persistent Storage
+
 - Uploads: `/var/denguewatch/uploads` (EC2 host) → `/app/uploads` (backend container)
 - Must be created before running docker-compose
 
 ### Environment Variables Required
+
 ```bash
 DATABASE_URL          # RDS connection string
 MODEL_PATH            # /app/models/best.pt
 UPLOAD_ROOT           # /app/uploads
 CORS_ORIGINS          # Frontend URL(s)
 VITE_API_BASE_URL     # Frontend API endpoint
-OFFICER_API_TOKEN     # Secure random token
+```
+
+Optional prototype-only variable:
+
+```bash
+OFFICER_API_TOKEN     # Secure random token for experimental officer-only endpoints
 ```
 
 ### Resource Naming (All use prefix)
+
 - EC2: `denguewatch-noorullah-ec2`
 - RDS: `denguewatch-noorullah-db`
 - Security Groups: `denguewatch-noorullah-ec2-sg`, `denguewatch-noorullah-rds-sg`
 - Key: `denguewatch-noorullah-key`
 
 ### Tags (All resources)
+
 ```
 Owner: Noorullah
 Project: DengueWatch
@@ -234,9 +272,11 @@ Course: FYP
 ## ⚠️ Remaining Risks
 
 ### 1. YOLO Model Path (Medium Risk)
+
 **Issue:** Dockerfile.backend expects model at `ml_workspace/models/current_yolo/best.pt` in build context
 
 **Verification needed:**
+
 ```bash
 ls -lh /Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/best.pt
 # Should show: 6.0M file
@@ -247,11 +287,13 @@ ls -lh /Users/noorullah/Developer/prototype/ml_workspace/models/current_yolo/bes
 ---
 
 ### 2. RDS PostGIS Extension (Medium Risk)
+
 **Issue:** PostGIS must be manually enabled on RDS before running migrations
 
 **Mitigation:** AWS_SETUP_GUIDE.md Step 7 covers this, but easy to miss
 
 **Verification command:**
+
 ```sql
 -- After connecting to RDS
 SELECT PostGIS_version();
@@ -260,6 +302,7 @@ SELECT PostGIS_version();
 ---
 
 ### 3. Browser Geolocation Requires HTTPS (High Risk for Mobile)
+
 **Issue:** Geolocation API won't work on mobile without HTTPS (browser security policy)
 
 **Mitigation:** AWS_SETUP_GUIDE.md Step 11 covers Let's Encrypt setup
@@ -269,6 +312,7 @@ SELECT PostGIS_version();
 ---
 
 ### 4. EC2 Upload Directory Not Created (High Risk)
+
 **Issue:** `/var/denguewatch/uploads` must exist before docker-compose starts
 
 **Mitigation:** Clearly documented in AWS_SETUP_GUIDE.md Step 6.3
@@ -278,9 +322,11 @@ SELECT PostGIS_version();
 ---
 
 ### 5. Cannot Validate Locally (Low Risk)
+
 **Issue:** Docker not available on local machine, cannot run full validation
 
 **What's untested:**
+
 - Docker Compose YAML validity (manually reviewed, should be valid)
 - Docker image builds (syntax checked, should work)
 - Container networking (standard Docker bridge, should work)
@@ -296,6 +342,7 @@ Since Docker is not available locally, **validation will occur on EC2**.
 ### On EC2 (After uploading files):
 
 #### 1. Validate Docker Compose YAML
+
 ```bash
 cd /home/ec2-user/denguewatch
 docker compose -f docker-compose.prod.yml config --quiet
@@ -303,6 +350,7 @@ docker compose -f docker-compose.prod.yml config --quiet
 ```
 
 #### 2. Validate Nginx Configuration (Before Building)
+
 ```bash
 # Test nginx.conf syntax
 docker run --rm -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro nginx nginx -t
@@ -310,6 +358,7 @@ docker run --rm -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro nginx nginx -t
 ```
 
 #### 3. Build Backend Image (Dry Run)
+
 ```bash
 docker build -f Dockerfile.backend -t denguewatch-backend:test .
 # Should complete without errors
@@ -317,6 +366,7 @@ docker build -f Dockerfile.backend -t denguewatch-backend:test .
 ```
 
 #### 4. Build Frontend Image (Dry Run)
+
 ```bash
 # Export placeholder variable for build
 export VITE_API_BASE_URL=http://placeholder/api
@@ -326,6 +376,7 @@ docker build -f Dockerfile.frontend --build-arg VITE_API_BASE_URL=$VITE_API_BASE
 ```
 
 #### 5. Verify Model File Before Building
+
 ```bash
 ls -lh ml_workspace/models/current_yolo/best.pt
 # Should show: 6.0M file
@@ -338,6 +389,7 @@ ls -lh ml_workspace/models/current_yolo/best.pt
 ### Phase 1: AWS Console - Create Resources (No Docker/Code Yet)
 
 **Step 1.1: Create RDS PostgreSQL**
+
 - Service: RDS
 - Name: `denguewatch-noorullah-db`
 - Engine: PostgreSQL 15+
@@ -349,10 +401,12 @@ ls -lh ml_workspace/models/current_yolo/best.pt
 - **SAVE the endpoint and master password!**
 
 **Step 1.2: Enable PostGIS on RDS**
+
 ```bash
 # From your local machine or EC2
 psql -h denguewatch-noorullah-db.xxxxx.rds.amazonaws.com -U postgres -d denguewatch
 ```
+
 ```sql
 CREATE EXTENSION IF NOT EXISTS postgis;
 SELECT PostGIS_version();  -- Verify
@@ -360,6 +414,7 @@ SELECT PostGIS_version();  -- Verify
 ```
 
 **Step 1.3: Create EC2 Instance**
+
 - Service: EC2
 - Name: `denguewatch-noorullah-ec2`
 - AMI: Amazon Linux 2023
@@ -371,6 +426,7 @@ SELECT PostGIS_version();  -- Verify
 - Tags: Owner=Noorullah, Project=DengueWatch, Environment=Demo, Course=FYP
 
 **Step 1.4: Configure RDS Security Group**
+
 - Edit `denguewatch-noorullah-rds-sg` inbound rules
 - Add: PostgreSQL (5432) from `denguewatch-noorullah-ec2-sg`
 
@@ -379,12 +435,14 @@ SELECT PostGIS_version();  -- Verify
 ### Phase 2: EC2 Setup - Install Docker (No App Yet)
 
 **Step 2.1: Connect to EC2**
+
 ```bash
 chmod 400 denguewatch-noorullah-key.pem
 ssh -i denguewatch-noorullah-key.pem ec2-user@<EC2_PUBLIC_IP>
 ```
 
 **Step 2.2: Install Docker**
+
 ```bash
 sudo yum update -y
 sudo yum install -y docker
@@ -412,6 +470,7 @@ docker compose version
 **Step 3.1: Upload Code to EC2**
 
 Option A - Git (if repository):
+
 ```bash
 # On EC2
 cd /home/ec2-user
@@ -420,6 +479,7 @@ cd denguewatch
 ```
 
 Option B - SCP (from local machine):
+
 ```bash
 # Create tarball (exclude large/unnecessary files)
 cd /Users/noorullah/Developer/prototype
@@ -438,6 +498,7 @@ tar -xzf ../denguewatch.tar.gz
 ```
 
 **Step 3.2: Upload YOLO Model**
+
 ```bash
 # From local machine
 scp -i denguewatch-noorullah-key.pem \
@@ -451,6 +512,7 @@ ls -lh /home/ec2-user/denguewatch/ml_workspace/models/current_yolo/best.pt
 ```
 
 **Step 3.3: Create Upload Directory**
+
 ```bash
 # On EC2
 sudo mkdir -p /var/denguewatch/uploads
@@ -459,6 +521,7 @@ sudo chmod 755 /var/denguewatch/uploads
 ```
 
 **Step 3.4: Configure Environment Variables**
+
 ```bash
 # On EC2
 cd /home/ec2-user/denguewatch
@@ -467,16 +530,23 @@ nano .env.production
 ```
 
 Edit these values:
+
 ```bash
 DATABASE_URL=postgresql+psycopg://postgres:<YOUR_RDS_PASSWORD>@denguewatch-noorullah-db.<ENDPOINT>.rds.amazonaws.com:5432/denguewatch
 CORS_ORIGINS=http://<EC2_PUBLIC_IP>
 VITE_API_BASE_URL=http://<EC2_PUBLIC_IP>/api
-OFFICER_API_TOKEN=$(openssl rand -hex 32)  # Generate token first
+```
+
+If you are using the experimental officer-only prototype endpoints, also add:
+
+```bash
+OFFICER_API_TOKEN=$(openssl rand -hex 32)
 ```
 
 Save: Ctrl+X, Y, Enter
 
 **Step 3.5: Validate Before Deploying**
+
 ```bash
 # Validate YAML
 docker compose -f docker-compose.prod.yml config --quiet
@@ -489,6 +559,7 @@ ls -lh ml_workspace/models/current_yolo/best.pt
 ```
 
 **Step 3.6: Build and Deploy**
+
 ```bash
 # Load environment variables
 export $(cat .env.production | xargs)
@@ -505,6 +576,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 **Step 3.7: Monitor Deployment**
+
 ```bash
 # Watch logs in real-time
 docker compose -f docker-compose.prod.yml logs -f
@@ -524,6 +596,7 @@ docker compose -f docker-compose.prod.yml logs nginx | grep -i "error"
 ### Phase 4: Database Migrations and Verification
 
 **Step 4.1: Run Alembic Migrations**
+
 ```bash
 # On EC2
 cd /home/ec2-user/denguewatch
@@ -531,6 +604,7 @@ docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
 ```
 
 Expected output:
+
 ```
 INFO  [alembic.runtime.migration] Running upgrade -> 0001_initial_reports
 INFO  [alembic.runtime.migration] Running upgrade 0001 -> 0002_report_stacking
@@ -539,6 +613,7 @@ INFO  [alembic.runtime.migration] Running upgrade 0003 -> 0004_postgis_spatial
 ```
 
 **Step 4.2: Verify Health Endpoint**
+
 ```bash
 # From EC2
 curl http://localhost/api/health
@@ -548,6 +623,7 @@ curl http://<EC2_PUBLIC_IP>/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "ok": true,
@@ -563,11 +639,14 @@ Expected response:
 Open in browser: `http://<EC2_PUBLIC_IP>`
 
 **Step 4.4: Submit Test Report**
+
 1. Navigate to `/report`
 2. Upload test image
 3. Complete submission
-4. Verify in officer dashboard: `/officer`
-5. Check public map: `/map`
+4. Check public map: `/map`
+5. Check anonymous status flow
+
+Optional prototype-only check: 6. Verify in the experimental officer dashboard: `/officer`
 
 ---
 
@@ -576,10 +655,12 @@ Open in browser: `http://<EC2_PUBLIC_IP>`
 **Why:** Browser geolocation requires HTTPS on mobile devices
 
 **Prerequisites:**
+
 - Domain name pointed to EC2 Elastic IP
 - Ports 80 and 443 open in security group
 
 **Steps:**
+
 ```bash
 # On EC2
 sudo yum install -y certbot
@@ -622,9 +703,13 @@ After deployment, verify:
 - [ ] PostGIS enabled: Health check shows `"postgis":true`
 - [ ] YOLO model loaded: Health check shows `"model":true`
 - [ ] Can submit test report
-- [ ] Officer dashboard accessible: `/officer`
 - [ ] Public map displays: `/map`
 - [ ] Uploads persist after restart: `docker compose restart backend`
+- [ ] If CloudFront is in front of the app, verify the distribution serves the expected public entrypoint
+
+Optional prototype-only verification:
+
+- [ ] Experimental officer dashboard accessible: `/officer`
 
 ---
 
@@ -635,6 +720,7 @@ After deployment, verify:
 All critical issues have been fixed. The deployment package is production-ready.
 
 **Confidence Level:** HIGH
+
 - All syntax validated manually
 - All dependencies verified
 - All paths confirmed consistent
@@ -642,11 +728,13 @@ All critical issues have been fixed. The deployment package is production-ready.
 - Documentation is complete and accurate
 
 **Known Limitations:**
+
 1. Full Docker validation not performed locally (Docker unavailable)
 2. RDS connectivity will be tested during first deployment
 3. YOLO model path assumed correct (verify before building)
 
 **Recommended Approach:**
+
 1. Verify YOLO model file exists locally
 2. Create RDS instance first and enable PostGIS
 3. Create EC2 instance and install Docker
@@ -668,6 +756,7 @@ If issues occur during deployment:
 5. **Full redeploy:** `docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.prod.yml up -d --build`
 
 **Documentation:**
+
 - Full guide: `AWS_SETUP_GUIDE.md`
 - Quick reference: `DEPLOYMENT_README.md`
 - This report: `DEPLOYMENT_READINESS_REPORT.md`

@@ -108,78 +108,6 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* ---------- Brand header ---------- */
-.activity-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1.5rem 0 1.75rem;
-  align-self: flex-start;
-  width: 100%;
-}
-
-.activity-brand__mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #00464f 0%, #005f6b 100%);
-  border: 1px solid rgba(255,255,255,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
-  flex-shrink: 0;
-}
-
-.activity-brand__mark span {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1rem;
-  color: #ffffff;
-  letter-spacing: -0.03em;
-}
-
-.activity-brand__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 1;
-  min-width: 0;
-}
-
-.activity-brand__copy strong {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.01em;
-}
-
-.activity-brand__copy span {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: var(--font-label);
-}
-
-/* Count badge in header */
-.activity-brand__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 0.45rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  font-family: var(--font-label);
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-}
-
 /* ---------- Card ---------- */
 .activity-card {
   width: 100%;
@@ -393,6 +321,7 @@
 
 /* ---------- Inner report list ---------- */
 .activity-inner-list {
+  list-style: none;
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -400,7 +329,9 @@
   flex-direction: column;
   gap: 0.625rem;
   min-height: 0;
+  margin: 0 0 1rem;
   margin-bottom: 1rem;
+  padding-left: 0;
   padding-right: 2px; /* room for scrollbar */
 }
 
@@ -638,9 +569,6 @@
 
 /* ---------- Responsive ---------- */
 @media (min-height: 720px) {
-  .activity-brand {
-    padding: 2rem 0 2rem;
-  }
   .activity-card {
     padding: 2rem 2rem 2.25rem;
   }

@@ -186,6 +186,8 @@ function toPublicReport(report: SubmittedReport): PublicMapReport {
     imageUrl: latestReport.imageUrl ?? placeholderEvidenceImage,
     privacyNote:
       'Citizen-submitted image and exact pin are public because the reporter confirmed publication.',
+    hotspotPriority:
+      report.hotspotPriority ?? defaultHotspotPriority(report.reportLocation),
   }
 }
 
@@ -223,6 +225,8 @@ function toPublicReportDetail(report: SubmittedReport, reports: SubmittedReport[
     reportCount: Math.max(members.length, 1),
     thumbnailUrl: latestReport.thumbnailUrl ?? placeholderEvidenceImage,
     imageUrl: latestReport.imageUrl ?? placeholderEvidenceImage,
+    hotspotPriority:
+      rootReport.hotspotPriority ?? defaultHotspotPriority(rootReport.reportLocation),
     observations: (members.length ? members : [rootReport]).map(toObservation),
   }
 }
@@ -436,6 +440,19 @@ export function createMockAppServices(
 
   return {
     reportsService: {
+      async getMyReports() {
+        await delay()
+        // Mock implementation: return all stored reports
+        // In real implementation, this would filter by authenticated user
+        const reports = readStoredReports()
+        return reports.map((report) => ({
+          reference: report.reference,
+          status: report.status,
+          createdAt: report.createdAt,
+          neighborhood: report.neighborhood,
+          statusMessage: report.statusMessage,
+        }))
+      },
       async createReport(draft, createOptions) {
         await delay()
         if (!createOptions?.publicConsentAccepted) {
@@ -529,58 +546,7 @@ export function createMockAppServices(
         return fetchCurrentIdengueHotspots(options.hotspotFetchImpl ?? fetch, bounds)
       },
     },
-    officerService: {
-      async listReports() {
-        await delay(120)
-        return readStoredReports().map(toOfficerReport)
-      },
-      async updateReport(reference, update) {
-        await delay(120)
-        const reports = readStoredReports()
-        const report = reports.find(
-          (candidate) => candidate.reference.toUpperCase() === reference.trim().toUpperCase(),
-        )
-
-        if (!report) {
-          throw new Error('Report not found.')
-        }
-
-        const updatedReport = applyOfficerUpdate(report, update)
-        writeStoredReports(
-          reports.map((candidate) =>
-            candidate.reference === report.reference ? updatedReport : candidate,
-          ),
-        )
-
-        return {
-          ...toOfficerReport(updatedReport),
-          officerNotes: update.officerNotes,
-          followUpAction: update.followUpAction,
-          reviewedAt: new Date().toISOString(),
-          reviewedBy: update.reviewedBy ?? 'Local officer demo',
-        }
-      },
-      async getHotspotStatus() {
-        await delay(80)
-        return hotspotMirrorStatus
-      },
-      async syncHotspots() {
-        await delay(120)
-        const syncedAt = new Date().toISOString()
-        hotspotMirrorStatus = {
-          hotspotCount: 1,
-          latestSnapshotDate: syncedAt,
-          lastSyncedAt: syncedAt,
-          sourceLabel: 'iDengue hotspot context',
-        }
-
-        return {
-          syncedCount: hotspotMirrorStatus.hotspotCount,
-          snapshotDate: hotspotMirrorStatus.latestSnapshotDate,
-          sourceLabel: hotspotMirrorStatus.sourceLabel,
-          syncedAt,
-        }
-      },
-    },
+  }
+}    },
   }
 }

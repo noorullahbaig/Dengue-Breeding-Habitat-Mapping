@@ -1,7 +1,7 @@
 export async function requestCameraStream() {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error(
-      'Live camera preview is not available in this browser. Use the upload fallback instead.',
+      'Live camera preview is not available in this browser.',
     )
   }
 
@@ -10,9 +10,15 @@ export async function requestCameraStream() {
       video: { facingMode: { ideal: 'environment' } },
       audio: false,
     })
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'NotAllowedError') {
+      throw new DOMException(
+        'Camera access is blocked. Please enable Camera in your browser settings to continue.',
+        'NotAllowedError',
+      )
+    }
     throw new Error(
-      'Camera permission was blocked. Use the upload fallback instead.',
+      'Camera access failed. Please check your browser settings and try again.',
     )
   }
 }

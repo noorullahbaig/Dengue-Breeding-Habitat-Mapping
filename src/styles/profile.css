@@ -108,57 +108,6 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* ---------- Brand header ---------- */
-.profile-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1.5rem 0 1.75rem;
-  align-self: flex-start;
-  width: 100%;
-}
-
-.profile-brand__mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #00464f 0%, #005f6b 100%);
-  border: 1px solid rgba(255,255,255,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
-  flex-shrink: 0;
-}
-
-.profile-brand__mark span {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1rem;
-  color: #ffffff;
-  letter-spacing: -0.03em;
-}
-
-.profile-brand__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.profile-brand__copy strong {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.01em;
-}
-
-.profile-brand__copy span {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: var(--font-label);
-}
-
 /* ---------- Card ---------- */
 .profile-card {
   width: 100%;
@@ -515,7 +464,10 @@
 
 /* ---------- Stats strip ---------- */
 .profile-stats {
+  list-style: none;
   margin-bottom: 1.5rem;
+  margin-top: 0;
+  padding-left: 0;
 }
 
 .profile-stat-card {
@@ -578,9 +530,6 @@
 
 /* ---------- Responsive ---------- */
 @media (min-height: 720px) {
-  .profile-brand {
-    padding: 2rem 0 2rem;
-  }
   .profile-card {
     padding: 2rem 2rem 2.25rem;
   }

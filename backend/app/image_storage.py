@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from io import BytesIO
@@ -14,6 +15,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.config import settings
 
+
+logger = logging.getLogger(__name__)
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
@@ -78,8 +81,9 @@ def _delete_from_s3(storage_key: str) -> None:
     client = _get_s3_client()
     try:
         client.delete_object(Bucket=settings.s3_bucket, Key=storage_key)
-    except (BotoCoreError, ClientError):
-        pass
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning(f"Failed to delete S3 object {storage_key}: {exc}")
+        # Don't raise - this is cleanup, we'll log for manual intervention
 
 
 def get_s3_presigned_url(storage_key: str) -> str:
@@ -243,6 +247,15 @@ async def store_upload(upload: UploadFile) -> StoredImage:
         try:
             _upload_to_s3(image_path, image_storage_key)
             _upload_to_s3(thumbnail_path, thumbnail_storage_key)
+            
+            # Optional: cleanup local files after successful S3 upload
+            if settings.cleanup_local_after_s3_upload:
+                try:
+                    image_path.unlink(missing_ok=True)
+                    thumbnail_path.unlink(missing_ok=True)
+                except OSError:
+                    pass  # Keep going even if cleanup fails
+                    
         except Exception:
             try:
                 image_path.unlink(missing_ok=True)

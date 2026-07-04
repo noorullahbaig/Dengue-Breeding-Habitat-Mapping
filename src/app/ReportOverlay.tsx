@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { hasReportDraft, type ReportRouteState } from '@/app/reportOverlayState'
 import { useReportDraft } from '@/app/useReportDraft'
 
@@ -88,7 +89,7 @@ export function ReportOverlay({ children, routeState }: ReportOverlayProps) {
       <div className="report-overlay__surface">
         {showResumePrompt ? (
           <section className="report-resume" aria-labelledby="report-resume-title">
-            <div className="report-resume__mark" aria-hidden="true">KL</div>
+            <BrandLogo variant="mark" size={48} treatment="framed" className="report-resume__mark" />
             <div>
               <p className="report-resume__eyebrow">Unfinished report</p>
               <h1 id="report-resume-title">Continue where you left off?</h1>

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, CircleUserRound, Clock3, FileText, Home, Map as MapIcon, ShieldCheck, User } from 'lucide-react'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { useAuth } from '@/app/useAuth'
 import { hasReportDraft } from '@/app/reportOverlayState'
 import { useReportDraft } from '@/app/useReportDraft'
@@ -60,13 +61,7 @@ export function AppLayout() {
       <aside className="app-rail" aria-label="Primary desktop navigation">
         <div className="app-rail__brand">
           <NavLink to="/" className="app-brand">
-            <span className="app-brand__mark" aria-hidden="true">
-              KL
-            </span>
-            <span className="app-brand__copy">
-              <strong>DengueWatch KL</strong>
-              <span>Resident reporting system</span>
-            </span>
+            <BrandLogo variant="lockup" size={48} treatment="bare" className="app-brand__logo" />
           </NavLink>
         </div>
         <nav
@@ -125,12 +120,7 @@ export function AppLayout() {
       {!isReportPath && (
         <header className="app-topbar">
           <NavLink to="/" className="app-brand app-brand--topbar">
-            <span className="app-brand__mark" aria-hidden="true">
-              KL
-            </span>
-            <span className="app-brand__copy">
-              <strong>DengueWatch KL</strong>
-            </span>
+            <BrandLogo variant="lockup" size={32} treatment="bare" className="app-brand__logo" />
           </NavLink>
           <div className="app-topbar__actions">
             <NavLink

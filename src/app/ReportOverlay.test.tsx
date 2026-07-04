@@ -37,6 +37,8 @@ describe('ReportOverlay draft recovery', () => {
     renderOverlay()
 
     expect(screen.getByRole('heading', { name: 'Continue where you left off?' })).toBeInTheDocument()
+    expect(screen.getByTestId('brand-logo')).toHaveAttribute('data-variant', 'mark')
+    expect(screen.getByTestId('brand-logo')).toHaveAttribute('data-treatment', 'framed')
     await user.click(screen.getByRole('button', { name: 'Resume report' }))
 
     expect(screen.getByText('Active report flow')).toBeInTheDocument()

@@ -18,13 +18,16 @@ class Settings:
     model_path: Path
     upload_root: Path
     cors_origins: list[str]
-    officer_api_token: str
-    idengue_hotspot_endpoint: str
+    idengue_hotspot_endpoint: str = "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query"
     max_upload_bytes: int = 10 * 1024 * 1024
     storage_backend: str = "local"
     s3_bucket: str | None = None
     s3_region: str = "ap-southeast-1"
     s3_presigned_url_expires_seconds: int = 3600
+    cleanup_local_after_s3_upload: bool = False
+    cognito_region: str | None = None
+    cognito_user_pool_id: str | None = None
+    cognito_app_client_id: str | None = None
 
 
 def _resolve_path(value: str) -> Path:
@@ -57,7 +60,6 @@ def get_settings() -> Settings:
         ),
         upload_root=_resolve_path(os.getenv("UPLOAD_ROOT", "./uploads")),
         cors_origins=cors_origins,
-        officer_api_token=os.getenv("OFFICER_API_TOKEN", "local-officer-demo-token"),
         idengue_hotspot_endpoint=os.getenv(
             "IDENGUE_HOTSPOT_ENDPOINT",
             "https://mygis.mysa.gov.my/erica1/rest/services/iDengue/WM_idengue/MapServer/0/query",
@@ -66,6 +68,10 @@ def get_settings() -> Settings:
         s3_bucket=os.getenv("S3_BUCKET"),
         s3_region=os.getenv("S3_REGION", "ap-southeast-1"),
         s3_presigned_url_expires_seconds=int(os.getenv("S3_PRESIGNED_URL_EXPIRES_SECONDS", "3600")),
+        cleanup_local_after_s3_upload=os.getenv("CLEANUP_LOCAL_AFTER_S3_UPLOAD", "false").lower() == "true",
+        cognito_region=os.getenv("COGNITO_REGION"),
+        cognito_user_pool_id=os.getenv("COGNITO_USER_POOL_ID"),
+        cognito_app_client_id=os.getenv("COGNITO_APP_CLIENT_ID"),
     )
 
 settings = get_settings()

@@ -4,39 +4,39 @@ import { AppLayout } from '@/app/AppLayout'
 import { ReportOverlay } from '@/app/ReportOverlay'
 import type { ReportRouteState } from '@/app/reportOverlayState'
 import { useMobileViewport } from '@/app/useMobileViewport'
-import { HomePageV2 } from '@/pages/ux-v2/HomePageV2'
+import { HomePage } from '@/pages/HomePage'
 import { LoadingState } from '@/components/ui'
 
-const ActivityPageV2 = lazy(() =>
-  import('@/pages/ux-v2/ActivityPageV2').then((module) => ({ default: module.ActivityPageV2 })),
+const ActivityPage = lazy(() =>
+  import('@/pages/ActivityPage').then((module) => ({ default: module.ActivityPage })),
 )
-const ProfilePageV2 = lazy(() =>
-  import('@/pages/ux-v2/ProfilePageV2').then((module) => ({ default: module.ProfilePageV2 })),
+const ProfilePage = lazy(() =>
+  import('@/pages/ProfilePage').then((module) => ({ default: module.ProfilePage })),
 )
-const PublicMapPageV2 = lazy(() =>
-  import('@/pages/ux-v2/PublicMapPageV2').then((module) => ({ default: module.PublicMapPageV2 })),
+const PublicMapPage = lazy(() =>
+  import('@/pages/PublicMapPage').then((module) => ({ default: module.PublicMapPage })),
 )
-const OfficerDashboardPageV2 = lazy(() =>
-  import('@/pages/ux-v2/OfficerDashboardPageV2').then((module) => ({
-    default: module.OfficerDashboardPageV2,
+const OfficerDashboardPage = lazy(() =>
+  import('@/pages/OfficerDashboardPage').then((module) => ({
+    default: module.OfficerDashboardPage,
   })),
 )
-const PublicReportDetailPageV2 = lazy(() =>
-  import('@/pages/ux-v2/PublicReportDetailPageV2').then((module) => ({
-    default: module.PublicReportDetailPageV2,
+const PublicReportDetailPage = lazy(() =>
+  import('@/pages/PublicReportDetailPage').then((module) => ({
+    default: module.PublicReportDetailPage,
   })),
 )
-const LearnPageV2 = lazy(() =>
-  import('@/pages/ux-v2/LearnPageV2').then((module) => ({ default: module.LearnPageV2 })),
+const LearnPage = lazy(() =>
+  import('@/pages/LearnPage').then((module) => ({ default: module.LearnPage })),
 )
-const ReportPageV2 = lazy(() =>
-  import('@/pages/ux-v2/ReportPageV2').then((module) => ({ default: module.ReportPageV2 })),
+const ReportPage = lazy(() =>
+  import('@/pages/ReportPage').then((module) => ({ default: module.ReportPage })),
 )
-const ReportSuccessPageV2 = lazy(() =>
-  import('@/pages/ux-v2/ReportSuccessPageV2').then((module) => ({ default: module.ReportSuccessPageV2 })),
+const ReportSuccessPage = lazy(() =>
+  import('@/pages/ReportSuccessPage').then((module) => ({ default: module.ReportSuccessPage })),
 )
-const StatusPageV2 = lazy(() =>
-  import('@/pages/ux-v2/StatusPageV2').then((module) => ({ default: module.StatusPageV2 })),
+const StatusPage = lazy(() =>
+  import('@/pages/StatusPage').then((module) => ({ default: module.StatusPage })),
 )
 
 export function AppRoutes() {
@@ -54,28 +54,16 @@ export function AppRoutes() {
       {/* Standalone routes — no app shell */}
 
       <Route element={<AppLayout />}>
-        <Route index element={<HomePageV2 />} />
-        <Route path="/report" element={<ReportPageV2 />} />
-        <Route path="/report/success" element={<ReportSuccessPageV2 />} />
-        <Route path="/activity" element={<ActivityPageV2 />} />
-        <Route path="/profile" element={<ProfilePageV2 />} />
-        <Route path="/status" element={<StatusPageV2 />} />
-        <Route path="/learn" element={<LearnPageV2 />} />
-        <Route path="/map" element={<PublicMapPageV2 />} />
-        <Route path="/map/reports/:reference" element={<PublicReportDetailPageV2 />} />
-        <Route path="/officer" element={<OfficerDashboardPageV2 />} />
-
-        {/* Temporary redirects for any hardcoded /next legacy links */}
-        <Route path="/next" element={<Navigate to="/" replace />} />
-        <Route path="/next/report" element={<Navigate to="/report" replace />} />
-        <Route path="/next/report/success" element={<Navigate to="/report/success" replace />} />
-        <Route path="/next/activity" element={<Navigate to="/activity" replace />} />
-        <Route path="/next/profile" element={<Navigate to="/profile" replace />} />
-        <Route path="/next/status" element={<Navigate to="/status" replace />} />
-        <Route path="/next/learn" element={<Navigate to="/learn" replace />} />
-        <Route path="/next/map" element={<Navigate to="/map" replace />} />
-        <Route path="/next/map/reports/:reference" element={<Navigate to="/map/reports/:reference" replace />} />
-        <Route path="/next/officer" element={<Navigate to="/officer" replace />} />
+        <Route index element={<HomePage />} />
+        <Route path="/report" element={<ReportPage />} />
+        <Route path="/report/success" element={<ReportSuccessPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/status" element={<StatusPage />} />
+        <Route path="/learn" element={<LearnPage />} />
+        <Route path="/map" element={<PublicMapPage />} />
+        <Route path="/map/reports/:reference" element={<PublicReportDetailPage />} />
+        <Route path="/officer" element={<OfficerDashboardPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
@@ -83,7 +71,7 @@ export function AppRoutes() {
     {showReportOverlay ? (
       <ReportOverlay routeState={routeState}>
         {(closeReportOverlay) => (
-          <ReportPageV2 isOverlay onRequestClose={closeReportOverlay} />
+          <ReportPage isOverlay onRequestClose={closeReportOverlay} />
         )}
       </ReportOverlay>
     ) : null}

@@ -2,6 +2,8 @@
 
 This directory contains Docker and deployment configuration files for deploying DengueWatch KL to AWS.
 
+Scope note: deployment acceptance in this repository is based on the resident reporting flow plus the public map/status experience. Prototype officer routes remain in the codebase, but they are out of scope for deployment acceptance and architecture claims. The current deployed public edge uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`; CloudFront origin and cache settings are managed outside this repository.
+
 ---
 
 ## 📁 Files Created
@@ -84,6 +86,7 @@ This directory contains Docker and deployment configuration files for deploying 
 ### Deployment Steps
 
 1. **Read the full guide first:**
+
    ```bash
    # Open in your editor or browser
    open AWS_SETUP_GUIDE.md
@@ -100,12 +103,14 @@ This directory contains Docker and deployment configuration files for deploying 
    - Install Docker and Docker Compose
 
 4. **Upload code and model to EC2:**
+
    ```bash
    # From your local machine
    scp -i denguewatch-noorullah-key.pem -r . ec2-user@YOUR_EC2_IP:~/denguewatch/
    ```
 
 5. **Configure environment:**
+
    ```bash
    # On EC2
    cd ~/denguewatch
@@ -114,18 +119,21 @@ This directory contains Docker and deployment configuration files for deploying 
    ```
 
 6. **Create upload directory:**
+
    ```bash
    sudo mkdir -p /var/denguewatch/uploads
    sudo chown ec2-user:ec2-user /var/denguewatch/uploads
    ```
 
 7. **Build and deploy:**
+
    ```bash
    export $(cat .env.production | xargs)
    docker-compose -f docker-compose.prod.yml up -d --build
    ```
 
 8. **Run migrations:**
+
    ```bash
    docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
    ```
@@ -182,16 +190,20 @@ This directory contains Docker and deployment configuration files for deploying 
 ### Required Variables (.env.production)
 
 ```bash
-# RDS connection (MUST be configured)
+# RDS connection (MUST be configured for the application origin)
 DATABASE_URL=postgresql+psycopg://postgres:PASSWORD@RDS_ENDPOINT:5432/denguewatch
 
-# CORS origins (frontend URL)
+# CORS origins (CloudFront URL, custom domain, or origin URL as applicable)
 CORS_ORIGINS=http://YOUR_EC2_IP,https://your-domain.com
 
 # Frontend API base URL
 VITE_API_BASE_URL=http://YOUR_EC2_IP/api
+```
 
-# Officer dashboard authentication
+Optional prototype-only variable:
+
+```bash
+# Only if you are using the experimental officer-only endpoints
 OFFICER_API_TOKEN=your-secure-random-token
 ```
 
@@ -210,14 +222,18 @@ After deployment, verify:
 
 - [ ] Both containers running: `docker ps`
 - [ ] Health check passes: `curl http://YOUR_EC2_IP/api/health`
-- [ ] Frontend loads: Open `http://YOUR_EC2_IP` in browser
+- [ ] Frontend loads: open the CloudFront URL, custom domain, or origin URL you are actively using
 - [ ] Backend logs show no errors: `docker-compose logs backend`
 - [ ] Database connection works: Check health endpoint shows `"database":true`
 - [ ] PostGIS enabled: Health endpoint shows `"postgis":true`
 - [ ] YOLO model loaded: Health endpoint shows `"model":true`
 - [ ] Can submit test report
-- [ ] Officer dashboard accessible: `http://YOUR_EC2_IP/officer`
 - [ ] Public map displays: `http://YOUR_EC2_IP/map`
+- [ ] If CloudFront is in front of the app, confirm the distribution resolves and serves the expected public entrypoint
+
+Optional prototype-only verification:
+
+- [ ] Experimental officer dashboard accessible: `http://YOUR_EC2_IP/officer`
 
 ---
 
@@ -346,6 +362,7 @@ S3 Bucket:          denguewatch-noorullah-uploads (optional)
 ```
 
 **Tags for all resources:**
+
 ```
 Owner: Noorullah
 Project: DengueWatch
@@ -369,6 +386,7 @@ Total:                       ~$35/month
 ```
 
 **Cost optimization:**
+
 - Stop EC2 when not demoing: `aws ec2 stop-instances`
 - Keep RDS running (cheap, preserves data)
 - Use Elastic IP to maintain same public IP

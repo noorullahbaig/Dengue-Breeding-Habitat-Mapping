@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db, SessionLocal
+from app.auth import get_current_user, get_current_user_optional
 from app.domain import (
     PUBLIC_CONSENT_TEXT,
     PUBLIC_CONSENT_VERSION,
@@ -45,15 +46,13 @@ from app.image_storage import (
     get_s3_presigned_url,
 )
 from app.inference import ModelInference
-from app.models import Report
+from app.models import Report, User
 from app.schemas import (
     HealthOut,
     HotspotMirrorStatusOut,
     HotspotSyncOut,
     NearbyCandidatesOut,
     NearbyReportOut,
-    OfficerReportOut,
-    OfficerReportUpdateIn,
     PublicHotspotOut,
     PublicMapReportOut,
     PublicReportDetailOut,
@@ -63,7 +62,6 @@ from app.schemas import (
 from app.service_area import ensure_within_service_area, is_within_service_area
 from app.serializers import (
     nearby_report_out,
-    officer_report_out,
     prediction_summary_out,
     public_hotspot_out,
     public_report_detail_out,
@@ -79,6 +77,14 @@ from app.serializers import (
 async def lifespan(app: FastAPI):
     ensure_upload_dirs()
     cleanup_precheck_uploads()
+    
+    # Validate storage configuration on startup
+    if settings.storage_backend == "s3":
+        if not settings.s3_bucket:
+            raise ValueError("S3_BUCKET environment variable is required when STORAGE_BACKEND=s3")
+        if not check_s3_ready():
+            print("WARNING: S3 bucket is not accessible at startup. Image uploads may fail.")
+    
     model_inference.load()
     
     # Start periodic hotspot sync in background
@@ -118,17 +124,6 @@ app.add_middleware(
 
 def _report_by_reference(db: Session, reference: str) -> Report | None:
     return db.scalar(select(Report).where(Report.reference == reference.strip().upper()))
-
-
-def _require_officer(
-    authorization: str | None = Header(default=None),
-) -> None:
-    expected = f"Bearer {settings.officer_api_token}"
-    if authorization != expected:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Officer access token is required.",
-        )
 
 
 def _is_postgresql_session(db: Session) -> bool:
@@ -422,6 +417,7 @@ async def create_report(
     stack_parent_reference: str | None = Form(default=None),
     public_consent_accepted: bool = Form(default=False),
     public_consent_text: str | None = Form(default=None),
+    current_user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ) -> SubmittedReportOut:
     ensure_within_service_area(latitude, longitude)
@@ -542,6 +538,7 @@ async def create_report(
         nearest_hotspot_distance_meters=hotspot_priority.nearest_hotspot_distance_meters,
         hotspot_priority_level=hotspot_priority.priority_level,
         hotspot_priority_reason=hotspot_priority.priority_reason,
+        user_id=current_user.id if current_user else None,  # Associate with user if authenticated
     )
 
     try:
@@ -695,24 +692,62 @@ def public_reports(
     west: float | None = None,
     db: Session = Depends(get_db),
 ) -> list[PublicMapReportOut]:
-    statement = select(Report).where(
-        Report.parent_report_id.is_(None),
-        Report.public_consent_accepted.is_(True),
+    # Use PostGIS spatial query if PostgreSQL and bounding box provided
+    use_spatial_query = (
+        _is_postgresql_session(db) 
+        and None not in (north, south, east, west)
     )
+    
+    if use_spatial_query:
+        # Build spatial query using PostGIS ST_Intersects for optimal performance
+        spatial_query = text("""
+            SELECT id FROM reports
+            WHERE parent_report_id IS NULL
+              AND public_consent_accepted = TRUE
+              AND public_location_geog IS NOT NULL
+              AND ST_Intersects(
+                    public_location_geog::geometry,
+                    ST_MakeEnvelope(:west, :south, :east, :north, 4326)
+                  )
+        """)
+        
+        params = {
+            "north": north,
+            "south": south,
+            "east": east,
+            "west": west,
+        }
+        
+        # Get IDs from spatial query
+        spatial_ids = [row[0] for row in db.execute(spatial_query, params).fetchall()]
+        
+        # Build main query with spatial results
+        statement = select(Report).where(
+            Report.id.in_(spatial_ids) if spatial_ids else Report.id == None,  # Empty result if no matches
+            Report.parent_report_id.is_(None),
+            Report.public_consent_accepted.is_(True),
+        )
+    else:
+        # Fallback to standard lat/lng comparison (works with SQLite and without bbox)
+        statement = select(Report).where(
+            Report.parent_report_id.is_(None),
+            Report.public_consent_accepted.is_(True),
+        )
+        
+        if None not in (north, south, east, west):
+            statement = statement.where(
+                Report.latitude <= north,
+                Report.latitude >= south,
+                Report.longitude <= east,
+                Report.longitude >= west,
+            )
 
+    # Apply filters
     if status_filter and status_filter != "all":
         statement = statement.where(Report.status == status_filter)
 
     if habitat_class and habitat_class != "all":
         statement = statement.where(Report.prediction_label == habitat_class)
-
-    if None not in (north, south, east, west):
-        statement = statement.where(
-            Report.latitude <= north,
-            Report.latitude >= south,
-            Report.longitude <= east,
-            Report.longitude >= west,
-        )
 
     statement = statement.order_by(Report.created_at.desc())
     results: list[PublicMapReportOut] = []
@@ -748,10 +783,19 @@ def public_report_thumbnail(reference: str, db: Session = Depends(get_db)) -> Fi
 
     if settings.storage_backend == "s3":
         storage_key = report.thumbnail_storage_key
-        if not storage_key:
+        if storage_key:
+            try:
+                url = get_s3_presigned_url(storage_key)
+                return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
+            except HTTPException:
+                # S3 unavailable - fallback to local file if it exists
+                try:
+                    local_path = resolve_public_upload_path(report.thumbnail_storage_key or report.thumbnail_path)
+                    return FileResponse(local_path, media_type="image/jpeg")
+                except HTTPException:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found.")
+        else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
-        url = get_s3_presigned_url(storage_key)
-        return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
     return FileResponse(
         resolve_public_upload_path(report.thumbnail_storage_key or report.thumbnail_path),
@@ -771,10 +815,19 @@ def public_report_image(reference: str, db: Session = Depends(get_db)) -> FileRe
 
     if settings.storage_backend == "s3":
         storage_key = report.image_storage_key
-        if not storage_key:
+        if storage_key:
+            try:
+                url = get_s3_presigned_url(storage_key)
+                return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
+            except HTTPException:
+                # S3 unavailable - fallback to local file if it exists
+                try:
+                    local_path = resolve_public_upload_path(report.image_storage_key or report.image_path)
+                    return FileResponse(local_path, media_type="image/jpeg")
+                except HTTPException:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found.")
+        else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
-        url = get_s3_presigned_url(storage_key)
-        return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
     return FileResponse(
         resolve_public_upload_path(report.image_storage_key or report.image_path),
@@ -798,70 +851,3 @@ def public_report_detail(
         return None
 
     return public_report_detail_out(root_report, _stack_members(db, root_report))
-
-
-@app.get("/api/officer/reports", response_model=list[OfficerReportOut])
-def officer_reports(
-    _officer: None = Depends(_require_officer),
-    db: Session = Depends(get_db),
-) -> list[OfficerReportOut]:
-    reports = db.scalars(select(Report).order_by(Report.created_at.desc()).limit(250)).all()
-    return [officer_report_out(report) for report in reports]
-
-
-@app.get("/api/officer/hotspots/status", response_model=HotspotMirrorStatusOut)
-def officer_hotspot_status(
-    _officer: None = Depends(_require_officer),
-    db: Session = Depends(get_db),
-) -> HotspotMirrorStatusOut:
-    return hotspot_mirror_status_out(hotspot_mirror_status(db))
-
-
-@app.post("/api/officer/hotspots/sync", response_model=HotspotSyncOut)
-def officer_hotspot_sync(
-    _officer: None = Depends(_require_officer),
-    db: Session = Depends(get_db),
-) -> HotspotSyncOut:
-    try:
-        return hotspot_sync_out(sync_current_hotspots(db))
-    except Exception as exc:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Hotspot context could not be synced from iDengue.",
-        ) from exc
-
-
-@app.get("/api/officer/reports/{reference}", response_model=OfficerReportOut | None)
-def officer_report_detail(
-    reference: str,
-    _officer: None = Depends(_require_officer),
-    db: Session = Depends(get_db),
-) -> OfficerReportOut | None:
-    report = _report_by_reference(db, reference)
-    return officer_report_out(report) if report else None
-
-
-@app.patch("/api/officer/reports/{reference}", response_model=OfficerReportOut)
-def update_officer_report(
-    reference: str,
-    payload: OfficerReportUpdateIn,
-    _officer: None = Depends(_require_officer),
-    db: Session = Depends(get_db),
-) -> OfficerReportOut:
-    report = _report_by_reference(db, reference)
-    if report is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
-
-    now = datetime.now(timezone.utc)
-    report.status = payload.status
-    report.status_message = status_message_for(payload.status)
-    report.officer_notes = payload.officerNotes.strip() if payload.officerNotes else None
-    report.follow_up_action = payload.followUpAction.strip() if payload.followUpAction else None
-    report.reviewed_by = payload.reviewedBy.strip() if payload.reviewedBy else "Local officer demo"
-    report.reviewed_at = now
-
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-    return officer_report_out(report)

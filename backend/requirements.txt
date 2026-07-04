@@ -4,6 +4,7 @@ GeoAlchemy2==0.19.0
 httpx==0.28.1
 pillow==11.2.1
 psycopg[binary]==3.3.2
+PyJWT[crypto]==2.9.0
 pytest==9.0.2
 python-dotenv==1.2.1
 python-multipart==0.0.20

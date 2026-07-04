@@ -1,4 +1,5 @@
 # Pre-Deployment Checklist
+
 ## DengueWatch KL - AWS Production Deployment
 
 **Student:** Noorullah  
@@ -11,6 +12,7 @@ Use this checklist before creating any AWS resources.
 ## ✅ Code and Configuration Ready
 
 ### Files Verified
+
 - [x] Dockerfile.backend - Fixed health check
 - [x] Dockerfile.frontend - Fixed npm install
 - [x] docker-compose.prod.yml - Fixed YAML, security, health checks
@@ -20,6 +22,7 @@ Use this checklist before creating any AWS resources.
 - [x] DEPLOYMENT_README.md - Quick reference
 
 ### Critical Checks Passed
+
 - [x] No PostgreSQL container in docker-compose
 - [x] Backend connects to external RDS via DATABASE_URL
 - [x] Backend port NOT publicly exposed (uses `expose` not `ports`)
@@ -36,15 +39,18 @@ Use this checklist before creating any AWS resources.
 ## 📋 Before Creating AWS Resources
 
 ### Information You Need
+
 - [ ] AWS IAM credentials from lecturer
 - [ ] Decide on AWS region (e.g., us-east-1)
 - [ ] (Optional) Domain name for HTTPS
 
 ### Passwords to Generate
+
 - [ ] RDS master password (strong, save securely!)
 - [ ] Officer API token: `openssl rand -hex 32`
 
 ### Files to Prepare
+
 - [ ] Have this repository ready to upload
 - [ ] Have YOLO model ready: `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt`
 
@@ -53,6 +59,7 @@ Use this checklist before creating any AWS resources.
 ## 🗺️ Deployment Order (DO NOT DEVIATE)
 
 ### Phase 1: AWS Console Only (No Code Yet)
+
 1. [ ] Create RDS PostgreSQL instance
    - Name: `denguewatch-noorullah-db`
    - Engine: PostgreSQL 15+
@@ -60,6 +67,7 @@ Use this checklist before creating any AWS resources.
    - Save endpoint and password!
 
 2. [ ] Enable PostGIS on RDS
+
    ```sql
    CREATE EXTENSION IF NOT EXISTS postgis;
    SELECT PostGIS_version();
@@ -80,13 +88,16 @@ Use this checklist before creating any AWS resources.
 ---
 
 ### Phase 2: EC2 Setup (No App Code Yet)
+
 6. [ ] SSH into EC2
+
    ```bash
    chmod 400 denguewatch-noorullah-key.pem
    ssh -i denguewatch-noorullah-key.pem ec2-user@<EC2_IP>
    ```
 
 7. [ ] Install Docker
+
    ```bash
    sudo yum update -y
    sudo yum install -y docker
@@ -96,6 +107,7 @@ Use this checklist before creating any AWS resources.
    ```
 
 8. [ ] Install Docker Compose
+
    ```bash
    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
    sudo chmod +x /usr/local/bin/docker-compose
@@ -106,20 +118,24 @@ Use this checklist before creating any AWS resources.
 ---
 
 ### Phase 3: Upload and Validate
+
 10. [ ] Upload code to EC2 (via git or scp)
 
 11. [ ] Upload YOLO model to EC2
+
     ```bash
     scp -i key.pem best.pt ec2-user@<IP>:/home/ec2-user/denguewatch/ml_workspace/models/current_yolo/
     ```
 
 12. [ ] Create upload directory on EC2
+
     ```bash
     sudo mkdir -p /var/denguewatch/uploads
     sudo chown ec2-user:ec2-user /var/denguewatch/uploads
     ```
 
 13. [ ] Create .env.production on EC2
+
     ```bash
     cp .env.production.example .env.production
     nano .env.production  # Fill in RDS endpoint, EC2 IP, etc.
@@ -135,18 +151,22 @@ Use this checklist before creating any AWS resources.
 ---
 
 ### Phase 4: Deploy
+
 15. [ ] Build and start containers
+
     ```bash
     export $(cat .env.production | xargs)
     docker compose -f docker-compose.prod.yml up -d --build
     ```
 
 16. [ ] Monitor logs
+
     ```bash
     docker compose -f docker-compose.prod.yml logs -f
     ```
 
 17. [ ] Run migrations
+
     ```bash
     docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
     ```
@@ -159,10 +179,13 @@ Use this checklist before creating any AWS resources.
 ---
 
 ### Phase 5: Verify and Test
+
 19. [ ] Check health endpoint from local machine
+
     ```bash
     curl http://<EC2_IP>/api/health
     ```
+
     Expected: `{"ok":true,"database":true,"model":true,"postgis":true}`
 
 20. [ ] Open frontend in browser
@@ -173,8 +196,9 @@ Use this checklist before creating any AWS resources.
     - Upload test image
     - Complete submission
 
-22. [ ] Check officer dashboard
-    - URL: `http://<EC2_IP>/officer`
+22. [ ] If CloudFront is in front of the app, verify the public entrypoint and cache behavior
+    - Current distribution: `https://d2yol17g6mes38.cloudfront.net`
+    - Confirm the distribution serves the expected public entrypoint
 
 23. [ ] Check public map
     - URL: `http://<EC2_IP>/map`
@@ -188,14 +212,17 @@ Use this checklist before creating any AWS resources.
 ---
 
 ### Phase 6: HTTPS (Optional but Recommended)
+
 25. [ ] Get domain name and point to EC2 Elastic IP
 
 26. [ ] Install Certbot
+
     ```bash
     sudo yum install -y certbot
     ```
 
 27. [ ] Get SSL certificate
+
     ```bash
     sudo certbot certonly --standalone -d your-domain.com
     ```
@@ -205,6 +232,7 @@ Use this checklist before creating any AWS resources.
 29. [ ] Update nginx.conf (uncomment HTTPS server block)
 
 30. [ ] Rebuild and restart
+
     ```bash
     docker compose -f docker-compose.prod.yml up -d --build
     ```
@@ -219,6 +247,7 @@ Use this checklist before creating any AWS resources.
 ## ⚠️ Common Mistakes to Avoid
 
 ### DO NOT:
+
 - ❌ Expose backend port 8000 publicly (use `expose` not `ports`)
 - ❌ Forget to create /var/denguewatch/uploads directory
 - ❌ Forget to enable PostGIS on RDS before migrations
@@ -230,6 +259,7 @@ Use this checklist before creating any AWS resources.
 - ❌ Skip validation steps on EC2 before building
 
 ### DO:
+
 - ✅ Create RDS separately via AWS Console
 - ✅ Use Python stdlib for health checks
 - ✅ Verify YOLO model file exists before building
@@ -249,7 +279,7 @@ Deployment is successful when:
 - ✅ Health endpoint returns all true
 - ✅ Frontend loads in browser
 - ✅ Can submit a test report
-- ✅ Report appears in officer dashboard
+- ✅ Report is available through the resident/public verification path (status lookup or public map, depending on consent and workflow state)
 - ✅ Report appears on public map
 - ✅ Uploads persist after backend restart
 - ✅ No errors in docker logs
@@ -260,18 +290,21 @@ Deployment is successful when:
 ## 🆘 If Something Goes Wrong
 
 ### Container won't start
+
 ```bash
 docker compose -f docker-compose.prod.yml logs backend
 docker compose -f docker-compose.prod.yml logs nginx
 ```
 
 ### Health check fails
+
 ```bash
 # Check from inside container
 docker compose -f docker-compose.prod.yml exec backend python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/api/health', timeout=5).read())"
 ```
 
 ### Database connection fails
+
 ```bash
 # Test from EC2
 psql -h <RDS_ENDPOINT> -U postgres -d denguewatch
@@ -280,12 +313,14 @@ psql -h <RDS_ENDPOINT> -U postgres -d denguewatch
 ```
 
 ### YOLO model not found
+
 ```bash
 # Verify inside container
 docker compose -f docker-compose.prod.yml exec backend ls -lh /app/models/best.pt
 ```
 
 ### Full redeploy
+
 ```bash
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d --build

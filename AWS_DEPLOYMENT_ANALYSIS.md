@@ -12,6 +12,7 @@
 **RECOMMENDED APPROACH: Docker Compose on EC2 with RDS PostgreSQL/PostGIS**
 
 This is the best option for your shared AWS account scenario because:
+
 - ✅ Single EC2 instance = complete isolation from other students
 - ✅ All resources prefixed with `denguewatch-noorullah-*`
 - ✅ No complex orchestration or serverless management
@@ -23,12 +24,14 @@ This is the best option for your shared AWS account scenario because:
 **Estimated monthly cost:** $30-50 (t3.medium EC2 + db.t3.micro RDS + minimal S3)
 
 **Important Architecture Notes:**
+
 - Docker Compose on EC2 only runs: **nginx (frontend) + FastAPI backend**
 - PostgreSQL database is **NOT in a container** - it runs on RDS (managed service)
 - RDS must be created separately via AWS Console before deploying Docker Compose
 - "One docker-compose up" deploys the EC2 application containers only, not the database
 
 **HTTPS Strongly Recommended:**
+
 - Browser Geolocation API requires secure context (HTTPS) in production
 - Without HTTPS, geolocation will fail on mobile devices and remote access
 - Use Let's Encrypt for free SSL certificates (see deployment guide)
@@ -40,6 +43,7 @@ This is the best option for your shared AWS account scenario because:
 ### Current Architecture
 
 **Frontend:**
+
 - Vite + React + TypeScript SPA
 - Dependencies: React 19, React Router, Leaflet maps, Lucide icons
 - Build output: ~736KB (21 files)
@@ -47,6 +51,7 @@ This is the best option for your shared AWS account scenario because:
 - Environment variables: `VITE_API_BASE_URL` (API endpoint)
 
 **Backend:**
+
 - FastAPI (Python) REST API
 - Dependencies: FastAPI, SQLAlchemy, Alembic, Ultralytics YOLO, Pillow, psycopg
 - YOLO model file: `best.pt` (6.0 MB)
@@ -55,27 +60,41 @@ This is the best option for your shared AWS account scenario because:
 - CORS-enabled for frontend access
 
 **Database:**
+
 - PostgreSQL 18+ with PostGIS extension (CRITICAL requirement)
 - Alembic migrations for schema management
 - Tables: `reports` (with geography columns), `hotspots` (spatial mirror)
 - PostGIS features: geography points, GiST spatial indexes, ST_Distance queries
 
 **Storage Requirements:**
+
 - User-uploaded images (original + thumbnails)
 - Currently: `backend/uploads/` (7.7 MB locally)
 - Production: Needs persistent storage (S3 or EBS volume)
 
+**Current public edge:**
+
+- Amazon CloudFront is implemented at `d2yol17g6mes38.cloudfront.net`
+- CloudFront origin and cache behavior are managed outside this repository and must be verified in AWS Console
+
 **Environment Variables (Backend):**
+
 ```
 DATABASE_URL=postgresql+psycopg://user:pass@host:5432/dbname
 MODEL_PATH=/app/models/best.pt
 UPLOAD_ROOT=/app/uploads
 CORS_ORIGINS=https://your-frontend-domain.com
-OFFICER_API_TOKEN=secure-random-token
 IDENGUE_HOTSPOT_ENDPOINT=https://mygis.mysa.gov.my/... (external API)
 ```
 
+Optional prototype-only variable:
+
+```
+OFFICER_API_TOKEN=secure-random-token
+```
+
 **Environment Variables (Frontend):**
+
 ```
 VITE_API_BASE_URL=https://api.your-domain.com/api
 ```
@@ -87,9 +106,14 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 ### Option 1: Docker Compose on EC2 + RDS (RECOMMENDED ⭐)
 
 **Architecture:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ EC2 (t3.medium, 20GB EBS)                                   │
+│ CloudFront (implemented public edge)                        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ EC2 (t3.medium, 20GB EBS application origin)                │
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │   Nginx      │  │   Frontend   │  │   Backend    │      │
@@ -113,6 +137,7 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 ```
 
 **Pros:**
+
 - ✅ Complete isolation: Your EC2 instance won't interfere with other students
 - ✅ Simple: One docker-compose.yml manages everything
 - ✅ Easy debugging: SSH in and check logs with `docker logs`
@@ -123,17 +148,20 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 - ✅ Unique naming: `denguewatch-noorullah-ec2`, `denguewatch-noorullah-db`
 
 **Cons:**
+
 - ⚠️ Manual SSL: Need to configure Let's Encrypt or use ACM with ALB
 - ⚠️ Uptime: If EC2 stops, entire app stops (but fine for project demo)
 - ⚠️ No auto-scaling: But not needed for university project
 
 **Why this beats other options for your use case:**
+
 - Unlike Lambda/Fargate: No cold start delays for YOLO inference (6MB model)
 - Unlike Elastic Beanstalk: More control, easier to debug
 - Unlike manual EC2: Docker Compose = reproducible, no dependency hell
 - Unlike RDS on EC2: Managed RDS = automatic backups, easier PostGIS setup
 
 **Estimated Costs:**
+
 - EC2 t3.medium (2 vCPU, 4GB RAM): ~$30/month
 - RDS db.t3.micro (PostgreSQL + PostGIS): ~$15/month
 - EBS 20GB: ~$2/month
@@ -147,10 +175,12 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 **Architecture:** Install Node, Python, PostgreSQL, PostGIS directly on EC2
 
 **Pros:**
+
 - ✅ Full control
 - ✅ No Docker learning curve
 
 **Cons:**
+
 - ❌ Dependency hell: Manual PostgreSQL + PostGIS installation
 - ❌ Hard to reproduce: If something breaks, hard to reset
 - ❌ No isolation: Processes share system resources
@@ -166,11 +196,13 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 **Architecture:** Managed EC2 deployment with auto-scaling, load balancer
 
 **Pros:**
+
 - ✅ AWS-managed: Auto-scaling, health monitoring
 - ✅ Easy deployment: `eb deploy` from CLI
 - ✅ Built-in load balancer and SSL
 
 **Cons:**
+
 - ❌ Complex for shared account: Creates multiple resources (ALB, ASG, CloudWatch)
 - ❌ Harder to isolate: More AWS resources = more naming conflicts possible
 - ❌ PostGIS complications: Need to ensure PostGIS extension in RDS
@@ -187,10 +219,12 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 **Architecture:** Containerized deployment with managed orchestration
 
 **Pros:**
+
 - ✅ Scalable containers
 - ✅ No EC2 management
 
 **Cons:**
+
 - ❌ Steep learning curve: ECS tasks, services, task definitions
 - ❌ Complex networking: VPC, subnets, security groups, ALB
 - ❌ Cold starts: Fargate tasks take 30-60s to start (bad for demos)
@@ -206,15 +240,18 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 ### Option 5: Amplify/S3 Frontend + Separate Backend (Split Architecture)
 
 **Architecture:**
+
 - Frontend: S3 + CloudFront (static hosting)
 - Backend: Lambda + API Gateway OR EC2
 - Database: RDS PostgreSQL + PostGIS
 
 **Pros:**
+
 - ✅ Fast frontend: CloudFront CDN globally
 - ✅ Scalable frontend: S3 = unlimited static file hosting
 
 **Cons:**
+
 - ❌ Backend bottleneck: Lambda has cold starts (bad for YOLO)
 - ❌ Lambda limits: 6MB YOLO model + Ultralytics = package size issues
 - ❌ Complex: Multiple deployment pipelines (frontend vs backend)
@@ -229,6 +266,7 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 ### Option 6: RDS vs PostgreSQL on EC2
 
 **RDS PostgreSQL + PostGIS (RECOMMENDED):**
+
 - ✅ Automatic backups
 - ✅ Easy PostGIS: Just enable extension
 - ✅ Managed updates
@@ -237,6 +275,7 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 - Cost: ~$15/month (db.t3.micro)
 
 **PostgreSQL on EC2 (via Docker):**
+
 - ✅ Slightly cheaper (~$5/month EBS instead of $15 RDS)
 - ❌ Manual backups
 - ❌ If EC2 crashes, DB might corrupt
@@ -285,12 +324,14 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 #### Phase 2: EC2 Setup
 
 SSH into EC2:
+
 ```bash
 chmod 400 denguewatch-noorullah-key.pem
 ssh -i denguewatch-noorullah-key.pem ec2-user@<EC2_PUBLIC_IP>
 ```
 
 Install Docker & Docker Compose:
+
 ```bash
 # Amazon Linux 2023
 sudo yum update -y
@@ -313,6 +354,7 @@ ssh -i denguewatch-noorullah-key.pem ec2-user@<EC2_PUBLIC_IP>
 #### Phase 3: Deploy Application
 
 Clone repository (or upload via SCP/Git):
+
 ```bash
 cd /home/ec2-user
 git clone <your-repo-url> denguewatch
@@ -320,6 +362,7 @@ cd denguewatch
 ```
 
 Create production environment file:
+
 ```bash
 cat > .env.production <<EOF
 # Backend
@@ -328,20 +371,27 @@ MODEL_PATH=/app/models/best.pt
 UPLOAD_ROOT=/app/uploads
 CORS_ORIGINS=http://<EC2_PUBLIC_IP>
 ```
-```bash
-OFFICER_API_TOKEN=$(openssl rand -hex 32)
 
+```bash
 # Frontend
 VITE_API_BASE_URL=http://<EC2_PUBLIC_IP>/api
 EOF
 ```
 
+If you are using the experimental officer-only prototype endpoints, add:
+
+```bash
+OFFICER_API_TOKEN=$(openssl rand -hex 32)
+```
+
 Build and start containers:
+
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
 Check logs:
+
 ```bash
 docker-compose -f docker-compose.prod.yml logs -f
 ```
@@ -349,11 +399,13 @@ docker-compose -f docker-compose.prod.yml logs -f
 #### Phase 4: Database Migrations
 
 Run Alembic migrations:
+
 ```bash
 docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
 ```
 
 Enable PostGIS (if not done during RDS setup):
+
 ```bash
 docker-compose -f docker-compose.prod.yml exec backend python -c "
 from app.database import engine
@@ -363,9 +415,10 @@ engine.execute('CREATE EXTENSION IF NOT EXISTS postgis;')
 
 #### Phase 5: Access Application
 
-- Frontend: `http://<EC2_PUBLIC_IP>`
+- Frontend: CloudFront URL, custom domain, or `http://<EC2_PUBLIC_IP>` when testing the origin directly
 - Backend API: `http://<EC2_PUBLIC_IP>/api/health`
-- Officer Dashboard: `http://<EC2_PUBLIC_IP>/officer`
+- Public map: `http://<EC2_PUBLIC_IP>/map`
+- Experimental officer dashboard (out of scope): `http://<EC2_PUBLIC_IP>/officer`
 
 ---
 
@@ -386,6 +439,7 @@ I will prepare these Docker configuration files:
 ## Key Considerations for Shared AWS Account
 
 ### Resource Naming Strategy
+
 ALL resources MUST use the prefix `denguewatch-noorullah-` to avoid conflicts:
 
 - EC2 instance: `denguewatch-noorullah-ec2`
@@ -402,6 +456,7 @@ ALL resources MUST use the prefix `denguewatch-noorullah-` to avoid conflicts:
    - Use AWS Console tags: `Project=DengueWatch, Owner=Noorullah`
 
 2. **Use AWS Resource Tags**
+
    ```
    Project: DengueWatch
    Owner: Noorullah
@@ -429,15 +484,18 @@ ALL resources MUST use the prefix `denguewatch-noorullah-` to avoid conflicts:
 ## YOLO Model Deployment
 
 ### Challenge: 6MB Model File
+
 Your YOLO model (`best.pt`) is 6MB. Options:
 
 **Option A: Bundle in Docker Image (RECOMMENDED)**
+
 - Include `best.pt` in the Docker image during build
 - Model loads once when container starts
 - No cold start delays
 - Docker image size: ~2GB (base Python + dependencies + model)
 
 **Option B: Download from S3 on Startup**
+
 - Store model in S3: `s3://denguewatch-noorullah-models/best.pt`
 - Container downloads on startup
 - Pros: Smaller Docker image
@@ -462,6 +520,7 @@ SELECT PostGIS_version();
 ```
 
 Verify PostGIS in your backend health check:
+
 ```bash
 curl http://<EC2_IP>/api/health
 # Should show: {"postgis": true}
@@ -474,12 +533,14 @@ curl http://<EC2_IP>/api/health
 User-uploaded images need persistent storage.
 
 ### Option A: EBS Volume (RECOMMENDED for simplicity)
+
 - Mount EBS volume to EC2: `/var/denguewatch/uploads`
 - Docker volume: `-v /var/denguewatch/uploads:/app/uploads`
 - Pros: Simple, no code changes, fast access
 - Cons: If EC2 terminates, need to reattach volume
 
 ### Option B: S3 (Better for production)
+
 - Update `app/image_storage.py` to use boto3
 - Store uploads in `s3://denguewatch-noorullah-uploads/`
 - Serve via backend API (presigned URLs)
@@ -495,6 +556,7 @@ User-uploaded images need persistent storage.
 For `https://` access (not required but professional):
 
 ### Option 1: Let's Encrypt (Free, on EC2)
+
 ```bash
 # Install Certbot
 sudo yum install -y certbot python3-certbot-nginx
@@ -504,6 +566,7 @@ sudo certbot --nginx -d denguewatch-noorullah.yourdomain.com
 ```
 
 ### Option 2: Application Load Balancer + ACM
+
 - Create ALB: `denguewatch-noorullah-alb`
 - Request ACM certificate (requires domain)
 - ALB terminates SSL, forwards HTTP to EC2
@@ -518,6 +581,7 @@ sudo certbot --nginx -d denguewatch-noorullah.yourdomain.com
 ### Essential Commands
 
 **Check container status:**
+
 ```bash
 docker ps
 docker-compose logs -f backend
@@ -525,16 +589,19 @@ docker-compose logs -f nginx
 ```
 
 **Backend health:**
+
 ```bash
 curl http://localhost/api/health
 ```
 
 **Database connection test:**
+
 ```bash
 docker-compose exec backend python -c "from app.database import engine; print(engine.connect())"
 ```
 
 **YOLO model test:**
+
 ```bash
 docker-compose exec backend python -c "from app.inference import ModelInference; from app.config import settings; m = ModelInference(settings.model_path); m.load(); print(m.ready)"
 ```
@@ -542,6 +609,7 @@ docker-compose exec backend python -c "from app.inference import ModelInference;
 ### CloudWatch Logs (Optional)
 
 Install CloudWatch agent on EC2 to push logs:
+
 ```bash
 sudo yum install -y amazon-cloudwatch-agent
 ```
@@ -553,14 +621,17 @@ Configure to push Docker logs to CloudWatch Logs group: `denguewatch-noorullah-l
 ## Backup Strategy
 
 ### Database Backups
+
 - RDS automatic backups: Enabled by default (7-day retention)
 - Manual snapshot before demo: Via AWS Console
 
 ### Code Backups
+
 - Git repository (already backed up)
 - Tag production version: `git tag v1.0-demo`
 
 ### Uploaded Images Backup
+
 ```bash
 # Sync EBS uploads to S3 (daily cron job)
 aws s3 sync /var/denguewatch/uploads s3://denguewatch-noorullah-uploads/backups/
@@ -573,6 +644,7 @@ aws s3 sync /var/denguewatch/uploads s3://denguewatch-noorullah-uploads/backups/
 ### Stop Resources When Not Demoing
 
 **Before bed or weekends:**
+
 ```bash
 # Stop EC2 (saves ~$20/month)
 aws ec2 stop-instances --instance-ids i-xxxxx
@@ -581,6 +653,7 @@ aws ec2 stop-instances --instance-ids i-xxxxx
 ```
 
 **Before demo:**
+
 ```bash
 # Start EC2
 aws ec2 start-instances --instance-ids i-xxxxx
@@ -592,6 +665,7 @@ aws ec2 describe-instances --instance-ids i-xxxxx --query 'Reservations[0].Insta
 ### Estimated Monthly Costs
 
 **Full-time running:**
+
 - EC2 t3.medium: $30
 - RDS db.t3.micro: $15
 - EBS 20GB: $2
@@ -599,6 +673,7 @@ aws ec2 describe-instances --instance-ids i-xxxxx --query 'Reservations[0].Insta
 - **Total: ~$50/month**
 
 **Part-time (12 hours/day):**
+
 - EC2 t3.medium (50% uptime): $15
 - RDS db.t3.micro (always on): $15
 - EBS + S3: $5
@@ -663,16 +738,19 @@ aws ec2 describe-instances --instance-ids i-xxxxx --query 'Reservations[0].Insta
 If you want more AWS-managed approach:
 
 **Architecture:**
+
 - Frontend: S3 + CloudFront
 - Backend: AWS App Runner (containerized FastAPI)
 - Database: RDS PostgreSQL + PostGIS
 
 **Pros:**
+
 - ✅ No EC2 management
 - ✅ Auto-scaling (though not needed)
 - ✅ Built-in load balancing
 
 **Cons:**
+
 - ❌ Split deployment (frontend separate from backend)
 - ❌ Less SSH debugging
 - ❌ Similar cost to EC2
@@ -684,6 +762,7 @@ If you want more AWS-managed approach:
 ### 🏆 Winner: Docker Compose on EC2 + RDS
 
 **Why:**
+
 1. **Simplicity:** One `docker-compose up -d` deploys everything
 2. **Isolation:** Your EC2/RDS won't interfere with other students
 3. **Debugging:** SSH in, check logs, restart containers easily
@@ -693,6 +772,7 @@ If you want more AWS-managed approach:
 7. **Demo-ready:** Predictable performance, no Lambda timeouts
 
 **What you get:**
+
 - Frontend + Backend on same EC2 (Nginx reverse proxy)
 - RDS PostgreSQL + PostGIS (managed, backed up)
 - EBS persistent storage for uploads

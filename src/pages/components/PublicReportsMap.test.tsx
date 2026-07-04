@@ -1,0 +1,362 @@
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { PointExpression } from "leaflet";
+import {
+	buildPublicReportMarkerGroups,
+	getPublicPriorityState,
+	PublicReportsMap,
+	type PublicReportGroupSelection,
+} from "@/pages/components/PublicReportsMap";
+import type { LocationPoint, PublicMapReport } from "@/types/report";
+
+const leafletHarness = vi.hoisted(() => ({
+	zoom: 13,
+	maxZoom: 19,
+	flyTo: vi.fn(),
+	latestHandlers: undefined as
+		| {
+				zoomend?: () => void;
+				moveend?: () => void;
+				resize?: () => void;
+		  }
+		| undefined,
+}));
+
+function projectPoint(
+	point: Pick<LocationPoint, "latitude" | "longitude">,
+	zoom: number,
+) {
+	const effectiveZoom = Math.min(zoom, 19);
+	const zoomScale = 2 ** (effectiveZoom - 13);
+	return {
+		x: point.longitude * 1_000_000 * zoomScale,
+		y: point.latitude * 1_000_000 * zoomScale,
+	};
+}
+
+vi.mock("react-leaflet", () => {
+	const mockMap = {
+		getZoom: () => leafletHarness.zoom,
+		getMaxZoom: () => leafletHarness.maxZoom,
+		project: (
+			latLng: { lat: number; lng: number },
+			zoom: number,
+		): PointExpression => projectPoint(
+			{ latitude: latLng.lat, longitude: latLng.lng },
+			zoom,
+		),
+		flyTo: leafletHarness.flyTo,
+	};
+
+	return {
+		MapContainer: ({
+			children,
+			maxZoom,
+		}: {
+			children: React.ReactNode;
+			maxZoom?: number;
+		}) => {
+			if (maxZoom) {
+				leafletHarness.maxZoom = maxZoom;
+			}
+			return <div data-testid="public-map">{children}</div>;
+		},
+		Marker: ({
+			eventHandlers,
+			title,
+			alt,
+			icon,
+		}: {
+			eventHandlers?: { click?: () => void };
+			title?: string;
+			alt?: string;
+			icon?: { options?: { className?: string } };
+		}) => (
+			<button
+				type="button"
+				data-icon-class={icon?.options?.className ?? ""}
+				data-marker-alt={alt ?? ""}
+				onClick={() => eventHandlers?.click?.()}
+			>
+				{title}
+			</button>
+		),
+		TileLayer: () => null,
+		ZoomControl: () => null,
+		useMap: () => mockMap,
+		useMapEvents: (
+			handlers: NonNullable<typeof leafletHarness.latestHandlers>,
+		) => {
+			leafletHarness.latestHandlers = handlers;
+			return mockMap;
+		},
+	};
+});
+
+function report(
+	id: string,
+	latitude: number,
+	longitude: number,
+	overrides: Partial<PublicMapReport> = {},
+): PublicMapReport {
+	return {
+		id,
+		reference: `KL-${id}`,
+		publicLocation: {
+			latitude,
+			longitude,
+			source: "public",
+		},
+		habitatClass: "drain_inlet",
+		prediction: {
+			label: "drain_inlet",
+			confidence: 0.84,
+			confidenceBand: "high",
+			advisoryText: "Likely habitat.",
+		},
+		status: "submitted",
+		neighborhood: "Sentul",
+		reportedAt: `2026-06-2${id}`,
+		latestReportedAt: `2026-06-2${id}`,
+		reportCount: 1,
+		thumbnailUrl: "/evidence-thumb.jpg",
+		imageUrl: "/evidence.jpg",
+		privacyNote: "Public location.",
+		...overrides,
+	};
+}
+
+describe("PublicReportsMap marker grouping", () => {
+	beforeEach(() => {
+		leafletHarness.zoom = 13;
+		leafletHarness.maxZoom = 19;
+		leafletHarness.flyTo.mockClear();
+		leafletHarness.latestHandlers = undefined;
+	});
+
+	it("groups exact duplicate public coordinates into one hard stack", () => {
+		const reports = [
+			report("1", 3.13902, 101.68692, { reportCount: 2 }),
+			report("2", 3.13902, 101.68692),
+		];
+
+		const groups = buildPublicReportMarkerGroups(reports, {
+			zoom: 13,
+			maxZoom: 19,
+			project: projectPoint,
+		});
+
+		expect(groups).toHaveLength(1);
+		expect(groups[0]).toMatchObject({
+			isExactStack: true,
+			canZoomToExpand: false,
+			totalReportCount: 3,
+		});
+		expect(groups[0]?.reports.map((item) => item.id)).toEqual(["2", "1"]);
+	});
+
+	it("collapses core and warning into the same high-priority public state", () => {
+		expect(getPublicPriorityState({ priorityLevel: "core", priorityReason: "" })).toBe(
+			"high",
+		);
+		expect(
+			getPublicPriorityState({ priorityLevel: "warning", priorityReason: "" }),
+		).toBe("high");
+		expect(
+			getPublicPriorityState({ priorityLevel: "routine", priorityReason: "" }),
+		).toBe("routine");
+		expect(
+			getPublicPriorityState({ priorityLevel: "unavailable", priorityReason: "" }),
+		).toBe("unknown");
+		expect(getPublicPriorityState(undefined)).toBe("unknown");
+	});
+
+	it("uses high then unknown then routine precedence for grouped markers", () => {
+		const baseOptions = {
+			zoom: 13,
+			maxZoom: 19,
+			project: projectPoint,
+		};
+		const atSameLocation = (id: string, priorityLevel?: string) =>
+			report(id, 3.13902, 101.68692, {
+				hotspotPriority: priorityLevel
+					? { priorityLevel, priorityReason: "" }
+					: undefined,
+			});
+
+		expect(
+			buildPublicReportMarkerGroups(
+				[atSameLocation("1", "routine"), atSameLocation("2", "warning")],
+				baseOptions,
+			)[0]?.priorityState,
+		).toBe("high");
+		expect(
+			buildPublicReportMarkerGroups(
+				[atSameLocation("1", "routine"), atSameLocation("2")],
+				baseOptions,
+			)[0]?.priorityState,
+		).toBe("unknown");
+		expect(
+			buildPublicReportMarkerGroups(
+				[atSameLocation("1", "routine"), atSameLocation("2", "routine")],
+				baseOptions,
+			)[0]?.priorityState,
+		).toBe("routine");
+	});
+
+	it("renders priority classes, accessible descriptions, and a compact legend", () => {
+		render(
+			<PublicReportsMap
+				reports={[
+					report("1", 3.13902, 101.68692, {
+						hotspotPriority: {
+							priorityLevel: "core",
+							priorityReason: "Within 200 m.",
+						},
+					}),
+					report("2", 3.15, 101.7, {
+						hotspotPriority: {
+							priorityLevel: "routine",
+							priorityReason: "Outside 400 m.",
+						},
+					}),
+					report("3", 3.16, 101.71),
+				]}
+				hotspots={[]}
+				showHotspots={false}
+			/>,
+		);
+
+		const highPriorityMarker = screen.getByRole("button", {
+			name: "High priority. Open report KL-1. Within 400 m of an iDengue hotspot when reported.",
+		});
+		expect(highPriorityMarker).toHaveAttribute(
+			"data-icon-class",
+			expect.stringContaining("map-pin--priority-high"),
+		);
+		expect(highPriorityMarker).not.toHaveAttribute(
+			"data-icon-class",
+			expect.stringContaining("map-pin--drain_inlet"),
+		);
+		expect(highPriorityMarker).toHaveAttribute(
+			"data-marker-alt",
+			expect.stringContaining("High priority"),
+		);
+
+		const legend = screen.getByRole("region", { name: "Report priority legend" });
+		expect(legend).toHaveTextContent("Within 400 m of a hotspot when reported");
+		expect(legend).toHaveTextContent("Other assessed reports");
+		expect(legend).toHaveTextContent("Priority unavailable");
+	});
+
+	it("groups nearby coordinates at low zoom and splits them at higher zoom", () => {
+		const reports = [
+			report("1", 3.13902, 101.68692),
+			report("2", 3.13902, 101.68694),
+		];
+
+		const lowZoomGroups = buildPublicReportMarkerGroups(reports, {
+			zoom: 13,
+			maxZoom: 19,
+			project: projectPoint,
+		});
+		const highZoomGroups = buildPublicReportMarkerGroups(reports, {
+			zoom: 15,
+			maxZoom: 19,
+			project: projectPoint,
+		});
+
+		expect(lowZoomGroups).toHaveLength(1);
+		expect(lowZoomGroups[0]).toMatchObject({
+			isExactStack: false,
+			canZoomToExpand: true,
+			totalReportCount: 2,
+		});
+		expect(highZoomGroups).toHaveLength(2);
+	});
+
+	it("zooms into a separable overlap before opening the report stack", async () => {
+		const user = userEvent.setup();
+		const handleSelectGroup = vi.fn();
+
+		render(
+			<PublicReportsMap
+				reports={[
+					report("1", 3.13902, 101.68692),
+					report("2", 3.13902, 101.68694),
+				]}
+				hotspots={[]}
+				showHotspots={false}
+				onSelectReportGroup={handleSelectGroup}
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Priority unavailable. 2 reports in this area.",
+			}),
+		);
+
+		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
+			expect.any(Array),
+			15,
+			expect.objectContaining({ duration: expect.any(Number) }),
+		);
+		expect(handleSelectGroup).not.toHaveBeenCalled();
+	});
+
+	it("opens exact and max-zoom stacks immediately", async () => {
+		const user = userEvent.setup();
+		const handleSelectGroup = vi.fn<[PublicReportGroupSelection], void>();
+
+		const { rerender } = render(
+			<PublicReportsMap
+				reports={[
+					report("1", 3.13902, 101.68692),
+					report("2", 3.13902, 101.68692),
+				]}
+				hotspots={[]}
+				showHotspots={false}
+				onSelectReportGroup={handleSelectGroup}
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Priority unavailable. 2 reports at this public location.",
+			}),
+		);
+
+		expect(handleSelectGroup).toHaveBeenCalledWith(
+			expect.objectContaining({ isExactStack: true, totalReportCount: 2 }),
+		);
+
+		handleSelectGroup.mockClear();
+		leafletHarness.zoom = 22;
+		act(() => {
+			leafletHarness.latestHandlers?.zoomend?.();
+		});
+
+		rerender(
+			<PublicReportsMap
+				reports={[
+					report("3", 3.13902, 101.68692),
+					report("4", 3.13902, 101.68692056),
+				]}
+				hotspots={[]}
+				showHotspots={false}
+				onSelectReportGroup={handleSelectGroup}
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Priority unavailable. 2 reports in this area.",
+			}),
+		);
+
+		expect(handleSelectGroup).toHaveBeenCalledWith(
+			expect.objectContaining({ isExactStack: false, totalReportCount: 2 }),
+		);
+	});
+});

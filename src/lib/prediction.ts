@@ -18,6 +18,7 @@ function pickLabel(draft: ReportDraft): HabitatClass {
 
 export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
   const label = pickLabel(draft)
+  const photoName = draft.photoEvidence?.name.toLowerCase() ?? ''
   const confidenceBand =
     label === 'drain_inlet'
       ? 'moderate'
@@ -37,7 +38,7 @@ export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
     confidence,
     confidenceBand,
     topRawLabel: rawLabel,
-    detections: [
+    detections: photoName.includes('empty') ? [] : [
       {
         rawLabel,
         confidence,

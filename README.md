@@ -2,6 +2,8 @@
 
 React + Vite + TypeScript frontend plus a local FastAPI backend for the dengue breeding-habitat reporting prototype described in the FYP report.
 
+Current documentation scope: the assessed implementation covers the resident submission flow and the public map/status experience. Prototype officer routes still exist in the repository, but they are out of scope for architecture, deployment acceptance, and evaluation claims. The current deployed edge entrypoint uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`; its origin and cache configuration are managed outside this repository.
+
 ## Current scope
 
 - Resident landing page and guided reporting flow
@@ -19,7 +21,7 @@ React + Vite + TypeScript frontend plus a local FastAPI backend for the dengue b
 - Public crowdsourced map with exact consented pins, report thumbnails, and public detail galleries
 - ML-gated nearby report stacking for same-class public submissions
 - Kuala Lumpur service-area enforcement for report submission and hotspot context
-- Local officer review dashboard with status, notes, evidence, and follow-up controls
+- Experimental officer review routes remain in the repo for local prototype work, but they are out of scope for the assessed implementation
 
 ## Directory layout
 
@@ -50,9 +52,9 @@ React + Vite + TypeScript frontend plus a local FastAPI backend for the dengue b
 - `/status`: anonymous status lookup
 - `/map`: public crowdsourced report map
 - `/map/reports/:reference`: public report detail with stacked image timeline
-- `/officer`: local officer review queue and follow-up controls
-- `/next`, `/next/report`, `/next/status`, `/next/map`, `/next/map/reports/:reference`, `/next/officer`: temporary v2 aliases kept during cutover cleanup window
-- `/legacy`, `/legacy/report`, `/legacy/status`, `/legacy/map`, `/legacy/map/reports/:reference`, `/legacy/officer`: rollback-only legacy routes (temporary)
+- `/officer`: experimental local officer review queue retained in the repo, but out of scope for the assessed implementation
+- `/next`, `/next/report`, `/next/status`, `/next/map`, `/next/map/reports/:reference`, `/next/officer`: temporary v2 aliases kept during cutover cleanup window, including the same out-of-scope officer prototype route
+- `/legacy`, `/legacy/report`, `/legacy/status`, `/legacy/map`, `/legacy/map/reports/:reference`, `/legacy/officer`: rollback-only legacy routes (temporary), including the same out-of-scope officer prototype route
 
 Legacy routes remain unchanged by default. The v2 lane is additive and isolated until explicit cutover.
 
@@ -96,6 +98,7 @@ DATABASE_URL=postgresql+psycopg://noorullah@localhost:5432/codex_fyp
 MODEL_PATH=/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt
 UPLOAD_ROOT=./uploads
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+# Optional: only for the experimental officer-only prototype endpoints
 OFFICER_API_TOKEN=local-officer-demo-token
 ```
 
@@ -110,7 +113,8 @@ Model path policy:
 Recommended local setup:
 
 - Copy `prototype/.env.local.example` to `prototype/.env.local` for frontend-only values such as `VITE_API_BASE_URL`
-- Copy `prototype/backend/.env.local.example` to `prototype/backend/.env.local` for backend-only values such as `DATABASE_URL`, `MODEL_PATH`, and `OFFICER_API_TOKEN`
+- Copy `prototype/backend/.env.local.example` to `prototype/backend/.env.local` for backend-only values such as `DATABASE_URL` and `MODEL_PATH`
+- Add `OFFICER_API_TOKEN` only if you are using the experimental officer-only prototype endpoints
 - Keep `.env.example` files committed as templates, and treat `.env.local` as your machine-specific override
 
 For local browser testing, support both the Vite dev server and local preview/manual access origins:
@@ -145,7 +149,7 @@ curl http://localhost:8000/api/health
 Expected once PostgreSQL is running, migrations are applied, and the model is present:
 
 ```json
-{"ok":true,"database":true,"model":true,"postgis":true}
+{ "ok": true, "database": true, "model": true, "postgis": true }
 ```
 
 PostGIS is now part of local readiness, not an optional AWS-only detail. The Alembic migration enables it, adds report geography points plus GiST indexes, and creates the local `hotspots` mirror table.
@@ -163,22 +167,24 @@ PostGIS is now part of local readiness, not an optional AWS-only detail. The Ale
 
 ### Hotspot mirror sync
 
-The public map and report priority logic read from PostgreSQL, not directly from the browser. Sync the latest iDengue rows through the officer-only backend path:
+The public map and report priority logic read from PostgreSQL, not directly from the browser. The current local sync path is still an officer-only backend endpoint retained as an operational utility, even though the officer workflow itself is out of scope for the assessed prototype:
 
 ```bash
 curl -X POST http://localhost:8000/api/officer/hotspots/sync \
   -H "Authorization: Bearer local-officer-demo-token"
 ```
 
-You can also sync from the `/officer` dashboard.
+You can also sync from the experimental `/officer` dashboard.
 
 ## Notes
 
 - The frontend uses the FastAPI backend when `VITE_API_BASE_URL` is configured; if it is not set, mock services are still available for isolated UI tests.
+- The current deployed public entrypoint is the CloudFront distribution `d2yol17g6mes38.cloudfront.net`, but the CloudFront origin and cache behavior are managed outside this repository, so local docs should not claim an exact edge-to-origin topology beyond CloudFront sitting in front of the application.
 - The backend syncs hotspot context from the public iDengue ArcGIS layer into local PostgreSQL/PostGIS. Cloud deployment can move the same sync boundary to a scheduled App Runner job, Lambda, or EventBridge-triggered worker.
 - Public map markers show exact pins and submitted photos after explicit resident consent.
 - Nearby report stacking is ML-gated and uses an internal same-site matching rule; the 200 m/400 m hotspot visuals remain dengue context, not duplicate-report logic.
 - Report submissions and public hotspot context are constrained to the Kuala Lumpur service area.
 - AI output is always framed as advisory and never as final proof.
-- Cloud migration later should replace the local PostgreSQL URL and local upload adapter with hosted PostgreSQL and private object storage without changing the resident-facing workflow.
+- The officer prototype remains in the repository as an experimental utility surface and should not be used as a required scope claim for diagrams, deployment acceptance, or academic evaluation.
+- The system is currently deployed to AWS. The local development environment continues to use local PostgreSQL and local uploads for development purposes, while the production AWS environment utilizes hosted PostgreSQL (RDS) and S3 object storage without changing the resident-facing workflow.
 - Design tradeoffs are documented in `DESIGN_CHOICES.md`.

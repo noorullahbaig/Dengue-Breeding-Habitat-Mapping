@@ -2,7 +2,7 @@ import type { LocationPoint } from '@/types/report'
 import { isWithinServiceArea } from './serviceArea'
 
 const fallbackMessage =
-  'Location access is unavailable. Retry with a clearer device signal so the exact site can be verified.'
+  'Location access is unavailable. Please check your device signal and browser settings.'
 
 export function getGeolocationFallbackMessage() {
   return fallbackMessage
@@ -60,7 +60,7 @@ export async function requestCurrentPosition(): Promise<LocationPoint> {
         if (error.code === error.PERMISSION_DENIED) {
           reject(
             new Error(
-              'Location permission was denied. Allow device location access to verify the exact site.',
+              'Location access is blocked. Please enable Location in your browser settings to continue.',
             ),
           )
           return

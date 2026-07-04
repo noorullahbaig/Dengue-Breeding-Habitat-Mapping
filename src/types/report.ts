@@ -35,6 +35,8 @@ export interface ReportDraft {
   wizardStep?: number
   hasConfirmedPin?: boolean
   hasPublicConsent?: boolean
+  residentNote?: string
+  lowAiConfidence?: boolean
 }
 
 export interface PredictionSummary {
@@ -114,6 +116,7 @@ export interface PublicMapReport {
   thumbnailUrl: string
   imageUrl: string
   privacyNote: string
+  hotspotPriority?: HotspotPriority
 }
 
 export interface NearbyReportCandidate {

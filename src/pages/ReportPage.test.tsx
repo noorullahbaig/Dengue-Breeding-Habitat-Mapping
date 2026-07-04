@@ -1,0 +1,121 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
+import { ReportPage } from '@/pages/ReportPage'
+import type { ReportDraft } from '@/types/report'
+
+const updateDraft = vi.fn()
+
+const draft: ReportDraft = {
+  photoFile: new File(['photo'], 'evidence.jpg', { type: 'image/jpeg' }),
+  photoPreviewUrl: 'data:image/jpeg;base64,preview',
+  photoEvidence: {
+    name: 'evidence.jpg',
+    mimeType: 'image/jpeg',
+    size: 5,
+  },
+  detectedLocation: {
+    latitude: 3.139,
+    longitude: 101.6869,
+    accuracyMeters: 20,
+    source: 'browser',
+  },
+  correctedLocation: {
+    latitude: 3.139,
+    longitude: 101.6869,
+    accuracyMeters: 20,
+    source: 'browser',
+  },
+}
+
+vi.mock('@/app/useReportDraft', () => ({
+  useReportDraft: () => ({
+    draft,
+    updateDraft,
+    setLastSubmittedReference: vi.fn(),
+  }),
+}))
+
+vi.mock('@/app/useAuth', () => ({
+  useAuth: () => ({
+    isAuthenticated: false,
+    sessionMode: 'local',
+    trackReport: vi.fn(),
+    trackedReferences: [],
+  }),
+}))
+
+vi.mock('@/app/useServices', () => ({
+  useServices: () => ({
+    reportsService: {},
+  }),
+}))
+
+vi.mock('@/pages/components/LocationReviewMap', () => ({
+  LocationReviewMap: () => <div>Location map</div>,
+}))
+
+vi.mock('@/pages/components/NearbyReportPrompt', () => ({
+  NearbyReportPrompt: () => null,
+}))
+
+vi.mock('@/pages/components/PredictionEvidencePanel', () => ({
+  PredictionEvidencePanel: () => <div>Prediction panel</div>,
+}))
+
+vi.mock('@/pages/components/StaticReceiptMap', () => ({
+  StaticReceiptMap: () => <div>Receipt map</div>,
+}))
+
+describe('ReportPage mobile photo review', () => {
+  beforeEach(() => {
+    updateDraft.mockClear()
+    draft.wizardStep = 0
+    draft.hasConfirmedPin = false
+    draft.hasPublicConsent = false
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: query === '(max-width: 760px)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+  })
+
+  it('keeps the photo review actions visible and waits for explicit continuation', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Take image' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Captured preview' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
+    expect(screen.getByLabelText('Retake photo')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Confirm this exact site' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Use photo & continue' }))
+
+    expect(screen.getByRole('heading', { name: 'Confirm location' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirm this exact site' })).toBeVisible()
+  })
+
+  it('restores the last reachable wizard step from the session draft', () => {
+    draft.wizardStep = 1
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Confirm location' })).toBeInTheDocument()
+    expect(screen.getByText('Location map')).toBeInTheDocument()
+  })
+})

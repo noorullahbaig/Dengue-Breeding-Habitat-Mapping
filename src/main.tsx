@@ -10,6 +10,7 @@ import '@/styles/ui.css'
 import '@/styles/stitch.css'
 import '@/styles/map.css'
 import '@/styles/report.css'
+import '@/styles/home.css'
 import { authRuntimeConfig } from '@/app/authConfig'
 import { Amplify } from 'aws-amplify'
 

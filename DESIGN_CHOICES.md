@@ -2,11 +2,12 @@
 
 This file records implementation choices made after reviewing `/Users/noorullah/Desktop/MUHAMMAD NOORULLAH BAIG-TP077979-APD3F2511CS(AI).docx`.
 
-## Local First, AWS Ready Later
+## Deployed on AWS EC2 (with Local Development Support)
 
-- Current deployment target is local development only.
-- The local stack mirrors the intended AWS shape where practical: React/Vite frontend, FastAPI backend, PostgreSQL/PostGIS, object-style image keys, DB-backed hotspot context, and backend-owned report logic.
-- Future AWS migration should map the same boundaries to Amplify, App Runner, RDS PostgreSQL with PostGIS, and S3.
+- The current production deployment target is AWS EC2.
+- The local development stack (React/Vite frontend, FastAPI backend, PostgreSQL/PostGIS) mirrors the AWS production shape where practical to ensure seamless development.
+- The current deployed public edge uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`, which routes to our EC2 instances.
+- The system continues to support full local development workflows, while the production environment handles real traffic on AWS.
 
 ## PostgreSQL and PostGIS
 
@@ -28,7 +29,7 @@ This file records implementation choices made after reviewing `/Users/noorullah/
 - The backend requires `public_consent_accepted=true` for report creation.
 - Stored consent includes accepted state, timestamp, consent version, and consent text.
 - New submissions use `public-image-pin-ai-v2`, which explicitly covers the public image, exact pin, computer-vision advisory result, confidence, and detection evidence.
-- Optional resident notes remain officer-facing and are not exposed on public map/detail/status endpoints.
+- Optional resident notes remain non-public and are not exposed on public map/detail/status endpoints.
 
 ## YOLO vs EfficientNet
 
@@ -36,24 +37,24 @@ This file records implementation choices made after reviewing `/Users/noorullah/
 - The working prototype currently uses an Ultralytics YOLO model from `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt`.
 - YOLO remains the default for now because it is already integrated, tested, and returns usable habitat evidence for local demonstration.
 - The backend API stays classifier-like: it stores public habitat label, confidence, confidence band, top raw label, detections, and advisory text.
-- Detection payloads keep raw pixel boxes for auditability and normalized box coordinates for reliable public/officer overlays across display sizes.
+- Detection payloads keep raw pixel boxes for auditability and normalized box coordinates for reliable public and prototype-overlay rendering across display sizes.
 - If later model evaluation shows EfficientNet performs better for the retained classes, the inference implementation can be swapped without changing report storage or frontend submission flow.
 
 ## Hotspot Priority
 
-- Hotspot context is now backend-owned for report submission and officer review.
-- Officer-only sync mirrors the latest iDengue rows into PostgreSQL/PostGIS.
+- Hotspot context is now backend-owned for report submission and public report display.
+- The current sync path still uses an officer-only backend endpoint retained in the repository as an operational utility.
 - The backend assesses nearest iDengue hotspot distance with PostGIS distance logic and stores snapshot, nearest hotspot identity, priority level, and priority reason on each report.
 - Frontend map hotspot listing is served from the local mirror, which prepares the future path for scheduled AWS mirroring instead of browser-direct ArcGIS calls.
 
-## Officer Workflow
+## Out-of-Scope Officer Prototype
 
-- Officer review is implemented locally with a demo bearer token.
-- The dashboard shows report queue, image evidence, private notes, advisory ML output, hotspot mirror status, hotspot priority context, consent state, and status/follow-up controls.
-- The dashboard can trigger local hotspot sync now; AWS can later move that same behavior to a scheduled worker without changing resident-facing pages.
-- AWS migration can replace the demo token with Cognito or another managed identity provider without changing the resident flow.
+- Officer review remains in the repository as a local prototype with a demo bearer token.
+- It can still trigger hotspot sync and expose operational controls for experimentation.
+- It is explicitly out of scope for the assessed implementation, architecture diagrams, deployment acceptance, and academic evaluation claims.
 
 ## Full-Flow Rehearsal
 
-- Playwright E2E covers resident report submission, public detail/status lookup, officer review update, and persisted officer evidence against local frontend, FastAPI, PostgreSQL, and PostGIS.
+- Playwright and local rehearsal focus on resident report submission plus public detail/status lookup against local frontend, FastAPI, PostgreSQL, and PostGIS.
+- Some repository-level test or prototype paths may still touch officer functionality, but that does not expand the formal implementation scope.
 - The rehearsal intentionally avoids AWS credentials. It proves the boundaries AWS will inherit: Amplify can host the frontend, App Runner can host FastAPI, RDS can provide PostgreSQL/PostGIS, and S3 can replace the local key resolver.

@@ -2,8 +2,6 @@ import type {
   HabitatClass,
   HotspotMirrorStatus,
   HotspotSyncResult,
-  OfficerReport,
-  OfficerReportUpdate,
   PublicHotspot,
   PublicReportDetail,
   PublicMapReport,
@@ -34,6 +32,7 @@ export interface CreateReportOptions {
 }
 
 export interface ReportsService {
+  getMyReports(): Promise<ReportStatus[]>
   createReport(
     draft: ReportDraft,
     options?: CreateReportOptions,
@@ -52,15 +51,7 @@ export interface MapService {
   listHotspots(bounds?: MapBounds): Promise<PublicHotspot[]>
 }
 
-export interface OfficerService {
-  listReports(): Promise<OfficerReport[]>
-  updateReport(reference: string, update: OfficerReportUpdate): Promise<OfficerReport>
-  getHotspotStatus(): Promise<HotspotMirrorStatus>
-  syncHotspots(): Promise<HotspotSyncResult>
-}
-
 export interface AppServices {
   reportsService: ReportsService
   mapService: MapService
-  officerService: OfficerService
 }

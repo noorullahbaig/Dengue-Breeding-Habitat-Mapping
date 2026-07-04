@@ -51,6 +51,7 @@ export interface AuthContextValue {
   trackReport: (reference: string) => void
   untrackReport: (reference: string) => void
   trackedReferences: string[]
+  getAuthToken: () => Promise<string | null>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
@@ -208,7 +209,7 @@ function createCognitoSessionAdapter(): AuthAdapter {
           photoUrl: attributes.picture || (payload.picture as string),
           provider: 'cognito',
         }
-      } catch (err) {
+      } catch (_err) {
         return null
       }
     },
@@ -401,6 +402,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setTrackedReferences(nextTrackedReferences)
   }
 
+  async function getAuthToken(): Promise<string | null> {
+    if (authRuntimeConfig.sessionMode === 'cognito') {
+      try {
+        const session = await fetchAuthSession()
+        return session.tokens?.idToken?.toString() || null
+      } catch {
+        return null
+      }
+    }
+    // Local mode doesn't have real tokens
+    return null
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -417,6 +431,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         trackReport,
         untrackReport,
         trackedReferences,
+        getAuthToken,
       }}
     >
       {children}

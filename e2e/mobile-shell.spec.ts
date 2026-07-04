@@ -50,7 +50,7 @@ test.describe('mobile shell regressions', () => {
     await expect(page.getByRole('banner')).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Primary mobile navigation' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Track a report' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Keep KL safe from dengue.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Report a dengue breeding site.' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Start a report' })).toBeVisible()
 
     const homeHeroReadiness = await page.evaluate(() => {

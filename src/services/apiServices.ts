@@ -1,4 +1,3 @@
-import { OFFICER_DEMO_TOKEN } from '@/lib/constants'
 import { pointInBounds } from '@/services/mapBounds'
 import { preparePhotoForUpload, StaleFileError } from '@/lib/imageProcessing'
 import type { AppServices, CreateReportOptions, PublicReportFilters } from '@/services/contracts'
@@ -8,13 +7,13 @@ import type {
   NearbyReportCandidate,
   HotspotMirrorStatus,
   HotspotSyncResult,
-  OfficerReport,
   PublicMapReport,
   PublicReportDetail,
   PublicReportObservation,
   PublicHotspot,
   ReportDraft,
   ReportPrecheck,
+  ReportStatus,
   SubmittedReport,
 } from '@/types/report'
 import type { MapBounds } from '@/services/contracts'
@@ -256,9 +255,22 @@ function appendFilters(params: URLSearchParams, filters?: PublicReportFilters) {
   }
 }
 
-export function createApiAppServices(apiBaseUrl: string): AppServices {
+export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Promise<string | null>): AppServices {
   const baseUrl = trimTrailingSlash(apiBaseUrl)
   const apiOrigin = new URL(baseUrl, window.location.origin).origin
+
+  async function buildHeaders(includeAuth: boolean = false): Promise<HeadersInit> {
+    const headers: HeadersInit = {}
+    
+    if (includeAuth && getAuthToken) {
+      const token = await getAuthToken()
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+    }
+    
+    return headers
+  }
 
   function publicUrl(value: string) {
     return value.startsWith('/api/') ? `${apiOrigin}${value}` : value
@@ -325,24 +337,23 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
     }
   }
 
-  function officerHeaders() {
-    const token =
-      (import.meta.env.VITE_OFFICER_API_TOKEN as string | undefined) ?? OFFICER_DEMO_TOKEN
-
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    }
-  }
-
   return {
     reportsService: {
+      async getMyReports() {
+        const headers = await buildHeaders(true) // Include auth token
+        const response = await fetch(`${baseUrl}/my-reports`, {
+          headers,
+        })
+        return parseJsonResponse(response, baseUrl)
+      },
       async createReport(draft, options) {
         try {
           const formData = await buildReportFormData(draft, options)
+          const headers = await buildHeaders(true) // Include auth token
           const response = await fetch(`${baseUrl}/reports`, {
             method: 'POST',
             body: formData,
+            headers,
           })
           return parseJsonResponse<SubmittedReport>(response, baseUrl)
         } catch (error) {
@@ -482,44 +493,6 @@ export function createApiAppServices(apiBaseUrl: string): AppServices {
         const response = await fetch(`${baseUrl}/hotspots/current`)
         const hotspots = await parseJsonResponse<PublicHotspot[]>(response, baseUrl)
         return hotspots.filter((hotspot) => pointInBounds(hotspot.center, bounds))
-      },
-    },
-    officerService: {
-      async listReports() {
-        const response = await fetch(`${baseUrl}/officer/reports`, {
-          headers: officerHeaders(),
-        })
-        const reports = await parseJsonResponse<OfficerReport[]>(response, baseUrl)
-        return reports.map(normalizeOfficerReport)
-      },
-      async updateReport(reference, update) {
-        const response = await fetch(
-          `${baseUrl}/officer/reports/${encodeURIComponent(reference.trim())}`,
-          {
-            method: 'PATCH',
-            headers: officerHeaders(),
-            body: JSON.stringify(update),
-          },
-        )
-
-        return normalizeOfficerReport(
-          await parseJsonResponse<OfficerReport>(response, baseUrl),
-        )
-      },
-      async getHotspotStatus() {
-        const response = await fetch(`${baseUrl}/officer/hotspots/status`, {
-          headers: officerHeaders(),
-        })
-
-        return parseJsonResponse<HotspotMirrorStatus>(response, baseUrl)
-      },
-      async syncHotspots() {
-        const response = await fetch(`${baseUrl}/officer/hotspots/sync`, {
-          method: 'POST',
-          headers: officerHeaders(),
-        })
-
-        return parseJsonResponse<HotspotSyncResult>(response, baseUrl)
       },
     },
   }

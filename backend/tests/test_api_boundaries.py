@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import _precheck_report, app
 from app.models import Report
-from app.serializers import officer_report_out, public_report_detail_out, status_report_out
+from app.serializers import officer_report_out, public_report_detail_out, public_report_out, status_report_out
 
 
 def test_cors_allows_localhost_and_loopback_dev_origins():
@@ -119,6 +119,47 @@ def test_public_detail_includes_additive_privacy_and_hotspot_context():
 
     assert "privacyNote" in response
     assert response["hotspotPriority"]["priorityLevel"] == "warning"
+
+
+def test_public_map_report_includes_stored_hotspot_priority_without_private_location():
+	created_at = datetime.now(timezone.utc)
+	report = Report(
+		id="report-map-priority",
+		reference="KL-MAP-0001",
+		created_at=created_at,
+		captured_at=created_at,
+		latitude=3.1411,
+		longitude=101.6892,
+		accuracy_meters=10,
+		location_source="browser",
+		public_latitude=3.14,
+		public_longitude=101.69,
+		status="submitted",
+		neighborhood="Sentul",
+		status_message="Report submitted.",
+		image_original_filename="public.jpg",
+		image_mime_type="image/jpeg",
+		image_size_bytes=123,
+		image_sha256="e" * 64,
+		image_path="/private/public.jpg",
+		thumbnail_path="/private/public-thumb.jpg",
+		prediction_label="drain_inlet",
+		prediction_confidence=0.73,
+		prediction_confidence_band="moderate",
+		prediction_top_raw_label="Drain-Inlet",
+		prediction_advisory_text="Advisory only.",
+		detections=[],
+		hotspot_priority_level="core",
+		hotspot_priority_reason="Within core radius.",
+		nearest_hotspot_distance_meters=184.2,
+	)
+
+	response = public_report_out(report).model_dump()
+
+	assert response["hotspotPriority"]["priorityLevel"] == "core"
+	assert response["hotspotPriority"]["nearestHotspotDistanceMeters"] == 184.2
+	assert "reportLocation" not in response
+	assert response["publicLocation"]["latitude"] == 3.14
 
 
 def test_officer_report_includes_optional_stack_parent_summary():

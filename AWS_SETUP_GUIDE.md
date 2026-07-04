@@ -38,6 +38,7 @@ Step 5: Upload code and YOLO model to EC2
 Step 6: Configure environment variables
 Step 7: Run Docker Compose
 ```
+
 ```
 Step 8: Run database migrations
 Step 9: Test and verify
@@ -81,44 +82,54 @@ Confirm password: [Same password]
 ```
 DB instance class: db.t3.micro (or db.t4g.micro for ARM)
 ```
+
 Storage: 20 GB
 Storage autoscaling: Disable (to control costs)
+
 ```
 
 ### 1.6 Connectivity
 
 ```
+
 Virtual private cloud (VPC): Default VPC
 Subnet group: default
 Public access: No (security best practice)
 VPC security group: Create new
-  Name: denguewatch-noorullah-rds-sg
+Name: denguewatch-noorullah-rds-sg
 Availability Zone: No preference
+
 ```
 
 ### 1.7 Database Authentication
 
 ```
+
 Database authentication: Password authentication
+
 ```
 
 ### 1.8 Additional Configuration
 
 ```
+
 Initial database name: denguewatch
 Backup retention: 7 days (automatic backups)
 Backup window: No preference
 Enable deletion protection: Yes (prevents accidental deletion)
+
 ```
 
 ### 1.9 Monitoring and Tags
 
 **Tags:**
 ```
+
 Owner = Noorullah
 Project = DengueWatch
 Environment = Demo
 Course = FYP
+
 ```
 
 ### 1.10 Create Database
@@ -141,20 +152,24 @@ Course = FYP
 ### 2.2 Name and Tags
 
 ```
+
 Name: denguewatch-noorullah-ec2
 
 Tags:
-  Owner = Noorullah
-  Project = DengueWatch
-  Environment = Demo
-  Course = FYP
+Owner = Noorullah
+Project = DengueWatch
+Environment = Demo
+Course = FYP
+
 ```
 
 ### 2.3 Application and OS Images (AMI)
 
 ```
+
 Quick Start: Amazon Linux
 AMI: Amazon Linux 2023 AMI (64-bit x86)
+
 ```
 
 **Alternative:** Ubuntu Server 22.04 LTS (also works well)
@@ -162,13 +177,16 @@ AMI: Amazon Linux 2023 AMI (64-bit x86)
 ### 2.4 Instance Type
 
 ```
+
 Instance type: t3.medium
-  - 2 vCPU
-  - 4 GB RAM
-  - Needed for YOLO model inference
+
+- 2 vCPU
+- 4 GB RAM
+- Needed for YOLO model inference
+
 ```
 
-**Why t3.medium?** 
+**Why t3.medium?**
 - YOLO model requires ~1.5GB RAM
 - FastAPI + Nginx + overhead = 4GB total recommended
 - t3.small (2GB) might cause OOM errors
@@ -185,9 +203,11 @@ Instance type: t3.medium
 ### 2.6 Network Settings
 
 ```
+
 VPC: Default VPC (same as RDS)
 Subnet: No preference
 Auto-assign public IP: Enable
+
 ```
 
 **Firewall (Security groups):**
@@ -197,10 +217,12 @@ Auto-assign public IP: Enable
 
 **Inbound rules:**
 ```
-Type          Protocol   Port    Source         Description
-SSH           TCP        22      My IP          SSH access
-HTTP          TCP        80      0.0.0.0/0      HTTP access
-HTTPS         TCP        443     0.0.0.0/0      HTTPS access (optional)
+
+Type Protocol Port Source Description
+SSH TCP 22 My IP SSH access
+HTTP TCP 80 0.0.0.0/0 HTTP access
+HTTPS TCP 443 0.0.0.0/0 HTTPS access (optional)
+
 ```
 
 **Note:** For "My IP", AWS will auto-detect your current IP. For demo day, you may need to temporarily change this to `0.0.0.0/0` (anywhere).
@@ -208,9 +230,11 @@ HTTPS         TCP        443     0.0.0.0/0      HTTPS access (optional)
 ### 2.7 Configure Storage
 
 ```
+
 Volume type: gp3 (General Purpose SSD)
 Size: 20 GB
 Delete on termination: No (keep data if instance terminates)
+
 ```
 
 ### 2.8 Advanced Details (Optional)
@@ -218,7 +242,9 @@ Delete on termination: No (keep data if instance terminates)
 Leave defaults, or optionally add:
 
 ```
+
 IAM instance profile: None (not needed for basic deployment)
+
 ```
 
 ### 2.9 Summary and Launch
@@ -238,13 +264,15 @@ IAM instance profile: None (not needed for basic deployment)
 2. Find `denguewatch-noorullah-rds-sg`
 3. Click on it, then click **"Edit inbound rules"**
 4. Add rule:
-   ```
-   Type: PostgreSQL
-   Protocol: TCP
-   Port: 5432
-   Source: Custom > Select 'denguewatch-noorullah-ec2-sg'
-   Description: Allow EC2 access to RDS
-   ```
+```
+
+Type: PostgreSQL
+Protocol: TCP
+Port: 5432
+Source: Custom > Select 'denguewatch-noorullah-ec2-sg'
+Description: Allow EC2 access to RDS
+
+```
 5. Click **"Save rules"**
 
 This allows your EC2 instance to connect to RDS database.
@@ -256,11 +284,13 @@ To keep the same public IP even after stopping/starting EC2:
 1. Go to **EC2 > Elastic IPs**
 2. Click **"Allocate Elastic IP address"**
 3. Add tags:
-   ```
-   Name: denguewatch-noorullah-eip
-   Owner: Noorullah
-   Project: DengueWatch
-   ```
+```
+
+Name: denguewatch-noorullah-eip
+Owner: Noorullah
+Project: DengueWatch
+
+````
 4. Click **"Allocate"**
 5. Select the new Elastic IP
 6. Click **"Actions" > "Associate Elastic IP address"**
@@ -282,9 +312,10 @@ chmod 400 ~/Downloads/denguewatch-noorullah-key.pem
 
 # SSH into EC2 (replace with your actual public IP)
 ssh -i ~/Downloads/denguewatch-noorullah-key.pem ec2-user@54.123.45.67
-```
+````
 
 On Windows (PowerShell):
+
 ```powershell
 ssh -i C:\path\to\denguewatch-noorullah-key.pem ec2-user@54.123.45.67
 ```
@@ -329,16 +360,19 @@ docker-compose --version
 ### 4.5 Log Out and Back In
 
 For group changes to take effect:
+
 ```bash
 exit
 ```
 
 Then SSH back in:
+
 ```bash
 ssh -i ~/Downloads/denguewatch-noorullah-key.pem ec2-user@54.123.45.67
 ```
 
 Verify Docker works without sudo:
+
 ```bash
 docker ps
 ```
@@ -393,6 +427,7 @@ scp -i ~/Downloads/denguewatch-noorullah-key.pem \
 ```
 
 Or create the directory structure on EC2 first:
+
 ```bash
 # On EC2
 mkdir -p /home/ec2-user/denguewatch/ml_workspace/models/current_yolo/
@@ -403,6 +438,7 @@ Then upload from local machine.
 ### 5.4 Verify Files
 
 On EC2, verify the structure:
+
 ```bash
 cd /home/ec2-user/denguewatch
 ls -la
@@ -419,6 +455,7 @@ ls -lh ml_workspace/models/current_yolo/best.pt
 ### 6.1 Create Production Environment File
 
 On EC2:
+
 ```bash
 cd /home/ec2-user/denguewatch
 cp .env.production.example .env.production
@@ -439,11 +476,12 @@ CORS_ORIGINS=http://54.123.45.67,https://your-domain.com
 # VITE_API_BASE_URL - Frontend API endpoint
 VITE_API_BASE_URL=http://54.123.45.67/api
 
-# OFFICER_API_TOKEN - Generate a secure token
+# Optional: only for the experimental officer-only prototype endpoints
 OFFICER_API_TOKEN=your-secure-random-token-here
 ```
 
 **To generate a secure token:**
+
 ```bash
 openssl rand -hex 32
 ```
@@ -513,12 +551,14 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
 This will:
+
 1. Build the backend Docker image (includes YOLO model)
 2. Build the frontend Docker image (static React build)
 3. Start nginx container (port 80, 443)
 4. Start backend container (port 8000)
 
 **Expected output:**
+
 ```
 Creating network "denguewatch_denguewatch-network" ... done
 Building backend...
@@ -534,6 +574,7 @@ docker ps
 ```
 
 You should see 2 containers running:
+
 - `denguewatch-backend`
 - `denguewatch-nginx`
 
@@ -550,6 +591,7 @@ docker-compose -f docker-compose.prod.yml logs -f nginx
 ```
 
 Look for:
+
 - ✅ "Application startup complete" (backend)
 - ✅ Model loaded successfully
 - ✅ No database connection errors
@@ -568,6 +610,7 @@ docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
 ```
 
 **Expected output:**
+
 ```
 INFO  [alembic.runtime.migration] Running upgrade -> 0001_initial_reports
 INFO  [alembic.runtime.migration] Running upgrade 0001 -> 0002_report_stacking
@@ -585,6 +628,7 @@ psql -h denguewatch-noorullah-db.c1234567.us-east-1.rds.amazonaws.com \
 ```
 
 Inside psql:
+
 ```sql
 \dt
 -- Should show: reports, hotspots, alembic_version tables
@@ -602,11 +646,13 @@ Inside psql:
 ### 10.1 Health Check
 
 From your local machine:
+
 ```bash
 curl http://54.123.45.67/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "ok": true,
@@ -630,7 +676,11 @@ You should see the DengueWatch KL homepage.
 2. Allow browser geolocation (you may need HTTPS for this to work on mobile)
 3. Upload a test image
 4. Complete the report submission
-5. Check officer dashboard: `http://54.123.45.67/officer`
+5. Check public map and status flow
+
+Optional prototype-only check:
+
+- Experimental officer dashboard: `http://54.123.45.67/officer`
 
 ### 10.4 Check Backend Logs
 
@@ -678,11 +728,13 @@ sudo certbot certonly --standalone -d denguewatch.yourdomain.com
 ```
 
 Follow prompts:
+
 - Enter email: your-email@example.com
 - Agree to terms: Y
 - Share email: N (optional)
 
 Certificates will be saved to:
+
 ```
 /etc/letsencrypt/live/denguewatch.yourdomain.com/fullchain.pem
 /etc/letsencrypt/live/denguewatch.yourdomain.com/privkey.pem
@@ -691,12 +743,14 @@ Certificates will be saved to:
 #### 11.3 Update nginx.conf
 
 On EC2:
+
 ```bash
 cd /home/ec2-user/denguewatch
 nano nginx.conf
 ```
 
 Uncomment the HTTPS server block and update:
+
 ```nginx
 server {
     listen 443 ssl http2;
@@ -704,7 +758,7 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/denguewatch.yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/denguewatch.yourdomain.com/privkey.pem;
-    
+
     # ... rest of config
 }
 ```
@@ -712,6 +766,7 @@ server {
 #### 11.4 Update docker-compose.prod.yml
 
 Uncomment the volumes section for nginx:
+
 ```yaml
 volumes:
   - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -732,11 +787,13 @@ curl https://denguewatch.yourdomain.com/api/health
 #### 11.7 Auto-Renewal
 
 Set up auto-renewal cron job:
+
 ```bash
 sudo crontab -e
 ```
 
 Add this line:
+
 ```
 0 3 * * * certbot renew --quiet && docker-compose -f /home/ec2-user/denguewatch/docker-compose.prod.yml restart nginx
 ```
@@ -819,12 +876,14 @@ docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
 ### Stopping EC2 When Not Demoing
 
 **From AWS Console:**
+
 1. Go to EC2 > Instances
 2. Select `denguewatch-noorullah-ec2`
 3. Instance state > Stop instance
 4. Confirm
 
 **To start again:**
+
 1. Select instance
 2. Instance state > Start instance
 3. Note the new public IP (if not using Elastic IP)
@@ -850,6 +909,7 @@ docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
 ### Issue: Frontend shows "Cannot connect to server"
 
 **Diagnosis:**
+
 ```bash
 docker ps
 # Check if both containers are running
@@ -859,6 +919,7 @@ docker-compose -f docker-compose.prod.yml logs backend
 ```
 
 **Solutions:**
+
 - Verify CORS_ORIGINS includes your EC2 public IP
 - Check backend health: `curl http://localhost:8000/api/health` from EC2
 - Restart containers: `docker-compose -f docker-compose.prod.yml restart`
@@ -866,11 +927,13 @@ docker-compose -f docker-compose.prod.yml logs backend
 ### Issue: Backend shows database connection error
 
 **Diagnosis:**
+
 ```bash
 docker-compose -f docker-compose.prod.yml logs backend | grep -i database
 ```
 
 **Solutions:**
+
 - Verify RDS security group allows EC2 security group on port 5432
 - Check DATABASE_URL in .env.production is correct
 - Test connection: `psql -h <RDS_ENDPOINT> -U postgres -d denguewatch`
@@ -878,11 +941,13 @@ docker-compose -f docker-compose.prod.yml logs backend | grep -i database
 ### Issue: YOLO model not loading
 
 **Diagnosis:**
+
 ```bash
 docker-compose -f docker-compose.prod.yml exec backend ls -lh /app/models/best.pt
 ```
 
 **Solutions:**
+
 - Verify model file exists and is 6MB
 - Check Dockerfile.backend copies model correctly
 - Rebuild: `docker-compose -f docker-compose.prod.yml up -d --build`
@@ -890,12 +955,14 @@ docker-compose -f docker-compose.prod.yml exec backend ls -lh /app/models/best.p
 ### Issue: 502 Bad Gateway
 
 **Diagnosis:**
+
 ```bash
 docker-compose -f docker-compose.prod.yml logs nginx
 docker-compose -f docker-compose.prod.yml logs backend
 ```
 
 **Solutions:**
+
 - Backend container may have crashed (check logs)
 - Restart backend: `docker-compose -f docker-compose.prod.yml restart backend`
 - Check backend health: `curl http://backend:8000/api/health` from nginx container
@@ -905,18 +972,21 @@ docker-compose -f docker-compose.prod.yml logs backend
 **Cause:** Geolocation API requires HTTPS in production (security requirement)
 
 **Solutions:**
+
 - Set up HTTPS with Let's Encrypt (see Step 11)
 - For local testing, use `http://localhost` (allowed without HTTPS)
 
 ### Issue: Out of memory (OOM) errors
 
 **Diagnosis:**
+
 ```bash
 docker stats
 # Check memory usage
 ```
 
 **Solutions:**
+
 - Upgrade to larger instance type (t3.large with 8GB RAM)
 - Reduce concurrent requests
 - Check for memory leaks in logs
@@ -944,6 +1014,7 @@ docker-compose -f docker-compose.prod.yml top
 To send logs to AWS CloudWatch:
 
 1. Install CloudWatch agent:
+
 ```bash
 sudo yum install -y amazon-cloudwatch-agent
 ```
@@ -1003,11 +1074,14 @@ sudo yum install -y amazon-cloudwatch-agent
 ### Important URLs
 
 ```
-Frontend: http://YOUR_EC2_IP or https://your-domain.com
+CloudFront distribution: https://d2yol17g6mes38.cloudfront.net
+Frontend origin: http://YOUR_EC2_IP or https://your-domain.com
 Backend API: http://YOUR_EC2_IP/api
 Health check: http://YOUR_EC2_IP/api/health
-Officer dashboard: http://YOUR_EC2_IP/officer
 Public map: http://YOUR_EC2_IP/map
+
+Optional prototype-only route:
+Experimental officer dashboard: http://YOUR_EC2_IP/officer
 ```
 
 ### SSH Command
@@ -1075,18 +1149,21 @@ Course: FYP
 ## ✅ Deployment Checklist
 
 ### Pre-Deployment
+
 - [ ] AWS IAM credentials obtained
 - [ ] SSH key pair downloaded and saved
 - [ ] YOLO model file (best.pt) ready
 - [ ] Domain name configured (optional, for HTTPS)
 
 ### RDS Setup
+
 - [ ] RDS PostgreSQL instance created
 - [ ] PostGIS extension enabled
 - [ ] RDS endpoint noted
 - [ ] Master password saved securely
 
 ### EC2 Setup
+
 - [ ] EC2 instance created (t3.medium)
 - [ ] Security groups configured
 - [ ] SSH access working
@@ -1094,6 +1171,7 @@ Course: FYP
 - [ ] Elastic IP associated (optional)
 
 ### Application Deployment
+
 - [ ] Code uploaded to EC2
 - [ ] YOLO model uploaded
 - [ ] .env.production configured
@@ -1103,6 +1181,7 @@ Course: FYP
 - [ ] Database migrations completed
 
 ### Verification
+
 - [ ] Health endpoint returns all green
 - [ ] Frontend loads in browser
 - [ ] Test report submitted successfully
@@ -1111,6 +1190,7 @@ Course: FYP
 - [ ] HTTPS configured (recommended)
 
 ### Post-Deployment
+
 - [ ] Test on mobile device
 - [ ] Test geolocation (requires HTTPS)
 - [ ] Load sample data (optional)
@@ -1128,7 +1208,7 @@ Course: FYP
 5. **Use Elastic IP** - Prevents IP changes if you restart EC2
 6. **Enable HTTPS** - Professional and required for mobile geolocation
 7. **Create RDS snapshot** - Backup before demo day
-8. **Test officer dashboard** - Demonstrate full workflow
+8. **Test resident/public production flow** - Report, map, and status
 9. **Prepare sample images** - Pre-approved habitat photos
 10. **Document everything** - Screenshots, architecture diagrams, this guide
 
@@ -1150,6 +1230,7 @@ Course: FYP
 You've successfully deployed DengueWatch KL to AWS! 🎉
 
 **Next steps:**
+
 1. Test thoroughly
 2. Share URL with lecturer
 3. Prepare demo presentation
