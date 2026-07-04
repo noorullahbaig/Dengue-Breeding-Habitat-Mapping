@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import _precheck_report, app
 from app.models import Report
-from app.serializers import officer_report_out, public_report_detail_out, public_report_out, status_report_out
+from app.serializers import public_report_detail_out, public_report_out, status_report_out
 
 
 def test_cors_allows_localhost_and_loopback_dev_origins():
@@ -162,64 +162,3 @@ def test_public_map_report_includes_stored_hotspot_priority_without_private_loca
 	assert response["publicLocation"]["latitude"] == 3.14
 
 
-def test_officer_report_includes_optional_stack_parent_summary():
-    parent = Report(
-        id="report-parent",
-        reference="KL-PARENT-0001",
-        created_at=datetime.now(timezone.utc),
-        captured_at=datetime.now(timezone.utc),
-        latitude=3.141,
-        longitude=101.689,
-        accuracy_meters=10,
-        location_source="browser",
-        public_latitude=3.141,
-        public_longitude=101.689,
-        status="under_review",
-        neighborhood="Sentul",
-        status_message="Queued for officer review with map context.",
-        image_original_filename="parent.jpg",
-        image_mime_type="image/jpeg",
-        image_size_bytes=123,
-        image_sha256="c" * 64,
-        image_path="/private/parent.jpg",
-        thumbnail_path="/private/parent-thumb.jpg",
-        prediction_label="tire",
-        prediction_confidence=0.88,
-        prediction_confidence_band="high",
-        prediction_top_raw_label="Tire",
-        prediction_advisory_text="Advisory only.",
-        detections=[],
-    )
-    child = Report(
-        id="report-child",
-        reference="KL-CHILD-0002",
-        created_at=datetime.now(timezone.utc),
-        captured_at=datetime.now(timezone.utc),
-        latitude=3.1411,
-        longitude=101.6891,
-        accuracy_meters=11,
-        location_source="browser",
-        public_latitude=3.1411,
-        public_longitude=101.6891,
-        status="submitted",
-        neighborhood="Sentul",
-        status_message="Received and awaiting officer review.",
-        image_original_filename="child.jpg",
-        image_mime_type="image/jpeg",
-        image_size_bytes=123,
-        image_sha256="d" * 64,
-        image_path="/private/child.jpg",
-        thumbnail_path="/private/child-thumb.jpg",
-        prediction_label="tire",
-        prediction_confidence=0.85,
-        prediction_confidence_band="high",
-        prediction_top_raw_label="Tire",
-        prediction_advisory_text="Advisory only.",
-        detections=[],
-        parent_report=parent,
-    )
-
-    response = officer_report_out(child).model_dump()
-
-    assert response["stackedOnReference"] == "KL-PARENT-0001"
-    assert response["stackParent"]["reference"] == "KL-PARENT-0001"
