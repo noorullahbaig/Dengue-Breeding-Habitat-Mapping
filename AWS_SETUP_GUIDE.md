@@ -1,5 +1,7 @@
 # AWS Deployment Setup Guide for DengueWatch KL
 
+> Historical setup guide. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 **Student:** Noorullah  
 **Project:** Dengue Breeding Habitat Mapping  
 **Architecture:** Docker Compose on EC2 + RDS PostgreSQL/PostGIS  

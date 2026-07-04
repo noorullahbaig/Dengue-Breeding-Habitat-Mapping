@@ -1,5 +1,7 @@
 # ✅ Data Flow Optimizations - Ready to Deploy
 
+> Historical deployment notes. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 ## Summary
 
 Your AWS deployment will work **automatically** when you `git pull`. All changes are backward compatible with zero configuration changes required.

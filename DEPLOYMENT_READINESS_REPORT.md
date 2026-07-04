@@ -1,5 +1,7 @@
 # Deployment Readiness Report
 
+> Historical readiness report. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 ## DengueWatch KL - AWS Production Deployment
 
 **Date:** June 25, 2026  

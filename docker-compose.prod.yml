@@ -6,6 +6,7 @@
 
 services:
   backend:
+    image: denguewatch/backend:${APP_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -14,19 +15,19 @@ services:
     
     environment:
       # Database connection to RDS (set in .env.production)
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
       
       # Model and storage paths
       MODEL_PATH: /app/models/best.pt
       UPLOAD_ROOT: /app/uploads
       
       # CORS origins (frontend URL)
-      CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env.production}
       
       # AWS Cognito authentication
-      COGNITO_REGION: ${COGNITO_REGION}
-      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
-      COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID:-}
       
       # S3 storage for permanent uploaded evidence images
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
@@ -56,18 +57,19 @@ services:
       - denguewatch-network
 
   nginx:
+    image: denguewatch/nginx:${APP_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
         VITE_AUTH_MODE: ${VITE_AUTH_MODE:-cognito}
-        VITE_COGNITO_REGION: ${VITE_COGNITO_REGION}
-        VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID}
-        VITE_COGNITO_USER_POOL_CLIENT_ID: ${VITE_COGNITO_USER_POOL_CLIENT_ID}
-        VITE_COGNITO_HOSTED_UI_DOMAIN: ${VITE_COGNITO_HOSTED_UI_DOMAIN}
-        VITE_COGNITO_REDIRECT_SIGN_IN: ${VITE_COGNITO_REDIRECT_SIGN_IN}
-        VITE_COGNITO_REDIRECT_SIGN_OUT: ${VITE_COGNITO_REDIRECT_SIGN_OUT}
+        VITE_COGNITO_REGION: ${VITE_COGNITO_REGION:-}
+        VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID:-}
+        VITE_COGNITO_USER_POOL_CLIENT_ID: ${VITE_COGNITO_USER_POOL_CLIENT_ID:-}
+        VITE_COGNITO_HOSTED_UI_DOMAIN: ${VITE_COGNITO_HOSTED_UI_DOMAIN:-}
+        VITE_COGNITO_REDIRECT_SIGN_IN: ${VITE_COGNITO_REDIRECT_SIGN_IN:-}
+        VITE_COGNITO_REDIRECT_SIGN_OUT: ${VITE_COGNITO_REDIRECT_SIGN_OUT:-}
     container_name: denguewatch-nginx
     restart: unless-stopped
     

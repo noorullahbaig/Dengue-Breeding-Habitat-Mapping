@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+.env.production
 backend/.env
 backend/.venv
 backend/uploads
@@ -55,6 +56,7 @@ output/
 
 .playwright-cli/
 .kiro/
+.deploy/
 
 # AWS Keys and Credentials
 *.pem

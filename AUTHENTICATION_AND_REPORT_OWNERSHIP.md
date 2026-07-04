@@ -37,11 +37,14 @@ The frontend and backend values must identify the same user pool and app client.
 
 ## Deployment
 
-1. Fill `.env.production` from `.env.production.example`.
-2. Install backend dependencies from `backend/requirements.txt`.
-3. Run `alembic upgrade head` from the backend container or environment.
-4. Rebuild both images so the Cognito build arguments are embedded in the frontend.
-5. Verify authenticated submission and anonymous sign-in-and-claim flows from separate browser sessions.
+Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) as the authoritative production runbook.
+
+The deployment contract for resident account ownership is:
+
+1. Store the full production env document as an AWS SSM SecureString and let EC2 fetch it during deploy.
+2. Keep backend `COGNITO_*` values and frontend `VITE_COGNITO_*` values aligned to the same user pool and app client.
+3. Run the versioned deployment through `./scripts/deploy-production.sh` so the env file is validated and explicitly passed to Docker Compose.
+4. Verify authenticated submission and anonymous sign-in-and-claim flows from separate browser sessions after rollout.
 
 If production frontend Cognito configuration is incomplete, public reporting stays available but account sign-in is disabled instead of falling back to mock accounts.
 

@@ -1,6 +1,6 @@
 # Historical authentication documentation index
 
-> Start with `AUTHENTICATION_AND_REPORT_OWNERSHIP.md`. The documents indexed below were produced during the original implementation attempt and may contain outdated completion claims.
+> Start with [AUTHENTICATION_AND_REPORT_OWNERSHIP.md](/Users/noorullah/Developer/prototype/AUTHENTICATION_AND_REPORT_OWNERSHIP.md) and [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md). The documents indexed below were produced during the original implementation attempt and may contain outdated completion claims.
 
 ## ✅ Status: COMPLETE & READY TO DEPLOY
 

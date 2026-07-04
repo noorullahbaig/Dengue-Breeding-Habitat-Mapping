@@ -1,5 +1,7 @@
 # Pre-Deployment Checklist
 
+> Historical checklist. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 ## DengueWatch KL - AWS Production Deployment
 
 **Student:** Noorullah  

@@ -1,5 +1,7 @@
 # 🎯 Deployment Package Status: READY ✅
 
+> Historical status snapshot. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 **Project:** DengueWatch KL (Dengue Breeding Habitat Mapping)  
 **Student:** Noorullah  
 **Architecture:** CloudFront edge + EC2 origin + Docker Compose + RDS PostgreSQL/PostGIS

@@ -1,5 +1,7 @@
 # Deployment Files Overview
 
+> Historical deployment guide. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 This directory contains Docker and deployment configuration files for deploying DengueWatch KL to AWS.
 
 Scope note: deployment acceptance in this repository is based on the resident reporting flow plus the public map/status experience. Prototype officer routes remain in the codebase, but they are out of scope for deployment acceptance and architecture claims. The current deployed public edge uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`; CloudFront origin and cache settings are managed outside this repository.

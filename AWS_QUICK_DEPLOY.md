@@ -1,5 +1,7 @@
 # AWS Quick Deploy Guide
 
+> Historical quick-start. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 ## TL;DR - 3 Commands to Deploy
 
 ```bash

@@ -1,5 +1,7 @@
 # AWS Deployment Update Guide
 
+> Historical update guide. Use [PRODUCTION_DEPLOYMENT.md](/Users/noorullah/Developer/prototype/PRODUCTION_DEPLOYMENT.md) for the current production workflow.
+
 ## ✅ Good News - Your Deployment Will Work Automatically!
 
 All the optimizations implemented are **backward compatible** and will work immediately when you `git pull` on your EC2 instance.
