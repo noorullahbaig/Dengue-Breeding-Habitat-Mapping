@@ -95,6 +95,7 @@ class PublicMapReportOut(BaseModel):
     thumbnailUrl: str
     imageUrl: str
     privacyNote: str
+    hotspotPriority: HotspotPriorityOut
 
 
 class NearbyReportOut(BaseModel):
@@ -184,36 +185,6 @@ class HotspotSyncOut(BaseModel):
     sourceLabel: str
     syncedAt: datetime
 
-
-class OfficerReportOut(BaseModel):
-    id: str
-    reference: str
-    createdAt: datetime
-    capturedAt: datetime
-    reportLocation: LocationPoint
-    publicLocation: LocationPoint
-    status: str
-    prediction: PredictionSummaryOut
-    neighborhood: str
-    statusMessage: str
-    notes: str | None = None
-    imageUrl: str
-    thumbnailUrl: str
-    stackedOnReference: str | None = None
-    publicConsent: PublicConsentOut
-    hotspotPriority: HotspotPriorityOut
-    officerNotes: str | None = None
-    followUpAction: str | None = None
-    reviewedAt: datetime | None = None
-    reviewedBy: str | None = None
-    stackParent: StackParentSummaryOut | None = None
-
-
-class OfficerReportUpdateIn(BaseModel):
-    status: Literal["submitted", "under_review", "prioritized", "action_recorded", "closed"]
-    officerNotes: str | None = None
-    followUpAction: str | None = None
-    reviewedBy: str | None = None
 
 
 class HealthOut(BaseModel):

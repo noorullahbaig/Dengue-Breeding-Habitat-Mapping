@@ -8,6 +8,21 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    cognito_sub: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)  # 'cognito' or 'local'
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    reports: Mapped[list["Report"]] = relationship("Report", back_populates="user")
+
+
 class Report(Base):
     __tablename__ = "reports"
 
@@ -67,11 +82,16 @@ class Report(Base):
         default="Hotspot priority has not been assessed yet.",
     )
 
-    officer_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    follow_up_action: Mapped[str | None] = mapped_column(Text, nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
+
+    user_id: Mapped[str | None] = mapped_column(
+        String(128),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    user: Mapped["User | None"] = relationship("User", back_populates="reports")
     parent_report: Mapped["Report | None"] = relationship(
         "Report",
         remote_side="Report.id",

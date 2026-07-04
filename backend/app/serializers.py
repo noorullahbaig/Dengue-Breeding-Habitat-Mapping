@@ -12,7 +12,6 @@ from app.schemas import (
     LocationPoint,
     PredictionSummaryOut,
     NearbyReportOut,
-    OfficerReportOut,
     PublicConsentOut,
     PublicHotspotOut,
     PublicReportDetailOut,
@@ -174,6 +173,7 @@ def public_report_out(
         thumbnailUrl=_media_url(thumbnail_report, "thumbnail"),
         imageUrl=_media_url(thumbnail_report, "image"),
         privacyNote=PRIVACY_NOTE,
+        hotspotPriority=_hotspot_priority(report),
     )
 
 
@@ -285,50 +285,3 @@ def hotspot_sync_out(result: HotspotSyncResult) -> HotspotSyncOut:
     )
 
 
-def officer_report_out(report: Report) -> OfficerReportOut:
-    stacked_on_reference = report.parent_report.reference if report.parent_report else None
-    stack_parent = (
-        StackParentSummaryOut(
-            reference=report.parent_report.reference,
-            createdAt=report.parent_report.created_at,
-            status=report.parent_report.status,
-            prediction=_prediction(report.parent_report),
-            imageUrl=_media_url(report.parent_report, "image"),
-            thumbnailUrl=_media_url(report.parent_report, "thumbnail"),
-        )
-        if report.parent_report
-        else None
-    )
-
-    return OfficerReportOut(
-        id=report.id,
-        reference=report.reference,
-        createdAt=report.created_at,
-        capturedAt=report.captured_at,
-        reportLocation=LocationPoint(
-            latitude=report.latitude,
-            longitude=report.longitude,
-            accuracyMeters=report.accuracy_meters,
-            source=report.location_source,
-        ),
-        publicLocation=LocationPoint(
-            latitude=report.public_latitude,
-            longitude=report.public_longitude,
-            source="public",
-        ),
-        status=report.status,
-        prediction=_prediction(report),
-        neighborhood=report.neighborhood,
-        statusMessage=report.status_message,
-        notes=report.notes,
-        imageUrl=_media_url(report, "image"),
-        thumbnailUrl=_media_url(report, "thumbnail"),
-        stackedOnReference=stacked_on_reference,
-        publicConsent=_public_consent(report),
-        hotspotPriority=_hotspot_priority(report),
-        officerNotes=report.officer_notes,
-        followUpAction=report.follow_up_action,
-        reviewedAt=report.reviewed_at,
-        reviewedBy=report.reviewed_by,
-        stackParent=stack_parent,
-    )

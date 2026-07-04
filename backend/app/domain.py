@@ -11,14 +11,14 @@ from app.models import Report
 
 
 ADVISORY_TEXT = (
-    "Advisory only. Officers still review the image, location, and hotspot context "
+    "Advisory only. The image, location, and hotspot context are analyzed "
     "before any action is recorded."
 )
 PUBLIC_CONSENT_VERSION = "public-image-pin-ai-v2"
 PUBLIC_CONSENT_TEXT = (
     "I confirm this image, exact pin, computer-vision advisory result, confidence, "
     "and detection evidence can be shown publicly on the prototype map as crowdsourced "
-    "dengue habitat evidence. Optional notes remain for officer review."
+    "dengue habitat evidence."
 )
 SAME_SITE_RADIUS_METERS = 30
 MAX_DETECTED_ACCURACY_METERS = 250
@@ -85,10 +85,10 @@ def build_reference(db: Session) -> str:
 
 def status_message_for(status: str) -> str:
     messages = {
-        "submitted": "Received and awaiting officer review.",
-        "under_review": "Queued for officer review with map context.",
+        "submitted": "Received and awaiting review.",
+        "under_review": "Queued for review with map context.",
         "prioritized": "Flagged for faster follow-up because the area aligns with active hotspot context.",
-        "action_recorded": "An officer logged follow-up activity for this report.",
+        "action_recorded": "Follow-up activity logged for this report.",
         "closed": "The report lifecycle has been completed for this prototype.",
     }
     return messages.get(status, messages["submitted"])
