@@ -324,32 +324,31 @@
   transform: translateY(-2px);
 }
 
-/* Hotspot bottom carousel */
-.hotspot-carousel-container {
+/* Shared map detail sheet */
+.map-mobile-sheet {
   position: absolute;
-  bottom: calc(var(--space-md) + var(--safe-area-bottom));
+  top: calc(var(--app-topbar-height) + 4.5rem);
   left: var(--space-md);
   right: var(--space-md);
-  z-index: 10;
-  pointer-events: auto;
+  bottom: calc(var(--app-bottom-nav-height) + var(--safe-area-bottom) + var(--space-md));
+  z-index: 60;
+  pointer-events: none;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {
-  .hotspot-carousel-container {
-    bottom: calc(var(--space-sm) + var(--safe-area-bottom));
+  .map-mobile-sheet {
+    top: calc(var(--app-topbar-height) + 4.25rem);
     left: var(--space-sm);
     right: var(--space-sm);
+    bottom: calc(var(--app-bottom-nav-height) + var(--safe-area-bottom) + var(--space-sm));
   }
 }
 
-/* When used as a detail panel overlay (not a carousel), disable clicks on the wrapper
-   but allow clicks to pass through to child card elements */
-.hotspot-detail-container {
-  pointer-events: none;
-  padding-bottom: 16px;
+.map-mobile-sheet > * {
+  pointer-events: auto;
 }
 
 .map-fullscreen-loading {
@@ -532,7 +531,8 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  margin: 0 auto;
+  max-height: min(52vh, 420px);
+  margin: 0 0 0 auto;
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -545,7 +545,7 @@
   box-shadow: 0 16px 32px rgba(2, 31, 41, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
   transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   animation: slideUpFadeDetail 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  overflow: hidden;
+  overflow: auto;
 }
 
 @keyframes slideUpFadeDetail {
@@ -769,12 +769,13 @@
    ------------------------------------- */
 
 .report-stack-container {
-  padding-bottom: 0;
+  align-items: stretch;
 }
 
 .report-stack-sheet {
+  width: 100%;
   max-width: 468px;
-  max-height: min(70vh, 640px);
+  max-height: min(62vh, 560px);
   padding: 0;
   gap: 0;
   border-radius: 18px;
@@ -968,7 +969,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  padding: 14px 16px calc(16px + var(--safe-area-bottom));
+  padding: 14px 16px 16px;
   border-top: 1px solid rgba(2, 31, 41, 0.08);
   background: rgba(248, 252, 253, 0.92);
   backdrop-filter: blur(16px);
@@ -977,7 +978,7 @@
 }
 
 @supports selector(:has(*)) {
-  .page--map-fullscreen:has(.report-stack-sheet) .leaflet-bottom.leaflet-right {
+  .page--map-fullscreen:has(.map-mobile-sheet) .leaflet-bottom.leaflet-right {
     bottom: calc(
       var(--app-bottom-nav-height) + var(--safe-area-bottom) + 16px
     ) !important;
@@ -985,12 +986,10 @@
 }
 
 @media (max-width: 768px) {
-  .report-stack-container {
-    top: calc(var(--app-topbar-height) + 4.25rem);
-    bottom: calc(
-      var(--app-bottom-nav-height) + var(--safe-area-bottom) + var(--space-sm)
-    );
-    justify-content: flex-end;
+  .map-mobile-sheet--hotspot .hotspot-detail-card {
+    max-width: none;
+    max-height: min(38vh, 320px);
+    border-radius: 18px;
   }
 
   .report-stack-sheet {
@@ -1008,7 +1007,7 @@
   }
 
   .report-stack-sheet__footer {
-    padding: 12px 14px calc(14px + var(--safe-area-bottom));
+    padding: 12px 14px 14px;
   }
 
   .report-stack-sheet__title {
@@ -1025,7 +1024,7 @@
   }
 
   @supports selector(:has(*)) {
-    .page--map-fullscreen:has(.report-stack-sheet) .leaflet-bottom.leaflet-right {
+    .page--map-fullscreen:has(.map-mobile-sheet) .leaflet-bottom.leaflet-right {
       top: 124px !important;
       right: 10px !important;
       bottom: auto !important;
@@ -2937,11 +2936,13 @@
 	position: absolute;
 	left: 14px;
 	bottom: 14px;
-	z-index: 500;
-	display: inline-flex;
+	z-index: 20;
+	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 12px;
-	max-width: calc(100% - 82px);
+	row-gap: 6px;
+	max-width: min(calc(100% - 28px), 320px);
 	padding: 7px 9px;
 	border: 1px solid rgba(0, 70, 79, 0.16);
 	border-radius: 10px;
@@ -2958,6 +2959,7 @@
 	display: flex;
 	align-items: center;
 	gap: 5px;
+	min-width: 0;
 	white-space: nowrap;
 }
 
@@ -2998,7 +3000,8 @@
 		bottom: calc(
 			var(--app-bottom-nav-height) + var(--safe-area-bottom) + 20px
 		);
-		gap: 9px;
+		right: 10px;
+		gap: 8px;
 		max-width: calc(100% - 20px);
 		padding: 6px 8px;
 		font-size: 0.62rem;

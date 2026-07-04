@@ -149,7 +149,6 @@ describe("PublicReportsMap marker grouping", () => {
 		expect(groups).toHaveLength(1);
 		expect(groups[0]).toMatchObject({
 			isExactStack: true,
-			canZoomToExpand: false,
 			totalReportCount: 3,
 		});
 		expect(groups[0]?.reports.map((item) => item.id)).toEqual(["2", "1"]);
@@ -231,7 +230,7 @@ describe("PublicReportsMap marker grouping", () => {
 		);
 
 		const highPriorityMarker = screen.getByRole("button", {
-			name: "Prioritized report. Open report KL-1.",
+			name: "Priority report. Open report KL-1.",
 		});
 		expect(highPriorityMarker).toHaveAttribute(
 			"data-icon-class",
@@ -243,16 +242,16 @@ describe("PublicReportsMap marker grouping", () => {
 		);
 		expect(highPriorityMarker).toHaveAttribute(
 			"data-marker-alt",
-			"Prioritized report. Open report KL-1.",
+			"Priority report. Open report KL-1.",
 		);
 		expect(
-			screen.getByRole("button", { name: "Normal report. Open report KL-2." }),
+			screen.getByRole("button", { name: "Report. Open report KL-2." }),
 		).toHaveAttribute(
 			"data-icon-class",
 			expect.stringContaining("map-pin--priority-normal"),
 		);
 		expect(
-			screen.getByRole("button", { name: "Normal report. Open report KL-3." }),
+			screen.getByRole("button", { name: "Report. Open report KL-3." }),
 		).toHaveAttribute(
 			"data-icon-class",
 			expect.stringContaining("map-pin--priority-normal"),
@@ -260,9 +259,9 @@ describe("PublicReportsMap marker grouping", () => {
 
 		const legend = screen.getByRole("region", { name: "Map legend" });
 		expect(legend.querySelectorAll(".map-priority-legend__item")).toHaveLength(3);
-		expect(legend).toHaveTextContent("Prioritized report");
-		expect(legend).toHaveTextContent("Normal report");
-		expect(legend).toHaveTextContent("Active hotspot");
+		expect(legend).toHaveTextContent("Priority report");
+		expect(legend).toHaveTextContent("Report");
+		expect(legend).toHaveTextContent("Hotspot");
 		expect(legend.querySelector(".map-priority-legend__diamond")).not.toBeNull();
 		expect(legend).not.toHaveTextContent("400 m");
 	});
@@ -287,13 +286,12 @@ describe("PublicReportsMap marker grouping", () => {
 		expect(lowZoomGroups).toHaveLength(1);
 		expect(lowZoomGroups[0]).toMatchObject({
 			isExactStack: false,
-			canZoomToExpand: true,
 			totalReportCount: 2,
 		});
 		expect(highZoomGroups).toHaveLength(2);
 	});
 
-	it("zooms into a separable overlap before opening the report stack", async () => {
+	it("opens a grouped overlap immediately instead of zooming first", async () => {
 		const user = userEvent.setup();
 		const handleSelectGroup = vi.fn();
 
@@ -311,19 +309,17 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Normal report. 2 reports in this area.",
+				name: "Report. 2 reports in this area.",
 			}),
 		);
 
-		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
-			expect.any(Array),
-			15,
-			expect.objectContaining({ duration: expect.any(Number) }),
+		expect(handleSelectGroup).toHaveBeenCalledWith(
+			expect.objectContaining({ isExactStack: false, totalReportCount: 2 }),
 		);
-		expect(handleSelectGroup).not.toHaveBeenCalled();
+		expect(leafletHarness.flyTo).not.toHaveBeenCalled();
 	});
 
-	it("opens exact and max-zoom stacks immediately", async () => {
+	it("opens exact and separated stacks immediately at any zoom", async () => {
 		const user = userEvent.setup();
 		const handleSelectGroup = vi.fn<[PublicReportGroupSelection], void>();
 
@@ -341,7 +337,7 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Normal report. 2 reports at this public location.",
+				name: "Report. 2 reports at this public location.",
 			}),
 		);
 
@@ -369,12 +365,13 @@ describe("PublicReportsMap marker grouping", () => {
 
 		await user.click(
 			screen.getByRole("button", {
-				name: "Normal report. 2 reports in this area.",
+				name: "Report. 2 reports in this area.",
 			}),
 		);
 
 		expect(handleSelectGroup).toHaveBeenCalledWith(
 			expect.objectContaining({ isExactStack: false, totalReportCount: 2 }),
 		);
+		expect(leafletHarness.flyTo).not.toHaveBeenCalled();
 	});
 });

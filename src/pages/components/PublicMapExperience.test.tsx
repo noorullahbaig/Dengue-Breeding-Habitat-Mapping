@@ -16,6 +16,7 @@ const experienceHarness = vi.hoisted(() => ({
 				totalReportCount: number;
 		  }
 		| undefined,
+	hotspot: undefined as PublicHotspot | undefined,
 	listPublicReports: vi.fn(),
 	listHotspots: vi.fn(),
 }));
@@ -32,19 +33,33 @@ vi.mock("@/app/useServices", () => ({
 vi.mock("@/pages/components/PublicReportsMap", () => ({
 	PublicReportsMap: ({
 		onSelectReportGroup,
+		onSelectHotspot,
 	}: {
 		onSelectReportGroup?: (group: NonNullable<typeof experienceHarness.group>) => void;
+		onSelectHotspot?: (hotspot: NonNullable<typeof experienceHarness.hotspot>) => void;
 	}) => (
-		<button
-			type="button"
-			onClick={() => {
-				if (experienceHarness.group) {
-					onSelectReportGroup?.(experienceHarness.group);
-				}
-			}}
-		>
-			Select grouped marker
-		</button>
+		<>
+			<button
+				type="button"
+				onClick={() => {
+					if (experienceHarness.group) {
+						onSelectReportGroup?.(experienceHarness.group);
+					}
+				}}
+			>
+				Select grouped marker
+			</button>
+			<button
+				type="button"
+				onClick={() => {
+					if (experienceHarness.hotspot) {
+						onSelectHotspot?.(experienceHarness.hotspot);
+					}
+				}}
+			>
+				Select hotspot
+			</button>
+		</>
 	),
 }));
 
@@ -107,8 +122,23 @@ describe("PublicMapExperience report stack sheet", () => {
 			isExactStack: true,
 			totalReportCount: 3,
 		};
+		experienceHarness.hotspot = {
+			id: "hotspot-1",
+			locality: "Taman Melati",
+			district: "Wangsa Maju",
+			center: {
+				latitude: 3.2001,
+				longitude: 101.7182,
+				source: "hotspot",
+			},
+			cumulativeCases: 12,
+			outbreakDurationDays: 6,
+			outbreakStartDate: "2026-06-21",
+		};
 		experienceHarness.listPublicReports.mockResolvedValue(reports);
-		experienceHarness.listHotspots.mockResolvedValue([] satisfies PublicHotspot[]);
+		experienceHarness.listHotspots.mockResolvedValue([
+			experienceHarness.hotspot,
+		] satisfies PublicHotspot[]);
 	});
 
 	afterEach(() => {
@@ -125,6 +155,9 @@ describe("PublicMapExperience report stack sheet", () => {
 		);
 
 		await user.click(await screen.findByRole("button", { name: "Select grouped marker" }));
+
+		const reportSheet = document.querySelector(".map-mobile-sheet--report");
+		expect(reportSheet).toBeInstanceOf(HTMLElement);
 
 		expect(
 			screen.getByRole("heading", {
@@ -217,6 +250,36 @@ describe("PublicMapExperience report stack sheet", () => {
 			undefined,
 			expect.objectContaining({ habitatClass: "tire" }),
 		);
+	});
+
+	it("opens hotspot details in the shared mobile sheet above the bottom navigation", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		await user.click(await screen.findByRole("button", { name: "Select hotspot" }));
+
+		const hotspotSheet = document.querySelector(".map-mobile-sheet--hotspot");
+		expect(hotspotSheet).toBeInstanceOf(HTMLElement);
+		expect(screen.getByText("Active Outbreak")).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Taman Melati" }),
+		).toBeInTheDocument();
+		expect(screen.getByText("Wangsa Maju")).toBeInTheDocument();
+
+		await user.click(
+			screen.getByRole("button", { name: "Close hotspot details" }),
+		);
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole("heading", { name: "Taman Melati" }),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it("hides redundant single-observation counts and closes on Escape", async () => {

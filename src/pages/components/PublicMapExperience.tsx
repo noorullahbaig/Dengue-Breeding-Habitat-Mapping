@@ -342,7 +342,7 @@ export function PublicMapExperience() {
 
 			{/* Detail Hotspot View (Shown only when selected) */}
 			{selectedHotspotId && (
-				<div className="hotspot-carousel-container hotspot-detail-container">
+				<div className="map-mobile-sheet map-mobile-sheet--hotspot">
 					{(() => {
 						const hotspot = hotspots.find((h) => h.id === selectedHotspotId);
 						if (!hotspot) return null;
@@ -404,7 +404,7 @@ export function PublicMapExperience() {
 
 			{/* Detail Report View (Shown only when selected) */}
 			{selectedReportGroup && activeReport ? (
-				<div className="hotspot-carousel-container hotspot-detail-container report-stack-container">
+				<div className="map-mobile-sheet map-mobile-sheet--report report-stack-container">
 					<Surface
 						as="section"
 						className="hotspot-detail-card report-detail-card report-stack-sheet"

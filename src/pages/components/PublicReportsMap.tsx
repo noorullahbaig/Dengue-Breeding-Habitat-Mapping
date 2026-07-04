@@ -44,7 +44,6 @@ interface ProjectionPoint {
 
 interface ReportGroupingOptions {
 	zoom: number;
-	maxZoom: number;
 	collisionRadiusPx?: number;
 	project: (
 		point: Pick<PublicMapReport["publicLocation"], "latitude" | "longitude">,
@@ -63,7 +62,6 @@ interface PublicReportMarkerGroup extends PublicReportGroupSelection {
 	id: string;
 	title: string;
 	priorityState: PublicPriorityState;
-	canZoomToExpand: boolean;
 }
 
 interface MutableReportGroup {
@@ -168,23 +166,16 @@ function markerPriorityDescription(
 	priorityState: PublicPriorityState,
 	title: string,
 ) {
-	const label =
-		priorityState === "prioritized" ? "Prioritized report" : "Normal report";
+	const label = priorityState === "prioritized" ? "Priority report" : "Report";
 	return `${label}. ${title}.`;
 }
 
-function toMarkerGroup(
-	group: MutableReportGroup,
-	zoom: number,
-	maxZoom: number,
-): PublicReportMarkerGroup {
+function toMarkerGroup(group: MutableReportGroup): PublicReportMarkerGroup {
 	const totalReportCount = group.reports.reduce(
 		(total, report) => total + reportCount(report),
 		0,
 	);
 	const isExactStack = totalReportCount > 1 && group.exactKeys.size === 1;
-	const canZoomToExpand =
-		group.reports.length > 1 && !isExactStack && zoom < maxZoom;
 	const center: [number, number] = [
 		group.latitudeSum / group.reports.length,
 		group.longitudeSum / group.reports.length,
@@ -197,7 +188,6 @@ function toMarkerGroup(
 		center,
 		isExactStack,
 		totalReportCount,
-		canZoomToExpand,
 		priorityState: getGroupPriorityState(group.reports),
 		title: markerGroupTitle(totalReportCount, isExactStack, leadReport),
 	};
@@ -246,9 +236,7 @@ export function buildPublicReportMarkerGroups(
 		matchingGroup.longitudeSum += report.publicLocation.longitude;
 	}
 
-	return groups.map((group) =>
-		toMarkerGroup(group, options.zoom, options.maxZoom),
-	);
+	return groups.map((group) => toMarkerGroup(group));
 }
 
 function MapCenterSync({
@@ -288,7 +276,6 @@ function ReportMarkersLayer({
 		() =>
 			buildPublicReportMarkerGroups(reports, {
 				zoom: mapZoom,
-				maxZoom: PUBLIC_MAP_MAX_ZOOM,
 				project: (point, zoom) => {
 					const projected = map.project(
 						L.latLng(point.latitude, point.longitude),
@@ -301,14 +288,6 @@ function ReportMarkersLayer({
 	);
 
 	function handleGroupClick(group: PublicReportMarkerGroup) {
-		if (group.canZoomToExpand) {
-			map.flyTo(group.center, Math.min(mapZoom + 2, PUBLIC_MAP_MAX_ZOOM), {
-				duration: 0.45,
-				easeLinearity: 0.2,
-			});
-			return;
-		}
-
 		onSelectReportGroup?.({
 			reports: group.reports,
 			center: group.center,
@@ -409,21 +388,21 @@ export function PublicReportsMap({
 						className="map-priority-legend__dot map-priority-legend__dot--prioritized"
 						aria-hidden="true"
 					/>
-					<span>Prioritized report</span>
+					<span>Priority report</span>
 				</div>
 				<div className="map-priority-legend__item">
 					<span
 						className="map-priority-legend__dot map-priority-legend__dot--normal"
 						aria-hidden="true"
 					/>
-					<span>Normal report</span>
+					<span>Report</span>
 				</div>
 				<div className="map-priority-legend__item">
 					<span
 						className="map-priority-legend__diamond"
 						aria-hidden="true"
 					/>
-					<span>Active hotspot</span>
+					<span>Hotspot</span>
 				</div>
 			</section>
 

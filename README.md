@@ -4,6 +4,8 @@ React + Vite + TypeScript frontend plus a local FastAPI backend for the dengue b
 
 Current documentation scope: the assessed implementation covers the resident submission flow and the public map/status experience. Prototype officer routes still exist in the repository, but they are out of scope for architecture, deployment acceptance, and evaluation claims. The current deployed edge entrypoint uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`; its origin and cache configuration are managed outside this repository.
 
+Visual implementation rule: treat mobile view as the authoritative layout for this prototype. Any visual/UI change should be designed and validated for phone-sized viewports first; desktop/laptop rendering is secondary and should adapt from the mobile behavior rather than redefining it.
+
 ## Current scope
 
 - Resident landing page and guided reporting flow
