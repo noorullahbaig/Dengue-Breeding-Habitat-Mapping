@@ -142,6 +142,7 @@ def status_report_out(report: Report) -> StatusReportOut:
             else report.status_message
         ),
         stackedOnReference=stacked_on_reference,
+        notes=report.notes,
     )
 
 

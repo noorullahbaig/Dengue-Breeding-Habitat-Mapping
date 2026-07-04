@@ -103,9 +103,8 @@ The script will:
 5. Install `.env.production` atomically with mode `600`.
 6. Run `docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet`.
 7. Build images tagged with the current Git SHA.
-8. Run `alembic upgrade head` in a one-off backend container.
-9. Run `docker compose up -d --remove-orphans`.
-10. Wait for both nginx and backend health endpoints.
+8. Run `docker compose up -d --remove-orphans`. (The automatic `migrate` service runs `alembic upgrade head` first).
+9. Wait for both nginx and backend health endpoints.
 
 ## Config-only changes
 

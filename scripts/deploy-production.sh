@@ -162,7 +162,6 @@ install -m 600 "$TMP_ENV_FILE" "$ENV_FILE"
 
 APP_VERSION="$APP_VERSION" compose config --quiet
 APP_VERSION="$APP_VERSION" compose build
-APP_VERSION="$APP_VERSION" compose run --rm backend alembic upgrade head
 APP_VERSION="$APP_VERSION" compose up -d --remove-orphans
 
 attempt=0

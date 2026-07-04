@@ -85,6 +85,7 @@ class StatusReportOut(BaseModel):
     neighborhood: str
     statusMessage: str
     stackedOnReference: str | None = None
+    notes: str | None = None
 
 
 class OwnerReportOut(StatusReportOut):

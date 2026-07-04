@@ -5,6 +5,19 @@
 # You must create RDS PostgreSQL instance separately via AWS Console.
 
 services:
+  migrate:
+    image: denguewatch/backend:${APP_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: denguewatch-migrate
+    environment:
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
+    command: alembic upgrade head
+    networks:
+      - denguewatch-network
+
   backend:
     image: denguewatch/backend:${APP_VERSION:-latest}
     build:
@@ -12,6 +25,9 @@ services:
       dockerfile: Dockerfile.backend
     container_name: denguewatch-backend
     restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     
     environment:
       APP_ENV: production
