@@ -88,7 +88,7 @@ test('resident public report completes against the local backend', async ({
   const submitButton = page.getByRole('button', { name: /Submit Report|Submit Stacked Report/i })
   await expect(submitButton).toBeEnabled({ timeout: 90_000 })
   await submitButton.click()
-  const referenceBadge = page.getByRole('button', { name: 'Copy reference code to clipboard' })
+  const referenceBadge = page.getByRole('button', { name: 'Copy tracking ID to clipboard' })
   await expect(referenceBadge).toBeVisible({ timeout: 120_000 })
   const reference = (await referenceBadge.textContent())?.trim() ?? ''
   expect(reference).toMatch(/^KL-[A-Z0-9]+-\d+$/)

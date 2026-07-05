@@ -63,16 +63,18 @@ describe('ReportSuccessPage Identity & Tracking', () => {
 
     expect(resetDraft).toHaveBeenCalled()
     await waitFor(() => {
-      expect(screen.getByText('Your anonymous Tracking ID — tap to copy')).toBeInTheDocument()
+      expect(screen.getByText('Your anonymous Tracking ID')).toBeInTheDocument()
+      expect(screen.getByText('Tap to copy')).toBeInTheDocument()
     })
 
     const illustration = container.querySelector('.success-hero__illustration img')
     expect(illustration).not.toBeNull()
+    expect(container.querySelector('.success-hero__portrait')).not.toBeNull()
     expect(illustration?.getAttribute('src')).toContain('report-submitted.png')
     expect(illustration?.getAttribute('alt')).toBe('')
   })
 
-  it('auto-saves report to account and shows success notice when user is authenticated', async () => {
+  it('auto-saves report to account, shows account confirmation, and keeps tracking as the primary action for authenticated users', async () => {
     mockIsAuthenticated = true
 
     render(
@@ -85,13 +87,15 @@ describe('ReportSuccessPage Identity & Tracking', () => {
       expect(trackReport).toHaveBeenCalledWith('REF-12345')
       expect(screen.getByText('Report saved to your account')).toBeInTheDocument()
       expect(screen.getByText('This submission has been automatically linked to your activity history.')).toBeInTheDocument()
-      expect(screen.getByText('View Saved Activity')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'View activity' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Track report status' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Report another habitat' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Return home' })).toBeInTheDocument()
     })
   })
 
-  it('shows track report panel and collapses it when dismissing as an anonymous user', async () => {
+  it('shows the anonymous sign-in prompt after the main actions and keeps no-account tracking language visible', async () => {
     mockIsAuthenticated = false
-    const user = userEvent.setup()
 
     render(
       <MemoryRouter initialEntries={['/report/success']}>
@@ -100,18 +104,48 @@ describe('ReportSuccessPage Identity & Tracking', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Want to follow up on this report?')).toBeInTheDocument()
-      expect(screen.getByText("Sign In & Save to Account")).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Track report status' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Report another habitat' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Return home' })).toBeInTheDocument()
+      expect(screen.getByText('Want to save this report to an account?')).toBeInTheDocument()
+      expect(screen.getByText(/You can still track this report anytime with the Tracking ID above, no account needed\./i)).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Sign in to save it' })).toBeInTheDocument()
+    })
+  })
+
+  it('copies the tracking id and exposes visible copied feedback', async () => {
+    mockIsAuthenticated = false
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    const originalClipboard = navigator.clipboard
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText,
+      },
     })
 
-    const dismissButton = screen.getByRole('button', { name: "I'll use the Tracking ID" })
-    await user.click(dismissButton)
+    render(
+      <MemoryRouter initialEntries={['/report/success']}>
+        <ReportSuccessPage />
+      </MemoryRouter>,
+    )
 
-    expect(screen.queryByText('Want to follow up on this report?')).not.toBeInTheDocument()
+    const copyButton = await screen.findByRole('button', { name: 'Copy tracking ID to clipboard' })
+    await user.click(copyButton)
+
+    expect(writeText).toHaveBeenCalledWith('REF-12345')
+    expect(screen.getByText('Copied!')).toBeInTheDocument()
+
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: originalClipboard,
+    })
   })
 
   it('keeps the same success illustration when receipt details fail to load', async () => {
     getReportStatus.mockRejectedValueOnce(new Error('receipt unavailable'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const { container } = render(
       <MemoryRouter initialEntries={['/report/success?ref=REF-12345']}>
         <ReportSuccessPage />
@@ -122,8 +156,11 @@ describe('ReportSuccessPage Identity & Tracking', () => {
       expect(screen.getByText(/Receipt details are still loading/i)).toBeInTheDocument()
     })
 
+    expect(screen.getByRole('link', { name: 'Track report status' })).toBeInTheDocument()
     const illustration = container.querySelector('.success-hero__illustration img')
     expect(illustration).not.toBeNull()
     expect(illustration?.getAttribute('src')).toContain('report-submitted.png')
+
+    consoleError.mockRestore()
   })
 })

@@ -148,7 +148,7 @@ def status_report_out(report: Report) -> StatusReportOut:
 
 def owner_report_out(report: Report) -> OwnerReportOut:
     status = status_report_out(report)
-    return OwnerReportOut(**status.model_dump(), notes=report.notes)
+    return OwnerReportOut(**status.model_dump())
 
 
 def public_report_out(
