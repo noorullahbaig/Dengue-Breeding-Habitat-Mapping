@@ -646,6 +646,10 @@ export function ReportPage({
 		setIsNearbyPromptOpen(false);
 	}
 
+	function handleDismissNearbyPrompt() {
+		setIsNearbyPromptOpen(false);
+	}
+
 	function handleLowConfidenceConfirm(note: string) {
 		updateDraft({ notes: note });
 		setIsLowConfirmOpen(false);
@@ -1380,6 +1384,16 @@ export function ReportPage({
 			{isNearbyPromptOpen && precheckReady ? (
 				<NearbyReportPrompt
 					variant="modal"
+					candidates={nearbyCandidates}
+					onStack={handleStackDecision}
+					onCreateSeparate={handleSeparateDecision}
+					onDismiss={handleDismissNearbyPrompt}
+				/>
+			) : null}
+
+			{!isNearbyPromptOpen && precheckReady && needsStackDecision ? (
+				<NearbyReportPrompt
+					variant="inline"
 					candidates={nearbyCandidates}
 					onStack={handleStackDecision}
 					onCreateSeparate={handleSeparateDecision}

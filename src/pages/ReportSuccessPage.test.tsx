@@ -54,8 +54,8 @@ describe('ReportSuccessPage Identity & Tracking', () => {
     })
   })
 
-  it('resets draft on mount and displays the anonymous tracking ID caption', async () => {
-    render(
+  it('resets draft on mount, displays the anonymous tracking caption, and uses the shared success illustration', async () => {
+    const { container } = render(
       <MemoryRouter initialEntries={['/report/success']}>
         <ReportSuccessPage />
       </MemoryRouter>,
@@ -65,6 +65,11 @@ describe('ReportSuccessPage Identity & Tracking', () => {
     await waitFor(() => {
       expect(screen.getByText('Your anonymous Tracking ID — tap to copy')).toBeInTheDocument()
     })
+
+    const illustration = container.querySelector('.success-hero__illustration img')
+    expect(illustration).not.toBeNull()
+    expect(illustration?.getAttribute('src')).toContain('report-submitted.png')
+    expect(illustration?.getAttribute('alt')).toBe('')
   })
 
   it('auto-saves report to account and shows success notice when user is authenticated', async () => {
@@ -103,5 +108,22 @@ describe('ReportSuccessPage Identity & Tracking', () => {
     await user.click(dismissButton)
 
     expect(screen.queryByText('Want to follow up on this report?')).not.toBeInTheDocument()
+  })
+
+  it('keeps the same success illustration when receipt details fail to load', async () => {
+    getReportStatus.mockRejectedValueOnce(new Error('receipt unavailable'))
+    const { container } = render(
+      <MemoryRouter initialEntries={['/report/success?ref=REF-12345']}>
+        <ReportSuccessPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Receipt details are still loading/i)).toBeInTheDocument()
+    })
+
+    const illustration = container.querySelector('.success-hero__illustration img')
+    expect(illustration).not.toBeNull()
+    expect(illustration?.getAttribute('src')).toContain('report-submitted.png')
   })
 })

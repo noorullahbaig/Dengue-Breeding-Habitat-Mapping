@@ -9,6 +9,21 @@ import { formatTimestamp } from "@/lib/formatters";
 import type { ReportStatus } from "@/types/report";
 import { Notice, Surface, Button, ButtonLink, LoadingState } from "@/components/ui";
 import { API_BASE_URL } from "@/config";
+import reportSubmittedIllustration from "@/assets/report/report-submitted.png";
+
+function SuccessHero() {
+	return (
+		<div className="success-hero">
+			<div className="success-hero__illustration">
+				<img src={reportSubmittedIllustration} alt="" aria-hidden="true" />
+			</div>
+			<h1 className="success-hero__title">Report submitted</h1>
+			<p className="success-hero__subtitle">
+				Thank you for helping map breeding habitats in our community.
+			</p>
+		</div>
+	);
+}
 
 export function ReportSuccessPage() {
 	const { reportsService } = useServices();
@@ -157,35 +172,7 @@ export function ReportSuccessPage() {
 				<LoadingState label="Loading your submission receipt..." />
 			) : report ? (
 				<div className="stack-md">
-					{/* 1. Hero Success Animation */}
-					<div className="success-hero">
-						<div className="success-hero__checkmark-wrapper">
-							<svg aria-hidden="true" className="success-hero__checkmark-svg" viewBox="0 0 52 52">
-								<circle
-									className="success-hero__checkmark-fill-circle"
-									cx="26"
-									cy="26"
-									r="25"
-								/>
-								<circle
-									className="success-hero__checkmark-circle"
-									cx="26"
-									cy="26"
-									r="25"
-									fill="none"
-								/>
-								<path
-									className="success-hero__checkmark-check"
-									fill="none"
-									d="M14.1 27.2l7.1 7.2 16.7-16.8"
-								/>
-							</svg>
-						</div>
-						<h1 className="success-hero__title">Report submitted</h1>
-						<p className="success-hero__subtitle">
-							Thank you for helping map breeding habitats in our community.
-						</p>
-					</div>
+					<SuccessHero />
 
 					{/* 2. Visual Evidence Panel */}
 					<div className="slide-up-content delay-1">
@@ -283,35 +270,7 @@ export function ReportSuccessPage() {
 				</div>
 			) : reference ? (
 				<div className="stack-md">
-					{/* Hero Success Animation (Still shown even if receipt loading failed) */}
-					<div className="success-hero">
-						<div className="success-hero__checkmark-wrapper">
-							<svg aria-hidden="true" className="success-hero__checkmark-svg" viewBox="0 0 52 52">
-								<circle
-									className="success-hero__checkmark-fill-circle"
-									cx="26"
-									cy="26"
-									r="25"
-								/>
-								<circle
-									className="success-hero__checkmark-circle"
-									cx="26"
-									cy="26"
-									r="25"
-									fill="none"
-								/>
-								<path
-									className="success-hero__checkmark-check"
-									fill="none"
-									d="M14.1 27.2l7.1 7.2 16.7-16.8"
-								/>
-							</svg>
-						</div>
-						<h1 className="success-hero__title">Report submitted</h1>
-						<p className="success-hero__subtitle">
-							Thank you for helping map breeding habitats in our community.
-						</p>
-					</div>
+					<SuccessHero />
 
 					{/* Fallback Warning Strip */}
 					<Notice

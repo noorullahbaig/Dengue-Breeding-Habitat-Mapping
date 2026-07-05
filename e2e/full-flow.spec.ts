@@ -1,43 +1,90 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
 
-const evidenceJpeg = Buffer.from(
-  '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwMDAgQDAwMEBAQFBgoGBgUFBgwICQcKDgwPDg4MDQ0PERYTDxAVEQ0NExoTFRcYGRkZDxIbHRsYHRYYGRj/2wBDAQQEBAYFBgsGBgsYEA0QGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBj/wAARCABgAGADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwB1FFFfm594FFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFNd0iiaSR1RFBZmY4AA6kmgB1FcBrfj2VnMGhjYgyDcSJlic/wg8YwO4zz0GK4+5vr282/bLye42Z2+bIX2564z9BXtYfI61Rc1R8v5nk183pU3aC5vyPb6K8Pt7q6tJTJaXM0DkbS0TlSR6ZH0rqNF8dXloywasGurcDHmKB5q8DHcBunfnnOe1VXyKrBXpy5vwYqOcU5u01b8T0iiobW6t72zjurWVZYZBlXXv8A59KmrxGmnZnrJpq6CiiikMKKKKACuA8e62zTjQ4DhE2yTsCQSeoX0xgg9+cdMV39eIX1z9s1O5vNmzzpWk25zt3EnGfxr2sjw6qVnUl9n8zyc3runSUF9r8ixpum/wBoeb++8vZj+HOc59/ar/8Awjf/AE+/+Q//AK9Hhv8A5ev+Af1rer9OwWCo1aMZzjdu/V9z8qzTNMVQxU6dOdkrdF2XkYP/AAjf/T7/AOQ//r1U1HSPsFqs32jzMvtxsx2J9fauprI8Rf8AILj/AOuo/karFYChToylGOq82Z5fm2Lq4iFOc7pvsv8AIk8E622n6uNOlObe7YKMk/I/QED34B/DnivTa8Jr2+xuftmmW15s2edEsm3Odu4A4z+Nfmme4dQnGrHrv8v6/A/VcnruUHSfTYnooorwD2gooooAK8Purd7S+ntJCpeGRo2K9CQcHH5V7hXm/jrRTaal/a0CKLe4IDgEDbJg9vcDOeec57V7mRV1CrKm/tfmjyM4oudNTXT9TP8ADf8Ay9f8A/rW9XLaRqMFh53nLI2/bjYAemff3rS/4SKy/wCeVx/3yP8AGv07AYqjToRjKVnr+Z+T5tl+Iq4uc6cG07fkjXrI8Rf8guP/AK6j+Ro/4SKy/wCeVx/3yP8AGqOq6rb31msUSSqwcN84AHQ+/vV4vF0Z0ZRjLUzy7LsTTxMJzg0kzIr23Trd7TR7S0kKl4YUjYr0JCgHH5V5j4S0U6vriySIrWtsQ8oJHzddq4Oc5I59gfavV6/M8+rqUo0l01Z+sZNRajKo+uwUUUV88e2FFFFABUN1a297ZyWt1EssMgwyN3/z61NRTTad0JpNWZ5lrfgnUNPcy6csl7bnJwq/vE54BA+91HI9+BXLV7tUFzY2V5t+2WcFxszt82MPtz1xn6Cvew+ezguWrG/nt/X4HjV8nhJ3pO3keIVv6L4S1PV2WSRGtLUjPnyL97gEbVyCc5HPTrz2r06307T7SUyWljbQORtLRRKpI9Mge1Waqvn0pK1KNvNio5NFO9SV/IqabptppOnpZ2ce2NeSTyznuxPc/wCelW6KK8CUnJuUnds9qMVFcq2CiiipGFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAf/Z',
-  'base64',
+const evidenceImage = readFileSync(
+  resolve(process.cwd(), 'src/assets/home/dengue-tire-habitat.webp'),
 )
+
+async function expectEvidencePreview(
+  page: import('@playwright/test').Page,
+  imageName: string | RegExp = 'Submitted evidence preview',
+) {
+  const image = page.getByRole('img', { name: imageName })
+  await expect(image).toBeVisible({ timeout: 120_000 })
+
+  const imageBox = await image.boundingBox()
+  expect(imageBox).not.toBeNull()
+  expect(imageBox!.width).toBeGreaterThan(0)
+  expect(imageBox!.height).toBeGreaterThan(0)
+
+  const boxes = page.locator('.prediction-evidence__box')
+  const boxCount = await boxes.count()
+
+  for (let index = 0; index < boxCount; index += 1) {
+    const box = await boxes.nth(index).boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.x).toBeGreaterThanOrEqual(imageBox!.x - 1)
+    expect(box!.y).toBeGreaterThanOrEqual(imageBox!.y - 1)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(imageBox!.x + imageBox!.width + 1)
+    expect(box!.y + box!.height).toBeLessThanOrEqual(imageBox!.y + imageBox!.height + 1)
+  }
+}
 
 test('resident public report completes against the local backend', async ({
   context,
   page,
 }) => {
   test.setTimeout(180_000)
+  await page.setViewportSize({ width: 390, height: 844 })
   await context.grantPermissions(['geolocation'])
   await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
 
   await page.goto('/report')
-  await expect(page.getByLabel('Upload a photo instead')).toBeVisible()
-  await page.getByLabel('Upload a photo instead').setInputFiles({
-    name: 'local-flow-evidence.jpg',
-    mimeType: 'image/jpeg',
-    buffer: evidenceJpeg,
+  await expect(page.getByText('Capture Breeding Habitat')).toBeVisible()
+  await page.locator('input[type="file"]').first().setInputFiles({
+    name: 'local-flow-evidence.webp',
+    mimeType: 'image/webp',
+    buffer: evidenceImage,
   })
   await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
   await page.getByRole('button', { name: 'Use photo & continue' }).click()
-  await expect(page.getByText(/blue ring is the approximate device guide/i)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Confirm this exact pin' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Confirm this exact pin' }).click()
+  await expect(page.getByRole('button', { name: 'Use current location again' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Confirm this exact site' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Confirm this exact site' }).click()
 
+  const consentBody = page.locator('[aria-label="Public consent text"]')
+  await consentBody.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+    element.dispatchEvent(new Event('scroll', { bubbles: true }))
+  })
   await page.locator('input[type="checkbox"]').check()
-  await page.getByRole('button', { name: 'Continue to AI review' }).click()
-  await expect(page.getByRole('img', { name: 'Submitted evidence preview' })).toBeVisible({ timeout: 120_000 })
+  await expectEvidencePreview(page)
   await expect(page.getByText(/Advisory only/)).toBeVisible()
 
-  const separateButton = page.getByRole('button', { name: 'No, this is separate' })
-  if (await separateButton.isVisible().catch(() => false)) {
+  const nearbyDialog = page.getByRole('dialog', { name: 'We found a similar report nearby' })
+  if (await nearbyDialog.isVisible().catch(() => false)) {
+    const [dialogBox, createSeparateBox] = await Promise.all([
+      nearbyDialog.boundingBox(),
+      page.getByRole('button', { name: 'Create separate report' }).boundingBox(),
+    ])
+    expect(dialogBox).not.toBeNull()
+    expect(createSeparateBox).not.toBeNull()
+    expect(dialogBox!.x).toBeGreaterThanOrEqual(0)
+    expect(dialogBox!.y).toBeGreaterThanOrEqual(0)
+    expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+    expect(createSeparateBox!.y + createSeparateBox!.height).toBeLessThanOrEqual(
+      dialogBox!.y + dialogBox!.height + 1,
+    )
+
+    const separateButton = page.getByRole('button', { name: 'Create separate report' })
     await separateButton.click()
   }
 
   await expect(page.getByRole('button', { name: 'Continue to submit' })).toBeEnabled()
   await page.getByRole('button', { name: 'Continue to submit' }).click()
+  await expectEvidencePreview(page, /Captured evidence photo|Evidence image with computer-vision detections/i)
   const submitButton = page.getByRole('button', { name: /Submit Report|Submit Stacked Report/i })
   await expect(submitButton).toBeEnabled({ timeout: 90_000 })
   await submitButton.click()
@@ -59,23 +106,28 @@ test('resident public report completes against the local backend', async ({
 })
 
 test('desktop resident can confirm the selected location', async ({ context, page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
   await context.grantPermissions(['geolocation'])
   await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
 
   await page.goto('/report')
-  await page.getByLabel('Upload a photo instead').setInputFiles({
-    name: 'desktop-location-confirmation.jpg',
-    mimeType: 'image/jpeg',
-    buffer: evidenceJpeg,
+  await page.locator('input[type="file"]').first().setInputFiles({
+    name: 'desktop-location-confirmation.webp',
+    mimeType: 'image/webp',
+    buffer: evidenceImage,
   })
   await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
   await page.getByRole('button', { name: 'Use photo & continue' }).click()
 
-  const confirmButton = page.getByRole('button', { name: 'Confirm this exact pin' })
-  const progressHeader = page.getByRole('navigation', { name: 'Report progress' })
-
+  const confirmButton = page.getByRole('button', { name: 'Confirm this exact site' })
   await expect(confirmButton).toBeVisible()
   await expect(confirmButton).toBeEnabled()
+  await confirmButton.click()
+  await expect(page.getByRole('heading', { name: 'Consent form' })).toBeVisible()
+
+  await page.setViewportSize({ width: 1280, height: 900 })
+
+  const progressHeader = page.getByRole('navigation', { name: 'Report progress' })
 
   const desktopHeaderGeometry = await progressHeader.evaluate((element) => {
     const rect = element.getBoundingClientRect()
@@ -91,20 +143,13 @@ test('desktop resident can confirm the selected location', async ({ context, pag
 
   expect(desktopHeaderGeometry.containedByCanvas).toBeTruthy()
   expect(desktopHeaderGeometry.top).toBeGreaterThanOrEqual(0)
-
-  await page.getByRole('button', { name: 'Take image, complete' }).click()
-  await expect(page.getByRole('heading', { name: 'Take image' })).toBeVisible()
-
-  await page.getByRole('button', { name: 'Confirm location, available' }).click()
-  await expect(page.getByRole('heading', { name: 'Confirm location' })).toBeVisible()
-
-  await confirmButton.click()
-  await expect(page.getByRole('heading', { name: 'Consent form' })).toBeVisible()
 })
 
 for (const viewport of [
+  { width: 320, height: 568 },
   { width: 390, height: 844 },
   { width: 390, height: 667 },
+  { width: 430, height: 932 },
 ]) {
   test(`mobile resident can confirm the location at ${viewport.width}x${viewport.height}`, async ({
     context,
@@ -119,10 +164,10 @@ for (const viewport of [
     await expect(page.getByRole('heading', { name: 'Take image' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Capture Breeding Habitat' })).toBeVisible()
 
-    await page.getByLabel('Upload a photo instead').setInputFiles({
-      name: `mobile-local-flow-evidence-${viewport.height}.jpg`,
-      mimeType: 'image/jpeg',
-      buffer: evidenceJpeg,
+    await page.locator('input[type="file"]').first().setInputFiles({
+      name: `mobile-local-flow-evidence-${viewport.height}.webp`,
+      mimeType: 'image/webp',
+      buffer: evidenceImage,
     })
     await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
     await expect(page.getByLabel('Retake photo')).toBeVisible()

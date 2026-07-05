@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { formatConfidenceScore, formatHabitatLabel } from "@/lib/formatters";
 import type { DetectionSummary, PredictionSummary } from "@/types/report";
 
@@ -56,10 +57,12 @@ export function PredictionEvidencePanel({
 	compact = false,
 }: PredictionEvidencePanelProps) {
 	const [imageSize, setImageSize] = useState<ImageSize | null>(null);
+	const [imageFailed, setImageFailed] = useState(false);
 
 	useEffect(() => {
 		if (imageUrl !== undefined) {
 			setImageSize(null);
+			setImageFailed(false);
 		}
 	}, [imageUrl]);
 
@@ -76,34 +79,56 @@ export function PredictionEvidencePanel({
 		>
 			{imageUrl ? (
 				<div className="prediction-evidence__media">
-					<img
-						src={imageUrl}
-						alt={imageAlt}
-						onLoad={(event) => {
-							const image = event.currentTarget;
-							setImageSize({
-								width: image.naturalWidth,
-								height: image.naturalHeight,
-							});
-						}}
-					/>
-					{showDetections && imageSize
-						? validDetections.map((detection) => (
-								<span
-									key={detectionKey(detection)}
-									className="prediction-evidence__box"
-									style={{
-										...boxStyle(detection, imageSize),
-									}}
-									title={`${formatHabitatLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
-								>
-									<span>
-										{formatHabitatLabel(detection.rawLabel)}{" "}
-										{formatConfidenceScore(detection.confidence)}
+					<div
+						className={`prediction-evidence__media-frame${imageFailed ? " prediction-evidence__media-frame--failed" : ""}`}
+						style={
+							imageSize
+								? ({
+										"--prediction-media-ratio": `${imageSize.width} / ${imageSize.height}`,
+									} as CSSProperties)
+								: undefined
+						}
+					>
+						<img
+							src={imageUrl}
+							alt={imageAlt}
+							onLoad={(event) => {
+								const image = event.currentTarget;
+								setImageFailed(false);
+								setImageSize({
+									width: image.naturalWidth,
+									height: image.naturalHeight,
+								});
+							}}
+							onError={() => {
+								setImageSize(null);
+								setImageFailed(true);
+							}}
+						/>
+						{showDetections && imageSize && !imageFailed
+							? validDetections.map((detection) => (
+									<span
+										key={detectionKey(detection)}
+										className="prediction-evidence__box"
+										style={{
+											...boxStyle(detection, imageSize),
+										}}
+										title={`${formatHabitatLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
+									>
+										<span>
+											{formatHabitatLabel(detection.rawLabel)}{" "}
+											{formatConfidenceScore(detection.confidence)}
+										</span>
 									</span>
-								</span>
-							))
-						: null}
+								))
+							: null}
+						{imageFailed ? (
+							<div className="prediction-evidence__image-error" role="status" aria-live="polite">
+								<strong>Evidence preview unavailable</strong>
+								<span>The image could not be loaded. You can still review the AI result below.</span>
+							</div>
+						) : null}
+					</div>
 				</div>
 			) : null}
 		</section>

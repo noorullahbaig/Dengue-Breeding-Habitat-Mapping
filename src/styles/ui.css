@@ -509,10 +509,13 @@
   .ui-dialog {
     z-index: var(--z-modal);
     display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: var(--space-md);
+    box-sizing: border-box;
+    min-width: 0;
     width: min(100%, 680px);
     max-height: min(88dvh, 760px);
-    overflow-y: auto;
+    overflow: hidden;
     padding: var(--space-md);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -544,6 +547,11 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: var(--space-sm);
+  }
+
+  .ui-dialog__body {
+    min-width: 0;
+    overflow-y: auto;
   }
 
   .ui-bottom-sheet {

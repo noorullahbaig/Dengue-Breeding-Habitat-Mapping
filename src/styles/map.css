@@ -1311,6 +1311,7 @@
 }
 
 .compact-map-wrapper {
+  isolation: isolate;
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border);

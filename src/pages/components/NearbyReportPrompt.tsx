@@ -7,6 +7,7 @@ interface NearbyReportPromptProps {
 	candidates: NearbyReportCandidate[];
 	onStack: (reference: string) => void;
 	onCreateSeparate: () => void;
+	onDismiss?: () => void;
 	variant?: "modal" | "inline";
 }
 
@@ -14,6 +15,7 @@ export function NearbyReportPrompt({
 	candidates,
 	onStack,
 	onCreateSeparate,
+	onDismiss,
 	variant = "modal",
 }: NearbyReportPromptProps) {
 	const content = (
@@ -106,15 +108,17 @@ export function NearbyReportPrompt({
 				))}
 			</div>
 
-			<div className="u-static-65f9d5a3">
-				<Button
-					variant="secondary"
-					fullWidth
-					onClick={onCreateSeparate}
-				>
-					Create separate report
-				</Button>
-			</div>
+			{variant === "inline" ? (
+				<div className="u-static-65f9d5a3">
+					<Button
+						variant="secondary"
+						fullWidth
+						onClick={onCreateSeparate}
+					>
+						Create separate report
+					</Button>
+				</div>
+			) : null}
 		</div>
 	);
 
@@ -131,8 +135,13 @@ export function NearbyReportPrompt({
 		<Dialog
 			open
 			title="We found a similar report nearby"
-			onClose={onCreateSeparate}
+			onClose={onDismiss ?? onCreateSeparate}
 			className="nearby-modal animate-rise"
+			actions={(
+				<Button variant="secondary" fullWidth onClick={onCreateSeparate}>
+					Create separate report
+				</Button>
+			)}
 		>
 			{content}
 		</Dialog>
