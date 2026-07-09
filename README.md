@@ -18,7 +18,7 @@ Visual implementation rule: treat mobile view as the authoritative layout for th
 - AWS-ready storage keys for future private S3 object mapping
 - Explicit public image and exact-pin consent capture
 - Backend-owned hotspot priority context for each submitted report
-- Ultralytics YOLO inference from `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt`
+- Ultralytics YOLOv8s inference from `backend/models/denguewatch_yolov8s_best.pt`
 - Submission success screen and anonymous status lookup
 - Public crowdsourced map with exact consented pins, report thumbnails, and public detail galleries
 - ML-gated nearby report stacking for same-class public submissions
@@ -97,7 +97,7 @@ The backend reads local settings from `backend/.env.local` first, then `backend/
 
 ```env
 DATABASE_URL=postgresql+psycopg://noorullah@localhost:5432/codex_fyp
-MODEL_PATH=/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt
+MODEL_PATH=./models/denguewatch_yolov8s_best.pt
 UPLOAD_ROOT=./uploads
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
 # Optional: only for the experimental officer-only prototype endpoints
@@ -106,11 +106,10 @@ OFFICER_API_TOKEN=local-officer-demo-token
 
 Model path policy:
 
-- Keep `MODEL_PATH` on the stable integration path: `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt`
-- Do not point `MODEL_PATH` directly to `models/experiments/...` or `Downloads`; archive approved checkpoints first, then promote them into `models/current_yolo/best.pt`.
-- Current promoted checkpoint (2026-05-25): `new_more_data_model` from the interpretable existing-prediction comparison context.
-- Approved archive: `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/approved/new_more_data_model_20260522/best.pt`
-- Current promoted checkpoint SHA-256 (2026-05-25): `215b16ea72f450839966b22e2d17e342d40bf0cd3c6becb38b048dc21eb888e7`
+- Keep `MODEL_PATH` pointed at the committed runtime checkpoint: `backend/models/denguewatch_yolov8s_best.pt`.
+- The selected default deployment model is YOLOv8s because it delivered the best accuracy-to-latency tradeoff across the trained `n`, `s`, and `m` variants.
+- Runtime metadata for the promoted checkpoint lives in `backend/models/denguewatch_yolov8s_metadata.json`.
+- Current promoted checkpoint SHA-256 (2026-07-09): `6d6a5b75ea3913ebd6cf358faccd0ed75b0e38a57eb72edeaa5a2983e01afdc5`
 
 Recommended local setup:
 

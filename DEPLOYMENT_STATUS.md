@@ -57,7 +57,7 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 - ✅ No PostgreSQL container in docker-compose
 - ✅ Backend connects to external RDS
 - ✅ Backend port NOT exposed publicly
-- ✅ YOLO model exists (6.0MB at correct path)
+- ✅ YOLO model exists (21.5MB YOLOv8s checkpoint at correct path)
 - ✅ All resource names use `denguewatch-noorullah-*`
 - ✅ All tags use `Owner: Noorullah`
 - ✅ No "hamza" references
@@ -95,7 +95,7 @@ Follow `AWS_SETUP_GUIDE.md` to create:
 ### Step 3: Deploy (1-2 hours)
 
 - Install Docker on EC2
-- Upload code and YOLO model
+- Upload code with the committed YOLOv8s model package
 - Run validation commands
 - Deploy with docker-compose
 
@@ -134,7 +134,7 @@ Follow `AWS_SETUP_GUIDE.md` to create:
 | Configuration | ✅ High     | All vars documented   |
 | Documentation | ✅ High     | Complete guides       |
 | Dependencies  | ✅ High     | All verified          |
-| YOLO Model    | ✅ Verified | 6.0MB at correct path |
+| YOLO Model    | ✅ Verified | 21.5MB YOLOv8s checkpoint at correct path |
 
 **Overall Confidence:** ✅ **HIGH - READY TO DEPLOY**
 
@@ -171,7 +171,7 @@ If issues occur during deployment:
 │   Documentation Complete: 100% ✅       │
 │   Code Validated: Yes ✅                │
 │   Security Reviewed: Pass ✅            │
-│   YOLO Model Verified: 6.0MB ✅         │
+│   YOLO Model Verified: 21.5MB ✅        │
 │                                         │
 │   STATUS: SAFE TO PROCEED TO AWS 🚀    │
 │                                         │
