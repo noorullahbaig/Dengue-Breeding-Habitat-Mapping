@@ -1,0 +1,20 @@
+{
+  "model_name": "denguewatch_yolov8s_best",
+  "architecture": "YOLOv8s",
+  "deployment_role": "default",
+  "source_artifact": "Model Training/denguewatch_yolov8s_outputs/final_yolov8s_model/denguewatch_yolov8s_best.pt",
+  "eval_split": "test",
+  "precision": 0.858852,
+  "recall": 0.783834,
+  "map50": 0.828141,
+  "map50_95": 0.632445,
+  "inference_ms": 8.436129,
+  "size_mb": 21.457,
+  "sha256": "6d6a5b75ea3913ebd6cf358faccd0ed75b0e38a57eb72edeaa5a2983e01afdc5",
+  "classes": [
+    "Artificial Container",
+    "Drain Inlet",
+    "Tire"
+  ],
+  "selected_on": "2026-07-09"
+}

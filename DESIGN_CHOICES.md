@@ -34,10 +34,11 @@ This file records implementation choices made after reviewing `/Users/noorullah/
 ## YOLO vs EfficientNet
 
 - The report recommends a whole-image EfficientNet classifier because the intended ML task is advisory single-label habitat classification.
-- The working prototype currently uses an Ultralytics YOLO model from `/Users/noorullah/Desktop/FYP CODEX/ml_workspace/models/current_yolo/best.pt`.
-- YOLO remains the default for now because it is already integrated, tested, and returns usable habitat evidence for local demonstration.
+- The deployed prototype now uses the committed Ultralytics YOLOv8s checkpoint at `backend/models/denguewatch_yolov8s_best.pt`.
+- YOLOv8s is the default because it delivered the strongest deployment tradeoff across the trained nano, small, and medium runs: better practical detection quality than nano without the latency and size penalty of medium.
 - The backend API stays classifier-like: it stores public habitat label, confidence, confidence band, top raw label, detections, and advisory text.
 - Detection payloads keep raw pixel boxes for auditability and normalized box coordinates for reliable public and prototype-overlay rendering across display sizes.
+- YOLOv8m remains a server-side accuracy candidate and YOLOv8n remains the low-resource fallback if deployment constraints change later.
 - If later model evaluation shows EfficientNet performs better for the retained classes, the inference implementation can be swapped without changing report storage or frontend submission flow.
 
 ## Hotspot Priority

@@ -1,9 +1,0 @@
-path: /kaggle/input/retained-three-class-yolo-v1/retained_three_class_yolo_v1
-train: train/images
-val: valid/images
-test: test/images
-nc: 3
-names:
-- artificial_container
-- drain_inlet
-- tire

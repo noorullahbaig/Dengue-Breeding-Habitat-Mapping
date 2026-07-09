@@ -56,7 +56,7 @@ def get_settings() -> Settings:
         model_path=_resolve_path(
             os.getenv(
                 "MODEL_PATH",
-                "../ml_workspace/models/current_yolo/best.pt",
+                "./models/denguewatch_yolov8s_best.pt",
             )
         ),
         upload_root=_resolve_path(os.getenv("UPLOAD_ROOT", "./uploads")),

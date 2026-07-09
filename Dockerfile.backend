@@ -37,16 +37,15 @@ COPY src/data/kuala-lumpur-boundary.geojson /src/data/kuala-lumpur-boundary.geoj
 # Create directories for uploads and models
 RUN mkdir -p /app/uploads /app/models
 
-# Copy YOLO model file
-# NOTE: Adjust the source path if your model is in a different location
-COPY ml_workspace/models/approved/2026-06-17_yolov8n_mosquito-breeding-expanded_v1/best.pt /app/models/best.pt
+# Copy the selected deployment checkpoint
+COPY backend/models/denguewatch_yolov8s_best.pt /app/models/denguewatch_yolov8s_best.pt
 
 # Verify model file exists
-RUN ls -lh /app/models/best.pt
+RUN ls -lh /app/models/denguewatch_yolov8s_best.pt
 
 # Environment variables (will be overridden by docker-compose)
 ENV PYTHONUNBUFFERED=1
-ENV MODEL_PATH=/app/models/best.pt
+ENV MODEL_PATH=/app/models/denguewatch_yolov8s_best.pt
 ENV UPLOAD_ROOT=/app/uploads
 
 # Expose port

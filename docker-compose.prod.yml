@@ -35,7 +35,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
       
       # Model and storage paths
-      MODEL_PATH: /app/models/best.pt
+      MODEL_PATH: /app/models/denguewatch_yolov8s_best.pt
       UPLOAD_ROOT: /app/uploads
       
       # CORS origins (frontend URL)

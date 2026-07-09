@@ -48,8 +48,7 @@ __pycache__/
 
 
 # Ignored large outputs and models
-ml_workspace/runs/
-ml_workspace/model_compare_app/outputs/
+Model Training/
 output/
 *.zip
 

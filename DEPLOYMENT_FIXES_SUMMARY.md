@@ -31,7 +31,7 @@
 
 ### 5. `.env.production.example`
 **Change:** Added missing environment variables
-- Added `MODEL_PATH=/app/models/best.pt`
+- Added `MODEL_PATH=/app/models/denguewatch_yolov8s_best.pt`
 - Added `UPLOAD_ROOT=/app/uploads`
 - **Why:** Complete documentation of all required variables
 
@@ -70,7 +70,7 @@
 - ✅ Documentation: Complete env var list
 
 ### Verified
-- ✅ YOLO model exists: `ml_workspace/models/current_yolo/best.pt` (6.0MB)
+- ✅ YOLO model exists: `backend/models/denguewatch_yolov8s_best.pt` (21.5MB)
 - ✅ No PostgreSQL container in docker-compose
 - ✅ Backend connects to external RDS via DATABASE_URL
 - ✅ Persistent uploads via host directory mount
