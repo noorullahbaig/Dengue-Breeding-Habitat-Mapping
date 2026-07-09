@@ -1,0 +1,4 @@
+split,image_count,annotation_count,background_image_count
+train,7377,8749,3101
+valid,933,1006,401
+test,934,1108,438

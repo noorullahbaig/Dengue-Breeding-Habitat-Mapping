@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { MOBILE_VIEWPORT_MEDIA_QUERY } from '@/app/layoutConstants'
 import { ReportPage } from '@/pages/ReportPage'
 import type { ReportDraft } from '@/types/report'
 
@@ -79,7 +80,7 @@ describe('ReportPage mobile photo review', () => {
     draft.hasConfirmedPin = false
     draft.hasPublicConsent = false
     vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
-      matches: query === '(max-width: 760px)',
+      matches: query === MOBILE_VIEWPORT_MEDIA_QUERY,
       media: query,
       onchange: null,
       addListener: vi.fn(),

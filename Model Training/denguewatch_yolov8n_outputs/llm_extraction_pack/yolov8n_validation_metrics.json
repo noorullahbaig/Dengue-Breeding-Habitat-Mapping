@@ -1,0 +1,17 @@
+{
+  "candidate": "yolov8n",
+  "model_name": "yolov8n.pt",
+  "weights": "/kaggle/working/denguewatch_yolov8n_workspace/runs/yolov8n/weights/best.pt",
+  "eval_split": "test",
+  "model_size_mb": 5.942,
+  "precision": 0.8490411204536153,
+  "recall": 0.7885181702203635,
+  "map50": 0.8193802668259407,
+  "map50_95": 0.6008896697035282,
+  "speed_preprocess_ms": 0.9153676498929811,
+  "speed_inference_ms": 3.5837962912164762,
+  "speed_postprocess_ms": 0.8638506531056973,
+  "AP_Artificial Container": 0.5253680738302579,
+  "AP_Drain Inlet": 0.6568348881608486,
+  "AP_Tire": 0.6204660471194782
+}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - 4.5.3 Review Dashboard</title>
+    <style>
+        
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #333;
+            gap: 50px;
+        }
+
+        .device {
+            width: 320px;
+            height: 600px;
+            border: 12px solid #333;
+            border-radius: 36px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        /* iPhone Notch */
+        .device::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background-color: #333;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 1000;
+        }
+
+        .device-label {
+            text-align: center;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 15px;
+            width: 320px;
+        }
+
+        .device-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Screen 1: Lookup Gateway */
+        .lookup-container {
+            padding-top: 40px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .lookup-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .lookup-title {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+        }
+        .lookup-desc {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            width: 100%;
+            border: 1px solid #999;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            text-align: left;
+            color: #999;
+        }
+        .btn-primary {
+            width: 100%;
+            border: 1px solid #444;
+            padding: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            border-radius: 6px;
+            background-color: #444;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Screen 2: Dashboard */
+        .dashboard-header {
+            padding-top: 35px;
+            border-bottom: 1px solid #ccc;
+            padding: 15px;
+            background-color: #fff;
+        }
+        .header-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .ref-code {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .status-badge {
+            border: 1px solid #999;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #eeeeee; /* Under review color */
+        }
+
+        .stepper {
+            padding: 20px 15px;
+            background-color: #fafafa;
+            border-bottom: 1px solid #ccc;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #999;
+            border-radius: 50%;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2;
+        }
+        .step.done .step-icon {
+            background-color: #333;
+            color: #fff;
+        }
+        .step.active .step-icon {
+            background-color: #fff;
+            border-width: 3px;
+        }
+        .step-text {
+            margin-left: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ccc;
+        }
+        .step.done .step-text, .step.active .step-text {
+            color: #333;
+        }
+        .step-line {
+            position: absolute;
+            left: 12px;
+            top: 24px;
+            bottom: -15px;
+            width: 2px;
+            background-color: #ccc;
+            z-index: 1;
+        }
+        .step.done .step-line {
+            background-color: #333;
+        }
+
+        .info-grid {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .info-val {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .evidence-panel {
+            margin: 0 15px 15px 15px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            background-color: #fff;
+            display: flex;
+        }
+        .evidence-thumb {
+            width: 80px;
+            height: 80px;
+            border-right: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #eee;
+            font-weight: bold;
+        }
+        .evidence-text {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .evidence-text h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        
+        </style>
+</head>
+<body>
+
+    <!-- Screen 1: The Lookup Gateway -->
+    <div class="device-wrapper">
+        <div class="device">
+            <div class="lookup-container">
+                <div class="lookup-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+                <h2 class="lookup-title">Secure Status Tracking</h2>
+                <p class="lookup-desc">Provide reference code to query triage status.</p>
+                
+                <div class="search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> [ Incident Ref Code Entry ]
+                </div>
+                
+                <button class="btn-primary">Query Status</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: The Status Dashboard -->
+    <div class="device-wrapper">
+        <div class="device">
+            
+            <div class="dashboard-header">
+                <div class="header-title-row">
+                    <h1 class="ref-code">Reference Code</h1>
+                    <span style="font-weight: bold; border: 1px solid #999; padding: 2px; border-radius: 5px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></span>
+                </div>
+                <span class="status-badge">● Triage State</span>
+            </div>
+
+            <div class="stepper">
+                <div class="step done">
+                    <div class="step-icon">X</div>
+                    <div class="step-line"></div>
+                    <div class="step-text">Submitted</div>
+                </div>
+                <div class="step active">
+                    <div class="step-icon"></div>
+                    <div class="step-line"></div>
+                    <div class="step-text">AI Review</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <div class="step-line"></div>
+                    <div class="step-text">Prioritized</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">4</div>
+                    <div class="step-line"></div>
+                    <div class="step-text">Action Logged</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">5</div>
+                    <div class="step-text">Closed</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Submission Timeline</span>
+                    <span class="info-val">Temporal Data</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Spatial Zone</span>
+                    <span class="info-val">Geospatial String</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Predicted Habitat Type</span>
+                    <span class="info-val">Classification Label</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Prediction Confidence</span>
+                    <span class="info-val">Confidence Metric</span>
+                </div>
+            </div>
+
+            <div class="evidence-panel">
+                <div class="evidence-thumb"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
+                <div class="evidence-text">
+                    <h4>Analyzed Evidence</h4>
+                    <span style="font-size: 14px; color: #555;">Bounding box extraction attached</span>
+                </div>
+            </div>
+
+            <div style="padding: 0 15px 15px 15px;">
+                <button class="btn-primary" style="background-color: #fff; color: #333;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg> View on Spatial Map</button>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

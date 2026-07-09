@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - Step 2: Spatial Pinpoint</title>
+    <style>
+        
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #333;
+        }
+
+        .device {
+            width: 320px;
+            height: 600px;
+            border: 12px solid #333;
+            border-radius: 36px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        /* iPhone Notch */
+        .device::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background-color: #333;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 1000;
+        }
+
+        .header {
+            padding-top: 35px;
+            border-bottom: 1px solid #ccc;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #fafafa;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-bottom: 1px solid #ccc;
+            background-color: #fff;
+            position: relative;
+        }
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 40%;
+            background-color: #333;
+            border-right: 1px solid #ccc;
+        }
+
+        .instruction-bar {
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+            border-bottom: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        .status-banner {
+            padding: 8px;
+            text-align: center;
+            font-size: 16px;
+            border-bottom: 2px dashed #333;
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+
+        .map-area {
+            flex: 1;
+            position: relative;
+            background-color: #fafafa;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .map-area::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(#ccc 1px, transparent 1px),
+                linear-gradient(90deg, #ccc 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+
+        /* Center Pin */
+        .pin {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #999;
+            border-radius: 50% 50% 50% 0;
+            transform: translate(-50%, -100%) rotate(-45deg);
+            position: absolute;
+            top: 50%; left: 50%;
+            background-color: #fff;
+            z-index: 10;
+        }
+        .pin::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Crosshair */
+        .crosshair {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 20px; height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .crosshair::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: -10px; right: -10px;
+            height: 2px; background-color: #ccc;
+            transform: translateY(-50%);
+        }
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: -10px; bottom: -10px;
+            width: 2px; background-color: #ccc;
+            transform: translateX(-50%);
+        }
+
+        /* Allowed Radius Circle */
+        .radius {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.03);
+        }
+
+        .footer {
+            padding: 15px 20px;
+            background-color: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            border: 1px solid #999;
+            padding: 12px;
+            font-size: 20px;
+            font-family: inherit;
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 3px 3px 0px #333;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="device">
+        <div class="header">
+            Step 2: Confirm Spatial Coordinates
+        </div>
+        <div class="progress-bar"></div>
+        
+        <div class="instruction-bar">
+            Move the pin to the exact site.
+        </div>
+        
+        <div class="status-banner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Within 5m of your device location
+        </div>
+        
+        <div class="map-area">
+            <div class="radius"></div>
+            <div class="crosshair"></div>
+            <div class="pin"></div>
+        </div>
+
+        <div class="footer">
+            <button class="btn">Confirm Location</button>
+        </div>
+    </div>
+
+</body>
+</html>

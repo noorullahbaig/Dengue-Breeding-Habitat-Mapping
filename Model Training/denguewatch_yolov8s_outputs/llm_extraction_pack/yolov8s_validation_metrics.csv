@@ -1,0 +1,2 @@
+candidate,model_name,weights,eval_split,model_size_mb,precision,recall,map50,map50_95,speed_preprocess_ms,speed_inference_ms,speed_postprocess_ms,AP_Artificial Container,AP_Drain Inlet,AP_Tire
+yolov8s,yolov8s.pt,/kaggle/working/denguewatch_yolov8s_workspace/runs/yolov8s/weights/best.pt,test,21.457,0.8588519077094854,0.7838336384764379,0.8281411092262047,0.6324454736450622,0.9066750481756679,8.43612925268206,0.8198325053552339,0.5585484521683185,0.6999826184405296,0.6388053503263385

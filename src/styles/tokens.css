@@ -90,7 +90,11 @@
   --app-rail-width: 256px;
   --app-topbar-height: 56px;
   --app-bottom-nav-height: 76px;
-  --app-bottom-nav-clearance: 104px;
+  --app-topbar-occupied-height: var(--app-topbar-height);
+  --app-bottom-nav-occupied-height: 104px;
+  --visual-viewport-bottom-offset: 0px;
+  --app-mobile-bottom-clearance: var(--app-bottom-nav-occupied-height);
+  --app-mobile-viewport-height: 100vh;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Z-index */

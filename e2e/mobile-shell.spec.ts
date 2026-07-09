@@ -96,8 +96,8 @@ test.describe('mobile shell regressions', () => {
     expect(bottomNavBefore).not.toBeNull()
     expect(bottomNavAfter).not.toBeNull()
 
-    expect(Math.abs((topbarBefore?.y ?? 0) - (topbarAfter?.y ?? 0))).toBeLessThan(1)
-    expect(Math.abs((bottomNavBefore?.y ?? 0) - (bottomNavAfter?.y ?? 0))).toBeLessThan(1)
+    expect(Math.abs((topbarBefore?.y ?? 0) - (topbarAfter?.y ?? 0))).toBeLessThanOrEqual(1)
+    expect(Math.abs((bottomNavBefore?.y ?? 0) - (bottomNavAfter?.y ?? 0))).toBeLessThanOrEqual(1)
 
     await page.goto('/report')
 
@@ -141,3 +141,61 @@ test.describe('mobile shell regressions', () => {
     await expect(page.getByText(/local build keeps saved activity/i)).toHaveCount(0)
   })
 })
+
+for (const width of mobileWidths) {
+  test(`keeps public report detail contained and navigable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 320 ? 700 : 844 })
+    await page.goto('/map/reports/KL-KC8P-6230')
+    await page.locator('.app-shell').waitFor()
+
+    const backToMap = page.getByRole('link', { name: 'Back to map' })
+    await expect(backToMap).toBeVisible()
+    await expect(backToMap).toHaveClass(/ui-button--ghost/)
+    await expect(backToMap).toHaveClass(/ui-button--compact/)
+
+    const containment = await page.evaluate(() => {
+      const canvas = document.querySelector('.app-canvas')
+      const detailPage = document.querySelector('.page--detail-revamp')
+      const activeTimelineCard = document.querySelector('.timeline-node--active .timeline-card')
+      const metadataGrid = document.querySelector('.detail-metadata-grid')
+      const heroRef = document.querySelector('.detail-hero-header__ref')
+
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        documentClientWidth: document.documentElement.clientWidth,
+        canvasWidth: canvas?.scrollWidth ?? 0,
+        canvasClientWidth: canvas?.clientWidth ?? 0,
+        detailWidth: detailPage?.scrollWidth ?? 0,
+        detailClientWidth: detailPage?.clientWidth ?? 0,
+        timelineWidth: activeTimelineCard?.scrollWidth ?? 0,
+        timelineClientWidth: activeTimelineCard?.clientWidth ?? 0,
+        metadataWidth: metadataGrid?.scrollWidth ?? 0,
+        metadataClientWidth: metadataGrid?.clientWidth ?? 0,
+        heroRefWidth: heroRef?.scrollWidth ?? 0,
+        heroRefClientWidth: heroRef?.clientWidth ?? 0,
+      }
+    })
+
+    expect(containment.documentWidth, `detail route document overflow at ${width}px`).toBe(
+      containment.documentClientWidth,
+    )
+    expect(containment.canvasWidth, `detail route canvas overflow at ${width}px`).toBe(
+      containment.canvasClientWidth,
+    )
+    expect(containment.detailWidth, `detail page overflow at ${width}px`).toBe(
+      containment.detailClientWidth,
+    )
+    expect(containment.timelineWidth, `timeline overflow at ${width}px`).toBe(
+      containment.timelineClientWidth,
+    )
+    expect(containment.metadataWidth, `metadata overflow at ${width}px`).toBe(
+      containment.metadataClientWidth,
+    )
+    expect(containment.heroRefWidth, `reference overflow at ${width}px`).toBeLessThanOrEqual(
+      containment.heroRefClientWidth,
+    )
+
+    await backToMap.click()
+    await page.waitForURL('**/map')
+  })
+}

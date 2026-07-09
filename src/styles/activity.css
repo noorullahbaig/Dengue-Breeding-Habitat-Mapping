@@ -81,7 +81,7 @@
   overflow: hidden; /* no outer page scroll */
   align-items: center;
   /* push content down below the topbar, leave room above bottom nav */
-  padding: calc(var(--app-topbar-height) + 0.875rem) 1rem calc(var(--app-bottom-nav-height) + 0.875rem);
+  padding: calc(var(--app-topbar-occupied-height) + 0.875rem) 1rem calc(var(--app-mobile-bottom-clearance) + 0.875rem);
 }
 
 /* ---------- Back link ---------- */

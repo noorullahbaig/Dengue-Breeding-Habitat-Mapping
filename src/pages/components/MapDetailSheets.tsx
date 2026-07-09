@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { ArrowLeft, ChevronRight, Navigation, X } from "lucide-react";
 import { ButtonLink, IconButton, Surface } from "@/components/ui";
 import {
@@ -15,9 +16,17 @@ interface MapHotspotSheetProps {
 	onClose: () => void;
 }
 
+const mapMobileSheetStyle = {
+	"--map-sheet-bottom-offset":
+		"calc(var(--app-mobile-bottom-clearance) + var(--space-sm))",
+} as CSSProperties;
+
 export function MapHotspotSheet({ hotspot, onClose }: MapHotspotSheetProps) {
 	return (
-		<div className="map-mobile-sheet map-mobile-sheet--hotspot">
+		<div
+			className="map-mobile-sheet map-mobile-sheet--hotspot"
+			style={mapMobileSheetStyle}
+		>
 			<Surface
 				as="section"
 				className="map-detail-sheet hotspot-detail-card"
@@ -125,7 +134,10 @@ export function MapReportSheet({
 		: `${group.totalReportCount} reports ${group.isExactStack ? "at this location" : "in this area"}`;
 
 	return (
-		<div className="map-mobile-sheet map-mobile-sheet--report">
+		<div
+			className="map-mobile-sheet map-mobile-sheet--report"
+			style={mapMobileSheetStyle}
+		>
 			<Surface
 				as="section"
 				className="map-detail-sheet report-sheet"

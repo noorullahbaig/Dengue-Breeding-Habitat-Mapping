@@ -97,9 +97,9 @@ export function PublicReportDetailPage() {
 			<div className="page-body stack-md">
 				{/* Premium Back Bar */}
 				<div className="detail-navigation-bar">
-					<ButtonLink to="/map" variant="ghost">
+					<ButtonLink to="/map" variant="ghost" size="compact">
 						<ArrowLeft size={18} />
-						Back to Interactive Map
+						Back to map
 					</ButtonLink>
 				</div>
 

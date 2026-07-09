@@ -151,13 +151,13 @@ img {
 
 
 .app-main {
-  min-height: calc(100vh - var(--app-topbar-height));
+  min-height: calc(100vh - var(--app-topbar-occupied-height));
 }
 
 .app-canvas {
   width: min(1180px, calc(100vw - 1.75rem));
   margin: 0 auto;
-  padding: 0.5rem 0 calc(var(--app-bottom-nav-height) + 1.5rem);
+  padding: 0.5rem 0 calc(var(--app-mobile-bottom-clearance) + 1.5rem);
 }
 
 .app-footer {
@@ -2683,8 +2683,7 @@ img {
 
 /* Layout overrides when report page is active */
 .app-main--report-immersive {
-  height: calc(100vh - var(--app-topbar-height) - var(--app-bottom-nav-height));
-  height: calc(100dvh - var(--app-topbar-height) - var(--app-bottom-nav-height));
+  height: calc(var(--app-mobile-viewport-height) - var(--app-topbar-occupied-height) - var(--app-mobile-bottom-clearance));
   min-height: 0;
   overflow: hidden;
 }
@@ -3649,7 +3648,7 @@ img {
 .page--activity-gate-wrapper {
   max-width: 440px;
   padding: 0 1rem;
-  min-height: calc(100dvh - var(--app-topbar-height) - var(--app-bottom-nav-height) - 1.5rem);
+  min-height: calc(var(--app-mobile-viewport-height) - var(--app-topbar-occupied-height) - var(--app-mobile-bottom-clearance) - 1.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;

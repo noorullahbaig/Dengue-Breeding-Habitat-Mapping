@@ -1,0 +1,61 @@
+{
+  "roboflow_workspace": "mosquito-detection-nqnla",
+  "roboflow_project": "mosquito-breeding-expanded",
+  "roboflow_version": 3,
+  "roboflow_format": "yolov8",
+  "manual_dataset_root": "",
+  "expected_target_classes": [
+    "Artificial Container",
+    "Drain Inlet",
+    "Tire"
+  ],
+  "strict_expected_classes": true,
+  "model": "yolov8m.pt",
+  "img_size": 640,
+  "epochs": 100,
+  "batch": 8,
+  "patience": 10,
+  "save_period": 5,
+  "device": 0,
+  "workers": 2,
+  "auto_split_if_valid_missing": true,
+  "split_ratios": {
+    "train": 0.7,
+    "valid": 0.2,
+    "test": 0.1
+  },
+  "remove_exact_duplicates": true,
+  "audit_near_duplicates": true,
+  "phash_max_distance": 4,
+  "include_clean_dataset_in_final_zip": false,
+  "source_dataset_registry": [
+    {
+      "source_name": "VisText-Mosquito breeding-place detection subset",
+      "source_url": "https://data.mendeley.com/datasets/rtsfh7jh7p/2",
+      "dataset_level_count": "1,828 images; 3,752 annotations",
+      "relevant_source_labels": "Bottle; Coconut-Exocarp; Drain-Inlet; Tire; Vase",
+      "use_in_final_dataset": "Initial source for object-detection labels. Bottle and Vase were mapped to Artificial Container; Drain-Inlet to Drain Inlet; Tire to Tire; Coconut-Exocarp excluded."
+    },
+    {
+      "source_name": "MosquitoFusion",
+      "source_url": "https://www.kaggle.com/datasets/faiyazabdullah/mosquitofusion-dataset",
+      "dataset_level_count": "1,204 images",
+      "relevant_source_labels": "Breeding Sites; Mosquitoes; Swarms",
+      "use_in_final_dataset": "Reviewed cautiously. Broad Breeding Sites examples were not directly retained as a final target class; mosquito-focused images were not retained for habitat-object detection."
+    },
+    {
+      "source_name": "Mosquito Breeding Grounds",
+      "source_url": "https://universe.roboflow.com/thesis-kjmym/mosquito-breeding-grounds/dataset/1",
+      "dataset_level_count": "511 images on Roboflow Universe",
+      "relevant_source_labels": "Artificial-Container; Sewage and Drainage Canals",
+      "use_in_final_dataset": "Supplementary source. Artificial-Container mapped to Artificial Container; Sewage and Drainage Canals mapped to Drain Inlet."
+    },
+    {
+      "source_name": "Vehicle and street background images",
+      "source_url": "PASTE_LINK_OR_WRITE_LOCAL_COLLECTION",
+      "dataset_level_count": "PASTE_COUNT",
+      "relevant_source_labels": "No target class",
+      "use_in_final_dataset": "No-class background examples, especially cars with visible tyres, added to reduce false Tire detections."
+    }
+  ]
+}

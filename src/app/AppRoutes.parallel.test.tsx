@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { AppProviders } from '@/app/AppProviders'
 import { AppRoutes } from '@/app/AppRoutes'
+import { MOBILE_VIEWPORT_MEDIA_QUERY } from '@/app/layoutConstants'
 
 vi.mock('@/pages/HomePage', () => ({
   HomePage: () => <div>home-page</div>,
@@ -34,7 +35,7 @@ vi.mock('@/pages/LearnPage', () => ({
 describe('canonical routes', () => {
   beforeEach(() => {
     vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
-      matches: query === '(max-width: 760px)',
+      matches: query === MOBILE_VIEWPORT_MEDIA_QUERY,
       media: query,
       onchange: null,
       addListener: vi.fn(),

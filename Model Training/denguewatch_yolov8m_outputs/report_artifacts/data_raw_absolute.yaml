@@ -1,0 +1,15 @@
+names:
+- Artificial Container
+- Drain Inlet
+- Tire
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: mosquito-breeding-expanded
+  url: https://universe.roboflow.com/mosquito-detection-nqnla/mosquito-breeding-expanded/dataset/3
+  version: 3
+  workspace: mosquito-detection-nqnla
+test: /kaggle/working/denguewatch_yolov8m_workspace/raw_data/roboflow_mosquito-breeding-expanded_v3_yolov8/test/images
+train: /kaggle/working/denguewatch_yolov8m_workspace/raw_data/roboflow_mosquito-breeding-expanded_v3_yolov8/train/images
+val: /kaggle/working/denguewatch_yolov8m_workspace/raw_data/roboflow_mosquito-breeding-expanded_v3_yolov8/valid/images
+path: /kaggle/working/denguewatch_yolov8m_workspace/raw_data/roboflow_mosquito-breeding-expanded_v3_yolov8

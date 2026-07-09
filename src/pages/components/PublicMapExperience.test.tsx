@@ -253,6 +253,13 @@ describe("PublicMapExperience report stack sheet", () => {
 
 		const hotspotSheet = document.querySelector(".map-mobile-sheet--hotspot");
 		expect(hotspotSheet).toBeInstanceOf(HTMLElement);
+		expect(
+			(hotspotSheet as HTMLElement).style.getPropertyValue(
+				"--map-sheet-bottom-offset",
+			),
+		).toBe(
+			"calc(var(--app-mobile-bottom-clearance) + var(--space-sm))",
+		);
 		expect(screen.getByText("Active hotspot")).toBeInTheDocument();
 		expect(screen.getByTestId("legend-state")).toHaveTextContent(
 			"legend hidden",

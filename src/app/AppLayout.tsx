@@ -1,9 +1,10 @@
-import type { CSSProperties } from 'react'
+import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, CircleUserRound, Clock3, FileText, Home, Map as MapIcon, User } from 'lucide-react'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { useAuth } from '@/app/useAuth'
+import { MOBILE_VIEWPORT_MEDIA_QUERY } from '@/app/layoutConstants'
 import { hasReportDraft } from '@/app/reportOverlayState'
 import { useReportDraft } from '@/app/useReportDraft'
 
@@ -12,6 +13,8 @@ export function AppLayout() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
   const { draft } = useReportDraft()
+  const topbarRef = useRef<HTMLElement | null>(null)
+  const bottomNavRef = useRef<HTMLElement | null>(null)
 
   const primaryLinks: Array<{ to: string; label: string; icon: LucideIcon }> = [
     { to: '/', label: 'Home', icon: Home },
@@ -55,6 +58,80 @@ export function AppLayout() {
       },
     })
   }
+
+  useLayoutEffect(() => {
+    const rootStyle = document.documentElement.style
+    const topbar = topbarRef.current
+    const bottomNav = bottomNavRef.current
+    const media = window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY)
+
+    function setRootMetric(name: string, value: string) {
+      if (rootStyle.getPropertyValue(name) !== value) {
+        rootStyle.setProperty(name, value)
+      }
+    }
+
+    function getVisibleRect(element: HTMLElement | null) {
+      if (!element) return null
+
+      const rect = element.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) {
+        return null
+      }
+
+      return rect
+    }
+
+    function updateMobileChromeMetrics() {
+      const topbarRect = media.matches ? getVisibleRect(topbar) : null
+      const navRect = media.matches ? getVisibleRect(bottomNav) : null
+      const reportAction = bottomNav?.querySelector<HTMLElement>('.app-bottom-nav__report-action') ?? null
+      const reportActionRect = media.matches ? getVisibleRect(reportAction) : null
+      const topbarOccupiedHeight = Math.ceil(topbarRect?.height ?? 0)
+      const visualViewportOffset = window.visualViewport
+        ? Math.max(
+            0,
+            Math.ceil(window.innerHeight - (window.visualViewport.height + window.visualViewport.offsetTop)),
+          )
+        : 0
+      const occupiedHeight = navRect
+        ? Math.max(0, Math.ceil(window.innerHeight - Math.min(navRect.top, reportActionRect?.top ?? navRect.top)))
+        : 0
+      const mobileBottomClearance = occupiedHeight + visualViewportOffset
+
+      setRootMetric('--app-topbar-occupied-height', `${topbarOccupiedHeight}px`)
+      setRootMetric('--app-bottom-nav-occupied-height', `${occupiedHeight}px`)
+      setRootMetric('--visual-viewport-bottom-offset', `${visualViewportOffset}px`)
+      setRootMetric('--app-mobile-bottom-clearance', `${mobileBottomClearance}px`)
+      setRootMetric('--app-mobile-viewport-height', `${window.innerHeight}px`)
+    }
+
+    updateMobileChromeMetrics()
+    const resizeObserver =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => updateMobileChromeMetrics())
+        : null
+
+    if (topbar) {
+      resizeObserver?.observe(topbar)
+    }
+    if (bottomNav) {
+      resizeObserver?.observe(bottomNav)
+    }
+
+    window.addEventListener('resize', updateMobileChromeMetrics)
+    window.addEventListener('orientationchange', updateMobileChromeMetrics)
+    window.visualViewport?.addEventListener('resize', updateMobileChromeMetrics)
+    window.visualViewport?.addEventListener('scroll', updateMobileChromeMetrics)
+
+    return () => {
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', updateMobileChromeMetrics)
+      window.removeEventListener('orientationchange', updateMobileChromeMetrics)
+      window.visualViewport?.removeEventListener('resize', updateMobileChromeMetrics)
+      window.visualViewport?.removeEventListener('scroll', updateMobileChromeMetrics)
+    }
+  }, [])
 
   return (
     <div className="app-shell">
@@ -108,7 +185,7 @@ export function AppLayout() {
       </aside>
 
       {!isReportPath && (
-        <header className="app-topbar">
+        <header className="app-topbar" ref={topbarRef}>
           <NavLink to="/" className="app-brand app-brand--topbar">
             <BrandLogo variant="lockup" size={32} treatment="bare" className="app-brand__logo" />
           </NavLink>
@@ -140,6 +217,7 @@ export function AppLayout() {
       <nav
         className="app-bottom-nav"
         aria-label="Primary mobile navigation"
+        ref={bottomNavRef}
         style={{
           '--active-index': mobileActiveIndex,
           '--pill-opacity': mobileActiveIndex >= 0 && mobileActiveIndex !== 2 ? 1 : 0,

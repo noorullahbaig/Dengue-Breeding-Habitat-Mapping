@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - 4.5.2 Public Map Interface</title>
+    <style>
+        
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #333;
+            gap: 50px;
+        }
+
+        .device {
+            width: 320px;
+            height: 600px;
+            border: 12px solid #333;
+            border-radius: 36px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        /* iPhone Notch */
+        .device::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background-color: #333;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 1000;
+        }
+
+        /* Fake Map Grid lines */
+        .device::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(#ccc 1px, transparent 1px),
+                linear-gradient(90deg, #ccc 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+
+        /* Floating Header Chip */
+        .floating-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background-color: #fff;
+            border: 1px solid #999;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 3px 3px 0px #333;
+        }
+        .floating-header span {
+            font-size: 12px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+        .floating-header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        /* Floating Filters */
+        .filter-container {
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            right: -20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: hidden;
+        }
+        .filter-pill {
+            background-color: #fff;
+            border: 1px solid #999;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0px #333;
+            white-space: nowrap;
+        }
+        .filter-pill.active {
+            background-color: #333;
+            color: #fff;
+        }
+
+        /* Map Markers */
+        .pin {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #999;
+            border-radius: 50% 50% 50% 0;
+            transform: translate(-50%, -100%) rotate(-45deg);
+            position: absolute;
+            background-color: #fff;
+        }
+        .pin::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .pin.selected {
+            background-color: #333;
+        }
+        .pin.selected::after {
+            background-color: #fff;
+        }
+
+        /* Heatmap */
+        .heatmap {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed #333;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        /* Bottom Sheet */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border-top: 3px solid #333;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            transform: translateY(0);
+        }
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background-color: #ccc;
+            border-radius: 2px;
+            margin: 0 auto 15px auto;
+        }
+        
+        .sheet-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            border: 1px solid #999;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sheet-title {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+        }
+        .sheet-meta {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .badge {
+            display: inline-block;
+            border: 1px solid #999;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-full {
+            width: 100%;
+            border: 1px solid #999;
+            padding: 10px;
+            font-size: 18px;
+            font-family: inherit;
+            border-radius: 5px;
+            box-shadow: 2px 2px 0px #333;
+            font-weight: bold;
+            background-color: #fff;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .device-label {
+            text-align: center;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 15px;
+            width: 320px;
+        }
+
+        .device-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Screen 1: Default Exploration State -->
+    <div class="device-wrapper">
+        <div class="device">
+            <div class="heatmap" style="top: 300px; left: 160px;"></div>
+            <div class="pin" style="top: 300px; left: 160px;"></div>
+            <div class="pin" style="top: 200px; left: 100px;"></div>
+            <div class="pin" style="top: 450px; left: 220px;"></div>
+            
+            <div class="floating-header">
+                <span>Live Map</span>
+                <h1>KL Dengue Hotspots</h1>
+            </div>
+
+            <div class="filter-container">
+                <div class="filter-pill active">All</div>
+                <div class="filter-pill">Tire</div>
+                <div class="filter-pill">Predicted Category</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Detail Sheet State -->
+    <div class="device-wrapper">
+        <div class="device">
+            <div class="heatmap" style="top: 250px; left: 160px;"></div>
+            <div class="pin selected" style="top: 250px; left: 160px;"></div>
+            <div class="pin" style="top: 150px; left: 100px;"></div>
+            <div class="pin" style="top: 400px; left: 220px;"></div>
+            
+            <div class="floating-header" style="opacity: 0.2;">
+                <span>Live Map</span>
+                <h1>KL Dengue Hotspots</h1>
+            </div>
+
+            <div class="bottom-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-close">X</div>
+                <h2 class="sheet-title">Report / Hotspot Details</h2>
+                
+                <div class="sheet-meta">
+                    <div><strong>Habitat:</strong> Drain Inlet</div>
+                    <div><strong>AI Confidence:</strong> 85% High</div>
+                    <div><strong>Submitted:</strong> 2 hours ago</div>
+                </div>
+
+                <span class="badge">Status: Under Review</span>
+
+                <div class="btn-full">View Full Evidence</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

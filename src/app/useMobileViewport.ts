@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-
-const MOBILE_QUERY = '(max-width: 760px)'
+import { MOBILE_VIEWPORT_MEDIA_QUERY } from '@/app/layoutConstants'
 
 export function useMobileViewport() {
   const [isMobile, setIsMobile] = useState(() =>
-    typeof window === 'undefined' ? false : window.matchMedia(MOBILE_QUERY).matches,
+    typeof window === 'undefined'
+      ? false
+      : window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY).matches,
   )
 
   useEffect(() => {
-    const media = window.matchMedia(MOBILE_QUERY)
+    const media = window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY)
     const update = () => setIsMobile(media.matches)
 
     update()
@@ -18,4 +19,3 @@ export function useMobileViewport() {
 
   return isMobile
 }
-
