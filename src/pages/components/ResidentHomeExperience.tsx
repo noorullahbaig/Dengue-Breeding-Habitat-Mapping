@@ -124,22 +124,15 @@ export function ResidentHomeExperience() {
 				<ul className="home-readiness__list">
 					<li>
 						<Camera size={18} aria-hidden="true" />
-						<span>
-							<strong>Clear photo</strong> of the suspected habitat
-						</span>
+						<strong>Clear photo</strong>
 					</li>
 					<li>
 						<LocateFixed size={18} aria-hidden="true" />
-						<span>
-							<strong>Location check</strong> at the exact site
-						</span>
+						<strong>Location check</strong>
 					</li>
 					<li>
 						<ShieldCheck size={18} aria-hidden="true" />
-						<span>
-							<strong>No account required</strong> and public sharing needs
-							consent
-						</span>
+						<strong>No account required</strong>
 					</li>
 				</ul>
 				<div className="home-readiness__learn">
