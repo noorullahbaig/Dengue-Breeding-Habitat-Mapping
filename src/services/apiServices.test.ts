@@ -177,6 +177,50 @@ describe('createApiAppServices account reports', () => {
       }),
     )
   })
+
+  it('loads owner detail with authenticated media urls on the api origin', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({
+        id: 'report-1',
+        reference: 'KL-PRIVATE-0001',
+        createdAt: '2026-07-04T10:00:00Z',
+        status: 'submitted',
+        prediction: {
+          label: 'tire',
+          confidence: 0.9,
+          confidenceBand: 'high',
+          advisoryText: 'Advisory only.',
+          detections: [],
+        },
+        neighborhood: 'Sentul',
+        statusMessage: 'Report received.',
+        publicLocation: { latitude: 3.1, longitude: 101.7, source: 'public' },
+        imageUrl: '/api/my-reports/KL-PRIVATE-0001/image',
+        thumbnailUrl: '/api/my-reports/KL-PRIVATE-0001/thumbnail',
+        publicReportReference: null,
+      }))
+      .mockResolvedValueOnce(new Response(new Blob(['private evidence'], { type: 'image/jpeg' })))
+    vi.stubGlobal('fetch', fetchMock)
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:owner-evidence')
+    const services = createApiAppServices(
+      'https://api.example.com/api',
+      async () => 'id-token',
+    )
+
+    const detail = await services.reportsService.getMyReport('KL-PRIVATE-0001')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/api/my-reports/KL-PRIVATE-0001',
+      { headers: { Authorization: 'Bearer id-token' } },
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://api.example.com/api/my-reports/KL-PRIVATE-0001/image',
+      { headers: { Authorization: 'Bearer id-token' } },
+    )
+    expect(detail.imageUrl).toBe('blob:owner-evidence')
+    expect(detail.thumbnailUrl).toBe('https://api.example.com/api/my-reports/KL-PRIVATE-0001/thumbnail')
+  })
 })
 
 describe('createApiAppServices report notes', () => {

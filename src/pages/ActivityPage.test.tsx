@@ -4,6 +4,7 @@ import { ActivityPage } from '@/pages/ActivityPage'
 
 const reportsService = {
   getReportStatus: vi.fn(),
+  getMyReports: vi.fn(),
 }
 
 const guestAuthState = {
@@ -27,6 +28,9 @@ vi.mock('@/app/useServices', () => ({
 describe('ActivityPage guest state', () => {
   beforeEach(() => {
     guestAuthState.isAuthLoading = false
+    guestAuthState.isAuthenticated = false
+    guestAuthState.sessionMode = 'local'
+    reportsService.getMyReports.mockReset()
   })
 
   it('waits for session restoration before showing the signed-out gate', () => {
@@ -52,5 +56,38 @@ describe('ActivityPage guest state', () => {
     expect(screen.getByRole('link', { name: 'Sign In to View Activity' })).toBeInTheDocument()
     expect(screen.queryByText(/local build keeps saved activity/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Cognito/i)).not.toBeInTheDocument()
+  })
+
+  it('opens an owned report in the owner detail route', async () => {
+    guestAuthState.isAuthenticated = true
+    guestAuthState.sessionMode = 'cognito'
+    reportsService.getMyReports.mockResolvedValue([
+      {
+        id: 'report-1',
+        reference: 'KL-OWNER-0001',
+        createdAt: '2026-07-12T12:00:00.000Z',
+        status: 'submitted',
+        prediction: {
+          label: 'tire',
+          confidence: 0.9,
+          confidenceBand: 'high',
+          advisoryText: 'Advisory only.',
+          detections: [],
+        },
+        neighborhood: 'Bukit Jalil',
+        statusMessage: 'Received.',
+        notes: 'Resident note',
+      },
+    ])
+
+    render(
+      <MemoryRouter initialEntries={['/activity']}>
+        <ActivityPage />
+      </MemoryRouter>,
+    )
+
+    const link = await screen.findByRole('link', { name: 'View report details' })
+    expect(link).toHaveAttribute('href', '/my-reports/KL-OWNER-0001')
+    expect(screen.queryByRole('link', { name: 'View Status' })).not.toBeInTheDocument()
   })
 })

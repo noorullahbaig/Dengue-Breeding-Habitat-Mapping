@@ -1162,6 +1162,27 @@
   min-width: 0;
 }
 
+.report-detail-enter {
+  animation: report-detail-enter 220ms var(--ease-out-expo) both;
+}
+
+@keyframes report-detail-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-detail-enter {
+    animation: none;
+  }
+}
+
 .detail-navigation-bar {
   display: flex;
   justify-content: space-between;
@@ -1507,6 +1528,11 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+
+  .detail-hero-header__main {
+    flex: 0 1 auto;
+    width: 100%;
   }
   
   .detail-hero-header__stats {

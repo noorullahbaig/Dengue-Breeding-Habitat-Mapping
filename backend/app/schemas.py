@@ -85,11 +85,17 @@ class StatusReportOut(BaseModel):
     neighborhood: str
     statusMessage: str
     stackedOnReference: str | None = None
-    notes: str | None = None
 
 
 class OwnerReportOut(StatusReportOut):
     notes: str | None = None
+
+
+class OwnerReportDetailOut(OwnerReportOut):
+    publicLocation: LocationPoint
+    imageUrl: str
+    thumbnailUrl: str
+    publicReportReference: str | None = None
 
 
 class PublicMapReportOut(BaseModel):

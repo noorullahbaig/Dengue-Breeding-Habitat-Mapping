@@ -18,6 +18,7 @@ from app.schemas import (
     StackParentSummaryOut,
     StatusReportOut,
     OwnerReportOut,
+    OwnerReportDetailOut,
     SubmittedReportOut,
 )
 from app.hotspots import PublicHotspot
@@ -142,13 +143,31 @@ def status_report_out(report: Report) -> StatusReportOut:
             else report.status_message
         ),
         stackedOnReference=stacked_on_reference,
-        notes=report.notes,
     )
 
 
 def owner_report_out(report: Report) -> OwnerReportOut:
     status = status_report_out(report)
-    return OwnerReportOut(**status.model_dump())
+    return OwnerReportOut(**status.model_dump(), notes=report.notes)
+
+
+def owner_report_detail_out(report: Report) -> OwnerReportDetailOut:
+    root_report = report.parent_report or report
+    status = status_report_out(report)
+    return OwnerReportDetailOut(
+        **status.model_dump(),
+        notes=report.notes,
+        publicLocation=LocationPoint(
+            latitude=root_report.public_latitude,
+            longitude=root_report.public_longitude,
+            source="public",
+        ),
+        imageUrl=f"/api/my-reports/{quote(report.reference)}/image",
+        thumbnailUrl=f"/api/my-reports/{quote(report.reference)}/thumbnail",
+        publicReportReference=(
+            root_report.reference if root_report.public_consent_accepted else None
+        ),
+    )
 
 
 def public_report_out(
@@ -271,4 +290,3 @@ def public_hotspot_out(hotspot: PublicHotspot) -> PublicHotspotOut:
         sourceLabel=hotspot.source_label,
         reportCountWithinWarning=hotspot.report_count_within_warning,
     )
-

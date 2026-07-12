@@ -390,6 +390,30 @@ export function createMockAppServices(
           stackedOnReference: report.stackedOnReference,
         }))
       },
+      async getMyReport(reference) {
+        await delay()
+        const report = readStoredReports().find(
+          (item) => item.reference.toUpperCase() === reference.trim().toUpperCase(),
+        )
+        if (!report) throw new Error('Report not found.')
+        return {
+          id: report.id,
+          reference: report.reference,
+          status: report.status,
+          createdAt: report.createdAt,
+          prediction: report.prediction,
+          neighborhood: report.neighborhood,
+          statusMessage: report.statusMessage,
+          stackedOnReference: report.stackedOnReference,
+          notes: report.notes,
+          publicLocation: report.publicLocation,
+          imageUrl: report.imageUrl ?? placeholderEvidenceImage,
+          thumbnailUrl: report.thumbnailUrl ?? placeholderEvidenceImage,
+          publicReportReference: report.publicConsent?.accepted
+            ? report.stackedOnReference ?? report.reference
+            : null,
+        }
+      },
       async claimReport(reference) {
         const report = readStoredReports().find(
           (item) => item.reference.toUpperCase() === reference.trim().toUpperCase(),

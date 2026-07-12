@@ -2134,8 +2134,9 @@ img {
   }
 
   .app-nav-link--active {
-    background: transparent !important;
+    background: var(--color-accent) !important;
     color: #fff;
+    box-shadow: var(--shadow-panel);
   }
 
   .app-rail__meta {

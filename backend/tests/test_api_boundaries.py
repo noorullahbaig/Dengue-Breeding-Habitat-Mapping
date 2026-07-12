@@ -5,7 +5,12 @@ from fastapi.testclient import TestClient
 
 from app.main import _precheck_report, app
 from app.models import Report
-from app.serializers import public_report_detail_out, public_report_out, status_report_out
+from app.serializers import (
+    owner_report_detail_out,
+    public_report_detail_out,
+    public_report_out,
+    status_report_out,
+)
 
 
 def test_cors_allows_localhost_and_loopback_dev_origins():
@@ -27,6 +32,18 @@ def test_cors_allows_localhost_and_loopback_dev_origins():
 
         assert response.status_code == 200
         assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_owner_detail_and_media_require_authentication():
+    client = TestClient(app)
+
+    detail = client.get("/api/my-reports/KL-PRIVATE-0001")
+    image = client.get("/api/my-reports/KL-PRIVATE-0001/image")
+    thumbnail = client.get("/api/my-reports/KL-PRIVATE-0001/thumbnail")
+
+    assert detail.status_code == 401
+    assert image.status_code == 401
+    assert thumbnail.status_code == 401
 
 
 def test_precheck_helper_accepts_concrete_values_not_fastapi_param_defaults():
@@ -82,6 +99,53 @@ def test_status_response_hides_private_fields_but_exposes_public_model_evidence(
             "imageHeight": None,
         }
     ]
+
+
+def test_owner_detail_includes_private_note_and_linkable_public_cluster():
+    report = Report(
+        id="report-owner-detail",
+        reference="KL-OWNER-0001",
+        created_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        latitude=3.11121,
+        longitude=101.65218,
+        accuracy_meters=12,
+        location_source="browser",
+        public_latitude=3.11,
+        public_longitude=101.65,
+        status="submitted",
+        neighborhood="Bukit Jalil",
+        status_message="Received and awaiting officer review.",
+        notes="Resident note",
+        image_original_filename="private.jpg",
+        image_mime_type="image/jpeg",
+        image_size_bytes=123,
+        image_sha256="a" * 64,
+        image_path="/private/evidence.jpg",
+        thumbnail_path="/private/thumb.jpg",
+        prediction_label="tire",
+        prediction_confidence=0.91,
+        prediction_confidence_band="high",
+        prediction_top_raw_label="Tire",
+        prediction_advisory_text="Advisory only.",
+        detections=[],
+        public_consent_accepted=True,
+    )
+
+    response = owner_report_detail_out(report).model_dump()
+
+    assert response["reference"] == "KL-OWNER-0001"
+    assert response["notes"] == "Resident note"
+    assert response["statusMessage"] == "Received and awaiting officer review."
+    assert response["imageUrl"] == "/api/my-reports/KL-OWNER-0001/image"
+    assert response["thumbnailUrl"] == "/api/my-reports/KL-OWNER-0001/thumbnail"
+    assert response["publicReportReference"] == "KL-OWNER-0001"
+    assert response["publicLocation"] == {
+        "latitude": 3.11,
+        "longitude": 101.65,
+        "accuracyMeters": None,
+        "source": "public",
+    }
 
 
 def test_public_detail_includes_additive_privacy_and_hotspot_context():
@@ -160,5 +224,3 @@ def test_public_map_report_includes_stored_hotspot_priority_without_private_loca
 	assert response["hotspotPriority"]["nearestHotspotDistanceMeters"] == 184.2
 	assert "reportLocation" not in response
 	assert response["publicLocation"]["latitude"] == 3.14
-
-

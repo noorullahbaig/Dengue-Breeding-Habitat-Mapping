@@ -105,6 +105,13 @@ export interface OwnerReport extends ReportStatus {
   notes?: string | null
 }
 
+export interface OwnerReportDetail extends OwnerReport {
+  publicLocation: LocationPoint
+  imageUrl: string
+  thumbnailUrl: string
+  publicReportReference?: string | null
+}
+
 export interface PublicMapReport {
   id: string
   reference: string

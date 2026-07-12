@@ -61,6 +61,7 @@ from app.schemas import (
     PublicReportDetailOut,
     StatusReportOut,
     OwnerReportOut,
+    OwnerReportDetailOut,
     SubmittedReportOut,
 )
 from app.service_area import ensure_within_service_area, is_within_service_area
@@ -72,6 +73,7 @@ from app.serializers import (
     public_report_out,
     status_report_out,
     owner_report_out,
+    owner_report_detail_out,
     submitted_report_out,
 )
 
@@ -726,6 +728,79 @@ def list_my_reports(
         .order_by(Report.created_at.desc())
     ).all()
     return [owner_report_out(report) for report in reports]
+
+
+@app.get("/api/my-reports/{reference}", response_model=OwnerReportDetailOut)
+def owner_report_detail(
+    reference: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> OwnerReportDetailOut:
+    report = db.scalar(
+        select(Report).where(
+            Report.reference == reference.strip().upper(),
+            Report.user_id == current_user.id,
+        )
+    )
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
+    return owner_report_detail_out(report)
+
+
+def _owned_report_by_reference(db: Session, reference: str, current_user: User) -> Report:
+    report = db.scalar(
+        select(Report).where(
+            Report.reference == reference.strip().upper(),
+            Report.user_id == current_user.id,
+        )
+    )
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
+    return report
+
+
+def _owner_media_response(report: Report, variant: str) -> FileResponse | RedirectResponse:
+    if variant == "thumbnail":
+        storage_key = report.annotated_thumbnail_storage_key or report.thumbnail_storage_key
+        local_path = (
+            report.annotated_thumbnail_storage_key
+            or report.thumbnail_storage_key
+            or report.thumbnail_path
+        )
+    else:
+        storage_key = report.annotated_image_storage_key or report.image_storage_key
+        local_path = report.annotated_image_storage_key or report.image_storage_key or report.image_path
+
+    if settings.storage_backend == "s3":
+        if not storage_key:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
+        try:
+            return RedirectResponse(url=get_s3_presigned_url(storage_key), status_code=status.HTTP_302_FOUND)
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Image storage is unavailable.",
+            )
+
+    return FileResponse(resolve_public_upload_path(local_path), media_type="image/jpeg")
+
+
+@app.get("/api/my-reports/{reference}/image", response_model=None)
+def owner_report_image(
+    reference: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FileResponse | RedirectResponse:
+    return _owner_media_response(_owned_report_by_reference(db, reference, current_user), "image")
+
+
+@app.get("/api/my-reports/{reference}/thumbnail", response_model=None)
+def owner_report_thumbnail(
+    reference: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FileResponse | RedirectResponse:
+    return _owner_media_response(_owned_report_by_reference(db, reference, current_user), "thumbnail")
 
 
 @app.post("/api/my-reports/claim", response_model=StatusReportOut)

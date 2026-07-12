@@ -29,6 +29,9 @@ vi.mock('@/pages/PublicMapPage', () => ({
 vi.mock('@/pages/PublicReportDetailPage', () => ({
   PublicReportDetailPage: () => <div>detail-page</div>,
 }))
+vi.mock('@/pages/OwnerReportDetailPage', () => ({
+  OwnerReportDetailPage: () => <div>owner-detail-page</div>,
+}))
 vi.mock('@/pages/LearnPage', () => ({
   LearnPage: () => <div>learn-page</div>,
 }))
@@ -76,6 +79,13 @@ describe('canonical routes', () => {
   it('renders the new resident account routes', async () => {
     const view = renderRoutes('/activity')
     expect(await screen.findByText('activity-page')).toBeInTheDocument()
+
+    view.unmount()
+    renderRoutes('/my-reports/KL-OWNER-0001')
+    expect(await screen.findByText('owner-detail-page')).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('link', { name: 'Activity' }).some((link) => link.className.includes('active')),
+    ).toBe(true)
 
     view.unmount()
     renderRoutes('/profile')

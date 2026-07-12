@@ -8,10 +8,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.database import Base
-from app.main import claim_my_report, list_my_reports
+from app.main import (
+    claim_my_report,
+    list_my_reports,
+    owner_report_detail,
+    owner_report_image,
+    public_report_image,
+)
 from app.models import Report, User
 from app.schemas import ClaimReportIn
 from app.claims import create_claim_token, hash_claim_token
+from app.config import settings
 
 
 def make_user(user_id: str) -> User:
@@ -145,3 +152,44 @@ def test_claim_rejects_invalid_token_and_competing_owner(db: Session):
             db=db,
         )
     assert conflict.value.status_code == 409
+
+
+def test_owner_detail_hides_another_users_report(db: Session):
+    owner = make_user("cognito:owner")
+    other = make_user("cognito:other")
+    report = make_report("KL-PRIVATE-0001", datetime.now(timezone.utc), user_id=owner.id)
+    db.add_all([owner, other, report])
+    db.commit()
+
+    detail = owner_report_detail(report.reference, current_user=owner, db=db)
+    assert detail.reference == report.reference
+
+    with pytest.raises(HTTPException) as hidden:
+        owner_report_detail(report.reference, current_user=other, db=db)
+    assert hidden.value.status_code == 404
+
+
+def test_owner_media_allows_private_evidence_only_for_owner(db: Session):
+    owner = make_user("cognito:owner")
+    other = make_user("cognito:other")
+    report = make_report("KL-PRIVATE-0002", datetime.now(timezone.utc), user_id=owner.id)
+    image_path = settings.upload_root / "test-private-owner-evidence.jpg"
+    image_path.write_bytes(b"private evidence")
+    report.image_path = str(image_path)
+    report.public_consent_accepted = False
+    db.add_all([owner, other, report])
+    db.commit()
+
+    try:
+        response = owner_report_image(report.reference, current_user=owner, db=db)
+        assert response.path == image_path
+
+        with pytest.raises(HTTPException) as hidden:
+            owner_report_image(report.reference, current_user=other, db=db)
+        assert hidden.value.status_code == 404
+
+        with pytest.raises(HTTPException) as public_hidden:
+            public_report_image(report.reference, db=db)
+        assert public_hidden.value.status_code == 404
+    finally:
+        image_path.unlink(missing_ok=True)

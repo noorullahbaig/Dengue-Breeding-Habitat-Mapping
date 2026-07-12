@@ -21,6 +21,9 @@ const PublicReportDetailPage = lazy(() =>
     default: module.PublicReportDetailPage,
   })),
 )
+const OwnerReportDetailPage = lazy(() =>
+  import('@/pages/OwnerReportDetailPage').then((module) => ({ default: module.OwnerReportDetailPage })),
+)
 const LearnPage = lazy(() =>
   import('@/pages/LearnPage').then((module) => ({ default: module.LearnPage })),
 )
@@ -53,6 +56,7 @@ export function AppRoutes() {
         <Route path="/report" element={<ReportPage />} />
         <Route path="/report/success" element={<ReportSuccessPage />} />
         <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/my-reports/:reference" element={<OwnerReportDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/status" element={<StatusPage />} />
         <Route path="/learn" element={<LearnPage />} />

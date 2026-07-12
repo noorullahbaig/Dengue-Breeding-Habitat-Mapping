@@ -24,14 +24,17 @@ export function AppLayout() {
     { to: '/learn', label: 'Learn', icon: BookOpen },
   ]
 
-  // Calculate active index for the 5 main navigation items
-  const activeIndex = primaryLinks.slice(0, 5).findIndex((link) => {
-    if (link.to === '/') {
-      return location.pathname === '/'
+  function isSectionActive(path: string) {
+    if (path === '/') return location.pathname === '/'
+    if (path === '/activity') {
+      return location.pathname.startsWith('/activity') || location.pathname.startsWith('/my-reports/')
     }
-    return location.pathname.startsWith(link.to)
-  })
-  const pillOpacity = activeIndex !== -1 ? 1 : 0
+    return location.pathname.startsWith(path)
+  }
+
+  // Calculate active index for the 5 main navigation items
+  const activeIndex = primaryLinks.slice(0, 5).findIndex((link) => isSectionActive(link.to))
+  const pillOpacity = 0
 
   const isReportPath = location.pathname === '/report'
   const isMapPath = location.pathname === '/map'
@@ -44,10 +47,7 @@ export function AppLayout() {
     { to: '/activity', label: 'Activity', icon: Clock3 },
     { to: '/learn', label: 'Learn', icon: BookOpen },
   ]
-  const mobileActiveIndex = mobileLinks.findIndex((link) => {
-    if (link.to === '/') return location.pathname === '/'
-    return location.pathname.startsWith(link.to)
-  })
+  const mobileActiveIndex = mobileLinks.findIndex((link) => isSectionActive(link.to))
 
   function openReport() {
     navigate('/report', {
@@ -156,7 +156,7 @@ export function AppLayout() {
                 key={`${link.to}:${link.label}`}
                 to={link.to}
                 end={link.to === '/'}
-                className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
+                className={`app-nav-link${isSectionActive(link.to) ? ' app-nav-link--active' : ''}`}
               >
                 <Icon size={18} aria-hidden="true" />
                 <span className="app-nav-link__label">{link.label}</span>
@@ -248,7 +248,7 @@ export function AppLayout() {
               key={`mobile-${link.to}:${link.label}`}
               to={link.to}
               end={link.to === '/'}
-              className={({ isActive }) => `app-bottom-nav__link${isActive ? ' app-bottom-nav__link--active' : ''}`}
+              className={`app-bottom-nav__link${isSectionActive(link.to) ? ' app-bottom-nav__link--active' : ''}`}
             >
               <Icon size={18} aria-hidden="true" />
               <span>{link.label}</span>

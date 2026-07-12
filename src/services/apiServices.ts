@@ -5,6 +5,7 @@ import type {
   ApiHealthStatus,
   NearbyReportCheck,
   NearbyReportCandidate,
+  OwnerReportDetail,
   PublicMapReport,
   PublicReportDetail,
   PublicReportObservation,
@@ -328,6 +329,30 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
           headers,
         })
         return parseJsonResponse(response, baseUrl)
+      },
+      async getMyReport(reference) {
+        const headers = await buildHeaders(true)
+        const response = await fetch(`${baseUrl}/my-reports/${encodeURIComponent(reference.trim())}`, { headers })
+        const report = await parseJsonResponse<OwnerReportDetail>(response, baseUrl)
+        const authenticatedImageUrl = publicUrl(report.imageUrl)
+        const imageResponse = await fetch(authenticatedImageUrl, { headers })
+        if (!imageResponse.ok) {
+          const detail = await readErrorDetail(imageResponse)
+          throw new AppApiError({
+            kind: 'server_error',
+            message: detail ?? 'Private report evidence could not be loaded.',
+            detail,
+            status: imageResponse.status,
+            transport: 'http',
+            apiBaseUrl: baseUrl,
+          })
+        }
+        const evidenceBlob = await imageResponse.blob()
+        return {
+          ...report,
+          imageUrl: URL.createObjectURL(evidenceBlob),
+          thumbnailUrl: publicUrl(report.thumbnailUrl),
+        }
       },
       async claimReport(reference, claimToken) {
         const headers = await buildHeaders(true)

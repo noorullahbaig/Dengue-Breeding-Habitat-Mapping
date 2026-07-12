@@ -242,10 +242,10 @@ export function ActivityPage() {
 
 										<div className="activity-item__actions">
 											<Link
-												to={`/status?ref=${reference}`}
+												to={`/my-reports/${reference}`}
 												className="activity-item__view-btn"
 											>
-												View Status
+												View report details
 												<ChevronRight size={14} />
 											</Link>
 												{sessionMode === "local" && <button
