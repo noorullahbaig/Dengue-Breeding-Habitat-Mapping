@@ -19,13 +19,14 @@ function pickLabel(draft: ReportDraft): HabitatClass {
 export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
   const label = pickLabel(draft)
   const photoName = draft.photoEvidence?.name.toLowerCase() ?? ''
-  const confidenceBand =
-    label === 'drain_inlet'
-      ? 'moderate'
-      : label === 'tire'
-        ? 'high'
-        : 'moderate'
-  const confidence = confidenceBand === 'high' ? 0.84 : 0.62
+  const confidence = label === 'tire' ? 0.84 : label === 'drain_inlet' ? 0.62 : 0.62
+  const thresholds = {
+    artificial_container: 0.48,
+    drain_inlet: 0.66,
+    tire: 0.62,
+    unclassified: 1,
+  } as const
+  const confidenceBand = confidence >= thresholds[label] ? 'high' : 'low'
   const rawLabel =
     label === 'drain_inlet'
       ? 'Drain-Inlet'
@@ -49,6 +50,8 @@ export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
       },
     ],
     advisoryText:
-      'Advisory only. The computer-vision result does not confirm official action.',
+      confidenceBand === 'high'
+        ? 'The model is highly confident in this detection, but final verification is still required.'
+        : 'The image is ambiguous; human verification is required.',
   }
 }

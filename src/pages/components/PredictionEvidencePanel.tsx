@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
-import { formatConfidenceScore, formatHabitatLabel } from "@/lib/formatters";
+import {
+	formatConfidenceLabel,
+	formatConfidenceScore,
+	formatDetectionLabel,
+	formatDetectionCount,
+	formatHabitatLabel,
+} from "@/lib/formatters";
 import type { DetectionSummary, PredictionSummary } from "@/types/report";
 
 interface PredictionEvidencePanelProps {
@@ -71,6 +77,9 @@ export function PredictionEvidencePanel({
 		(detection) =>
 			detection.bboxNormalized?.length === 4 || detection.bbox.length >= 4,
 	);
+	const hasInvalidDetections = validDetections.length !== detections.length;
+	const resultLabel = formatHabitatLabel(prediction.label);
+	const hasTargetDetection = prediction.label !== "unclassified" && validDetections.length > 0;
 
 	return (
 		<section
@@ -113,10 +122,10 @@ export function PredictionEvidencePanel({
 										style={{
 											...boxStyle(detection, imageSize),
 										}}
-										title={`${formatHabitatLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
+											title={`${formatDetectionLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
 									>
 										<span>
-											{formatHabitatLabel(detection.rawLabel)}{" "}
+											{formatDetectionLabel(detection.rawLabel)}{" "}
 											{formatConfidenceScore(detection.confidence)}
 										</span>
 									</span>
@@ -131,6 +140,53 @@ export function PredictionEvidencePanel({
 					</div>
 				</div>
 			) : null}
+			<div className="prediction-evidence__body">
+				<div className="prediction-evidence__header">
+					<div>
+						<span className="eyebrow">AI evidence review</span>
+						<h2>{hasTargetDetection ? resultLabel : "No target habitat identified"}</h2>
+					</div>
+					<span className="prediction-evidence__score">
+						{formatConfidenceLabel(prediction.confidenceBand)}
+					</span>
+				</div>
+				<div className="prediction-evidence__metrics">
+					<div>
+						<span className="detail-grid__label">Top class</span>
+						<strong>{resultLabel}</strong>
+					</div>
+					<div>
+						<span className="detail-grid__label">Confidence</span>
+						<strong>{formatConfidenceScore(prediction.confidence)}</strong>
+					</div>
+					<div>
+						<span className="detail-grid__label">Detections</span>
+						<strong>{formatDetectionCount(validDetections.length)}</strong>
+					</div>
+				</div>
+				{validDetections.length > 0 ? (
+					<div className="prediction-evidence__detections">
+						<span className="detail-grid__label">Detected objects</span>
+						<ol>
+							{validDetections.map((detection) => (
+								<li key={detectionKey(detection)}>
+									{formatDetectionLabel(detection.rawLabel)} — {formatConfidenceScore(detection.confidence)}
+								</li>
+							))}
+						</ol>
+					</div>
+				) : (
+					<p className="prediction-evidence__empty">
+						No target habitat was identified with high confidence. Human verification is still recommended.
+					</p>
+				)}
+				{hasInvalidDetections ? (
+					<p className="prediction-evidence__warning" role="status">
+						Some detections could not be displayed because their bounding boxes were invalid.
+					</p>
+				) : null}
+				<p className="prediction-evidence__explain">{prediction.advisoryText} AI results are advisory.</p>
+			</div>
 		</section>
 	);
 }

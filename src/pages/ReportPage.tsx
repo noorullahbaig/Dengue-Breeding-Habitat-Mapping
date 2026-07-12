@@ -195,12 +195,17 @@ export function ReportPage({
 	const precheckReady = Boolean(
 		precheck && precheckSignature === activePrecheckSignature,
 	);
+	const inferenceViewState = precheckReady
+		? "success"
+		: isPrecheckLoading
+			? "loading"
+			: precheckError
+				? "error"
+				: "idle";
 	const isLowAiConfidence =
 		precheckReady &&
 		precheck !== null &&
-		(precheck.prediction.detections?.filter(
-			(d) => d.bboxNormalized?.length === 4 || d.bbox.length >= 4,
-		).length ?? 0) === 0;
+		precheck.prediction.confidenceBand === "low";
 	const selectedStack = nearbyCandidates.find(
 		(candidate) => candidate.reference === selectedStackReference,
 	);
@@ -295,6 +300,7 @@ export function ReportPage({
 		}
 
 		let isMounted = true;
+		setPrecheck(null);
 		setIsPrecheckLoading(true);
 		setPrecheckError(null);
 
@@ -1139,7 +1145,7 @@ export function ReportPage({
 					{/* Slide 3: AI Review & Stacking */}
 					<div className="report-slide">
 						{currentStep === 3 && (
-							<div className="report-slide__content">
+							<div className="report-slide__content" data-inference-state={inferenceViewState}>
 									{isPrecheckLoading ? (
 										<div
 											className="scanning-image-container"
@@ -1156,9 +1162,10 @@ export function ReportPage({
 											<div className="scan-line" />
 												<div className="u-static-457dd306">
 													<div className="glass-panel u-static-760bbe82">
-														<span className="u-static-5f9a40ab">
-															Running AI habitat scan...
-														</span>
+											<div className="precheck-scan-copy">
+												<strong>Analyzing image…</strong>
+												<span>Checking for target habitat classes</span>
+											</div>
 													</div>
 												</div>
 										</div>
@@ -1230,17 +1237,18 @@ export function ReportPage({
 										/>
 									) : null}
 
-									{precheckReady && precheck ? (
-										(precheck.prediction.detections?.filter(d => d.bboxNormalized?.length === 4 || d.bbox.length >= 4).length ?? 0) > 0 ? (
-											<Notice tone="info">
-												<strong>ℹ️ AI Analysis:</strong> Breeding habitat detected.
-											</Notice>
-										) : (
-											<Notice tone="neutral">
-												<strong>AI Analysis:</strong> No visible habitats detected.
-											</Notice>
-										)
-									) : null}
+					{precheckReady && precheck ? (
+						precheck.prediction.label !== "unclassified" &&
+						precheck.prediction.confidenceBand === "high" ? (
+							<Notice tone="info">
+								<strong>ℹ️ AI Analysis:</strong> Potential breeding habitat candidate identified.
+							</Notice>
+						) : (
+							<Notice tone="neutral">
+								<strong>AI Analysis:</strong> No high-confidence target habitat identified.
+							</Notice>
+						)
+					) : null}
 
 									{selectedStack ? (
 										<Notice tone="success">
@@ -1255,17 +1263,7 @@ export function ReportPage({
 										</Notice>
 									) : null}
 
-									{precheckReady && precheck ? (
-										<Surface className="u-static-80af9120">
-											<p className="u-static-a6e880eb">
-												<strong>Note:</strong>{" "}
-												{precheck.prediction.advisoryText} AI results are
-												advisory.
-											</p>
-										</Surface>
-									) : null}
-
-										<div className="stack-sm report-ai-actions">
+						<div className="stack-sm report-ai-actions">
 										<Button
 											variant="primary"
 											className="u-static-16000cc0"

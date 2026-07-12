@@ -25,6 +25,20 @@ export function formatHabitatLabel(habitatClass: string) {
   return habitatLabels[habitatClass as HabitatClass] ?? habitatClass
 }
 
+export function formatDetectionLabel(rawLabel: string) {
+  const normalized = rawLabel.trim().toLowerCase()
+  if (normalized === 'bottle' || normalized === 'vase' || normalized === 'artificial container') {
+    return habitatLabels.artificial_container
+  }
+  if (normalized === 'drain-inlet' || normalized === 'drain inlet') {
+    return habitatLabels.drain_inlet
+  }
+  if (normalized === 'tire') {
+    return habitatLabels.tire
+  }
+  return formatHabitatLabel(rawLabel)
+}
+
 export function formatStatusLabel(status: SubmissionStatus) {
   return statusLabels[status]
 }

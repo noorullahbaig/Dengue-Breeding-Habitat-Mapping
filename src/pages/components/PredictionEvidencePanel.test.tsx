@@ -55,4 +55,40 @@ describe('PredictionEvidencePanel', () => {
     expect(screen.getByText('Evidence preview unavailable')).toBeInTheDocument()
     expect(screen.getByText(/The image could not be loaded/i)).toBeInTheDocument()
   })
+
+  it('keeps the result summary visible when no detections are returned', () => {
+    render(
+      <PredictionEvidencePanel
+        prediction={{
+          label: 'unclassified',
+          confidence: null,
+          confidenceBand: 'low',
+          advisoryText: 'The image is ambiguous; human verification is required.',
+          detections: [],
+        }}
+        imageUrl="blob:empty-preview"
+        showDetections
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'No target habitat identified' })).toBeInTheDocument()
+    expect(screen.getByText(/No target habitat was identified with high confidence/i)).toBeInTheDocument()
+  })
+
+  it('reports malformed detections without rendering a misleading box', () => {
+    render(
+      <PredictionEvidencePanel
+        prediction={{
+          ...prediction,
+          confidenceBand: 'low',
+          detections: [{ rawLabel: 'Tire', confidence: 0.2, bbox: [] }],
+        }}
+        imageUrl="blob:invalid-preview"
+        showDetections
+      />,
+    )
+
+    expect(screen.getByText(/Some detections could not be displayed/i)).toBeInTheDocument()
+    expect(document.querySelector('.prediction-evidence__box')).toBeNull()
+  })
 })

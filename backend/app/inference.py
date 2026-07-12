@@ -3,9 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.domain import ADVISORY_TEXT
-
-
 RAW_TO_PUBLIC_LABEL = {
     "Bottle": "artificial_container",
     "Vase": "artificial_container",
@@ -17,6 +14,16 @@ RAW_TO_PUBLIC_LABEL = {
     "drain_inlet": "drain_inlet",
     "tire": "tire",
 }
+
+CLASS_CONFIDENCE_THRESHOLDS = {
+    "artificial_container": 0.48,
+    "drain_inlet": 0.66,
+    "tire": 0.62,
+}
+LOW_ADVISORY_TEXT = "The image is ambiguous; human verification is required."
+HIGH_ADVISORY_TEXT = (
+    "The model is highly confident in this detection, but final verification is still required."
+)
 
 
 @dataclass(frozen=True)
@@ -36,17 +43,22 @@ class PredictionSummary:
     confidence_band: str
     top_raw_label: str | None
     detections: list[Detection]
-    advisory_text: str = ADVISORY_TEXT
+    advisory_text: str = LOW_ADVISORY_TEXT
 
 
-def confidence_band(confidence: float | None) -> str:
-    if confidence is None:
+def confidence_band(label: str, confidence: float | None) -> str:
+    threshold = CLASS_CONFIDENCE_THRESHOLDS.get(label)
+    if threshold is None or confidence is None:
         return "low"
-    if confidence >= 0.70:
-        return "high"
-    if confidence >= 0.40:
-        return "moderate"
-    return "low"
+    return "high" if confidence >= threshold else "low"
+
+
+def advisory_text_for_band(confidence_band_value: str) -> str:
+    return (
+        HIGH_ADVISORY_TEXT
+        if confidence_band_value == "high"
+        else LOW_ADVISORY_TEXT
+    )
 
 
 def normalize_bbox(
@@ -92,9 +104,18 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
     return PredictionSummary(
         label=RAW_TO_PUBLIC_LABEL[top_retained.raw_label],
         confidence=top_retained.confidence,
-        confidence_band=confidence_band(top_retained.confidence),
+        confidence_band=confidence_band(
+            RAW_TO_PUBLIC_LABEL[top_retained.raw_label],
+            top_retained.confidence,
+        ),
         top_raw_label=top_retained.raw_label,
         detections=detections,
+        advisory_text=advisory_text_for_band(
+            confidence_band(
+                RAW_TO_PUBLIC_LABEL[top_retained.raw_label],
+                top_retained.confidence,
+            )
+        ),
     )
 
 
