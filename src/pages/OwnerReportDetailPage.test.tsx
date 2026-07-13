@@ -15,23 +15,9 @@ vi.mock('@/app/useAuth', () => ({
 }))
 
 vi.mock('@/pages/components/PredictionEvidencePanel', () => ({
-  PredictionEvidencePanel: () => <div>evidence-panel</div>,
-}))
-
-vi.mock('@/pages/components/ReportDetailPresentation', () => ({
-  ReportDetailPresentation: ({ model, primaryAfterEvidence, metadataAfter }: {
-    model: { evidence: { imageUrl?: string }; backTo: string; backLabel: string }
-    primaryAfterEvidence?: React.ReactNode
-    metadataAfter?: React.ReactNode
-  }) => (
-    <>
-      <a href={model.backTo}>{model.backLabel}</a>
-      <img alt="owner evidence" src={model.evidence.imageUrl} />
-      {primaryAfterEvidence}
-      {metadataAfter}
-    </>
+  PredictionEvidencePanel: ({ imageUrl, imageAlt }: { imageUrl?: string; imageAlt: string }) => (
+    <img alt={imageAlt} src={imageUrl} />
   ),
-  ReportDetailState: ({ title, action }: { title?: string; action?: React.ReactNode }) => <><h1>{title}</h1>{action}</>,
 }))
 
 vi.mock('@/pages/components/StaticReceiptMap', () => ({
@@ -87,14 +73,14 @@ describe('OwnerReportDetailPage', () => {
     expect(screen.queryByRole('link', { name: 'View public location report' })).not.toBeInTheDocument()
   })
 
-  it('links a stacked owner report to its root public report', async () => {
+  it('uses the same observation-history structure for a stacked owner report without showing other reports', async () => {
     getMyReport.mockResolvedValue(ownerDetail('KL-ROOT-0001'))
     renderPage()
 
-    expect(await screen.findByRole('link', { name: 'View public location report' })).toHaveAttribute(
-      'href',
-      '/map/reports/KL-ROOT-0001',
-    )
+    expect(await screen.findByRole('heading', { name: 'Observation history' })).toBeInTheDocument()
+    expect(screen.getAllByText('KL-PRIVATE-0001')).toHaveLength(2)
+    expect(screen.queryByText('KL-ROOT-0001')).not.toBeInTheDocument()
+    expect(screen.getByText('Latest update')).toBeInTheDocument()
   })
 
   it('renders the authenticated blob URL instead of the protected original endpoint', async () => {
@@ -105,7 +91,7 @@ describe('OwnerReportDetailPage', () => {
     })
     renderPage()
 
-    expect((await screen.findByRole('img', { name: 'owner evidence' })).getAttribute('src')).toBe('blob:private-original')
+    expect((await screen.findByRole('img', { name: 'Evidence for KL-PRIVATE-0001' })).getAttribute('src')).toBe('blob:private-original')
   })
 
   it('offers sign in with a return path when account access expires', async () => {

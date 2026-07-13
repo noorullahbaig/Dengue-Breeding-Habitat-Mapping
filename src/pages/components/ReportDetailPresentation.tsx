@@ -3,9 +3,16 @@ import type { ReactNode } from 'react'
 import { ButtonLink, EmptyState, LoadingState, Surface } from '@/components/ui'
 import { InlineNotice } from '@/components/InlineNotice'
 import { StatusBadge } from '@/features/shared/StatusBadge'
+import { formatConfidenceLabel, formatHabitatLabel, formatTimestamp } from '@/lib/formatters'
 import { PredictionEvidencePanel } from '@/pages/components/PredictionEvidencePanel'
 import { StaticReceiptMap } from '@/pages/components/StaticReceiptMap'
-import type { LocationPoint, PredictionSummary, SubmissionStatus } from '@/types/report'
+import type {
+  ConfidenceBand,
+  HabitatClass,
+  LocationPoint,
+  PredictionSummary,
+  SubmissionStatus,
+} from '@/types/report'
 
 export interface ReportDetailViewModel {
   mode: 'owner' | 'public'
@@ -27,6 +34,73 @@ export interface ReportDetailViewModel {
     description: string
   }
   metadata: Array<{ label: string; value: ReactNode }>
+}
+
+export interface ReportDetailObservation {
+  id: string
+  reference: string
+  reportedAt: string
+  thumbnailUrl: string
+  habitatClass: HabitatClass
+  confidenceBand: ConfidenceBand
+}
+
+interface ReportObservationHistoryProps {
+  observations: ReportDetailObservation[]
+  selectedReference: string
+  onSelect?: (reference: string) => void
+  description: string
+}
+
+export function ReportObservationHistory({
+  observations,
+  selectedReference,
+  onSelect,
+  description,
+}: ReportObservationHistoryProps) {
+  return (
+    <Surface as="section" className="public-detail-card-section">
+      <div className="public-detail-card-section__header">
+        <h2>Observation history</h2>
+        <p className="caption-text">{description}</p>
+      </div>
+      <div className="timeline-gallery-wrap">
+        {observations.map((observation) => {
+          const isSelected = observation.reference === selectedReference
+          return (
+            <button
+              type="button"
+              key={observation.reference}
+              className={`timeline-node${isSelected ? ' timeline-node--active' : ''}`}
+              onClick={() => onSelect?.(observation.reference)}
+              aria-current={isSelected ? 'true' : undefined}
+            >
+              <div className="timeline-card">
+                <img src={observation.thumbnailUrl} alt="" className="timeline-card__img" />
+                <div className="timeline-card__info">
+                  <div className="timeline-card__info-header">
+                    <strong className="timeline-card__ref">{observation.reference}</strong>
+                    <span className="timeline-card__date">{formatTimestamp(observation.reportedAt)}</span>
+                  </div>
+                  <div className="timeline-card__details">
+                    <span className="timeline-card__detail-pill">
+                      Class: <strong>{formatHabitatLabel(observation.habitatClass)}</strong>
+                    </span>
+                    <span className="timeline-card__detail-pill">
+                      Confidence: <strong>{formatConfidenceLabel(observation.confidenceBand)}</strong>
+                    </span>
+                  </div>
+                </div>
+                <span className={isSelected ? 'timeline-card__badge' : 'timeline-card__action'}>
+                  {isSelected ? 'Selected' : 'Review'}
+                </span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </Surface>
+  )
 }
 
 interface ReportDetailPresentationProps {

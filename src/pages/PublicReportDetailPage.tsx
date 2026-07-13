@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useServices } from '@/app/useServices'
-import { Surface } from '@/components/ui'
-import {
-  formatCalendarDate,
-  formatConfidenceLabel,
-  formatHabitatLabel,
-  formatTimestamp,
-} from '@/lib/formatters'
+import { formatCalendarDate, formatHabitatLabel, formatTimestamp } from '@/lib/formatters'
 import { toPublicReportErrorMessage } from '@/lib/userFacingErrors'
 import {
   ReportDetailPresentation,
   ReportDetailState,
+  ReportObservationHistory,
   type ReportDetailViewModel,
 } from '@/pages/components/ReportDetailPresentation'
 import type {
@@ -153,48 +148,12 @@ export function PublicReportDetailPage() {
     <ReportDetailPresentation
       model={model}
       primaryAfterEvidence={(
-        <Surface as="section" className="public-detail-card-section">
-          <div className="public-detail-card-section__header">
-            <h2>Observation history</h2>
-            <p className="caption-text">
-              {`This location has ${countLabel(report.reportCount, 'stacked citizen submission')}`}
-            </p>
-          </div>
-          <div className="timeline-gallery-wrap">
-            {observations.map((observation) => {
-              const isSelected = activeObservation.reference === observation.reference
-              return (
-                <button
-                  type="button"
-                  key={observation.reference}
-                  className={`timeline-node${isSelected ? ' timeline-node--active' : ''}`}
-                  onClick={() => setSelectedObsRef(observation.reference)}
-                >
-                  <div className="timeline-card">
-                    <img src={observation.thumbnailUrl} alt="" className="timeline-card__img" />
-                    <div className="timeline-card__info">
-                      <div className="timeline-card__info-header">
-                        <strong className="timeline-card__ref">{observation.reference}</strong>
-                        <span className="timeline-card__date">{formatTimestamp(observation.reportedAt)}</span>
-                      </div>
-                      <div className="timeline-card__details">
-                        <span className="timeline-card__detail-pill">
-                          Class: <strong>{formatHabitatLabel(observation.habitatClass)}</strong>
-                        </span>
-                        <span className="timeline-card__detail-pill">
-                          Confidence: <strong>{formatConfidenceLabel(observation.confidenceBand)}</strong>
-                        </span>
-                      </div>
-                    </div>
-                    <span className={isSelected ? 'timeline-card__badge' : 'timeline-card__action'}>
-                      {isSelected ? 'Selected' : 'Review'}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </Surface>
+        <ReportObservationHistory
+          observations={observations}
+          selectedReference={activeObservation.reference}
+          onSelect={setSelectedObsRef}
+          description={`This location has ${countLabel(report.reportCount, 'stacked citizen submission')}`}
+        />
       )}
       locationAfterMap={(
         <div className={`detail-outbreak-alert detail-outbreak-alert--${hotspotContext.state}`}>

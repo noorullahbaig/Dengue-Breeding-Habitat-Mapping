@@ -1,13 +1,13 @@
-import { Map as MapIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useServices } from '@/app/useServices'
 import { useAuth } from '@/app/useAuth'
 import { ButtonLink, Surface } from '@/components/ui'
-import { formatHabitatLabel, formatTimestamp } from '@/lib/formatters'
+import { formatCalendarDate, formatHabitatLabel, formatTimestamp } from '@/lib/formatters'
 import {
   ReportDetailPresentation,
   ReportDetailState,
+  ReportObservationHistory,
   type ReportDetailViewModel,
 } from '@/pages/components/ReportDetailPresentation'
 import type { OwnerReportDetail } from '@/types/report'
@@ -107,21 +107,30 @@ export function OwnerReportDetailPage() {
     reference: report.reference,
     status: report.status,
     neighborhood: report.neighborhood,
-    eyebrow: 'Your private report details',
+    eyebrow: (
+      <>
+        Selected habitat: <strong>{formatHabitatLabel(report.prediction.label)}</strong>
+      </>
+    ),
+    stats: [
+      { label: 'Stacked Reports', value: 1 },
+      { label: 'Last Updated', value: formatCalendarDate(report.createdAt) },
+    ],
     evidence: {
       prediction: report.prediction,
       imageUrl: report.imageUrl,
       imageAlt: `Evidence for ${report.reference}`,
-      description: 'Your submitted photo and model result',
+      description: 'Submitted photo with model classification boundaries',
     },
     location: {
       point: report.publicLocation,
       description: 'Public-safe location used on the map',
     },
     metadata: [
-      { label: 'Submitted', value: formatTimestamp(report.createdAt) },
-      { label: 'Habitat', value: formatHabitatLabel(report.prediction.label) },
-      { label: 'Reference', value: report.reference },
+      { label: 'First Reported', value: formatTimestamp(report.createdAt) },
+      { label: 'Last Updated', value: formatTimestamp(report.createdAt) },
+      { label: 'Primary Habitat', value: formatHabitatLabel(report.prediction.label) },
+      { label: 'Total Submissions', value: '1 report' },
     ],
   }
 
@@ -129,28 +138,33 @@ export function OwnerReportDetailPage() {
     <ReportDetailPresentation
       model={model}
       primaryAfterEvidence={(
-        <Surface as="section" className="public-detail-card-section">
-          <div className="public-detail-card-section__header">
-            <h2>Latest update</h2>
-          </div>
-          <p>{report.statusMessage}</p>
-          {report.notes ? (
-            <div className="detail-privacy-note">
-              <span className="detail-metadata-label">Your note</span>
-              <p>{report.notes}</p>
+        <>
+          <ReportObservationHistory
+            observations={[{
+              id: report.id,
+              reference: report.reference,
+              reportedAt: report.createdAt,
+              thumbnailUrl: report.imageUrl,
+              habitatClass: report.prediction.label,
+              confidenceBand: report.prediction.confidenceBand,
+            }]}
+            selectedReference={report.reference}
+            description="Your submitted report"
+          />
+          <Surface as="section" className="public-detail-card-section">
+            <div className="public-detail-card-section__header">
+              <h2>Latest update</h2>
             </div>
-          ) : null}
-        </Surface>
+            <p>{report.statusMessage}</p>
+            {report.notes ? (
+              <div className="detail-privacy-note">
+                <span className="detail-metadata-label">Your note</span>
+                <p>{report.notes}</p>
+              </div>
+            ) : null}
+          </Surface>
+        </>
       )}
-      metadataAfter={report.publicReportReference ? (
-        <Link
-          to={`/map/reports/${report.publicReportReference}`}
-          className="status-action-link"
-        >
-          <MapIcon size={18} />
-          View public location report
-        </Link>
-      ) : null}
     />
   )
 }
