@@ -111,6 +111,7 @@ export interface OwnerReportDetail extends OwnerReport {
   originalImageUrl?: string
   thumbnailUrl: string
   publicReportReference?: string | null
+  evidenceLoadFailed?: boolean
 }
 
 export interface PublicMapReport {

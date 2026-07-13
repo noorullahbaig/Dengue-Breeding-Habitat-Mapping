@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from io import BytesIO
@@ -112,6 +113,32 @@ def get_s3_presigned_url(storage_key: str) -> str:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate image URL.",
         ) from exc
+
+
+def stream_s3_object(storage_key: str) -> tuple[Iterator[bytes], str]:
+    if not settings.s3_bucket:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="S3 bucket not configured.",
+        )
+
+    try:
+        response = _get_s3_client().get_object(Bucket=settings.s3_bucket, Key=storage_key)
+    except (BotoCoreError, ClientError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image not found in S3.",
+        ) from exc
+
+    body = response["Body"]
+
+    def chunks() -> Iterator[bytes]:
+        try:
+            yield from body.iter_chunks(chunk_size=1024 * 1024)
+        finally:
+            body.close()
+
+    return chunks(), response.get("ContentType") or "image/jpeg"
 
 
 def check_s3_ready() -> bool:

@@ -7,6 +7,7 @@ interface PredictionEvidencePanelProps {
 	prediction: PredictionSummary;
 	title?: string;
 	imageUrl?: string;
+	imageUnavailable?: boolean;
 	imageAlt?: string;
 	showDetections?: boolean;
 	compact?: boolean;
@@ -53,6 +54,7 @@ export function PredictionEvidencePanel({
 	prediction,
 	title,
 	imageUrl,
+	imageUnavailable = false,
 	imageAlt = "Evidence image with computer-vision detections",
 	showDetections = false,
 	compact = false,
@@ -101,10 +103,10 @@ export function PredictionEvidencePanel({
 			data-outcome={outcome}
 			aria-label={title ?? "AI evidence analysis"}
 		>
-			{imageUrl ? (
+			{imageUrl || imageUnavailable ? (
 				<div className="prediction-evidence__media">
 					<div
-						className={`prediction-evidence__media-frame${imageFailed ? " prediction-evidence__media-frame--failed" : ""}${imageSize ? " prediction-evidence__media-frame--measured" : ""}${isAnalyzing ? " prediction-evidence__media-frame--analyzing" : ""}`}
+						className={`prediction-evidence__media-frame${imageFailed || imageUnavailable ? " prediction-evidence__media-frame--failed" : ""}${imageSize ? " prediction-evidence__media-frame--measured" : ""}${isAnalyzing ? " prediction-evidence__media-frame--analyzing" : ""}`}
 						style={
 							imageSize
 								? ({
@@ -113,7 +115,7 @@ export function PredictionEvidencePanel({
 								: undefined
 						}
 					>
-						<img
+						{imageUrl ? <img
 							src={imageUrl}
 							alt={imageAlt}
 							onLoad={(event) => {
@@ -128,7 +130,7 @@ export function PredictionEvidencePanel({
 								setImageSize(null);
 								setImageFailed(true);
 							}}
-						/>
+						/> : null}
 						{isAnalyzing ? (
 							<div
 								className="prediction-evidence__scan-state"
@@ -153,7 +155,7 @@ export function PredictionEvidencePanel({
 									</span>
 								))
 							: null}
-						{imageFailed ? (
+						{imageFailed || imageUnavailable ? (
 							<div
 								className="prediction-evidence__image-error"
 								role="status"

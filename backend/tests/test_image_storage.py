@@ -17,6 +17,7 @@ from app.image_storage import (
     store_precheck_image,
     store_upload,
     render_annotated_image,
+    stream_s3_object,
 )
 from app.inference import Detection
 
@@ -152,3 +153,31 @@ def test_render_annotated_image_keeps_no_detection_image_visually_unchanged(tmp_
     with Image.open(source) as original, Image.open(annotated) as result:
         assert result.size == original.size
         assert result.getpixel((16, 16)) == pytest.approx(original.getpixel((16, 16)), abs=3)
+
+
+def test_stream_s3_object_reads_private_media_without_presigned_redirect(monkeypatch):
+    class FakeBody:
+        def iter_chunks(self, chunk_size):
+            assert chunk_size > 0
+            yield b'private '
+            yield b'evidence'
+
+        def close(self):
+            self.closed = True
+
+    body = FakeBody()
+
+    class FakeClient:
+        def get_object(self, *, Bucket, Key):
+            assert Bucket == 'test-bucket'
+            assert Key == 'evidence/private.jpg'
+            return {'Body': body, 'ContentType': 'image/jpeg'}
+
+    monkeypatch.setattr(image_storage, 'settings', replace(settings, s3_bucket='test-bucket'))
+    monkeypatch.setattr(image_storage, '_get_s3_client', lambda: FakeClient())
+
+    chunks, content_type = stream_s3_object('evidence/private.jpg')
+
+    assert b''.join(chunks) == b'private evidence'
+    assert content_type == 'image/jpeg'
+    assert body.closed is True

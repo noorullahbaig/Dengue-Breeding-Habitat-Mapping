@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from dataclasses import replace
 
 import pytest
 from fastapi import HTTPException
@@ -8,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.database import Base
+from app import main
 from app.main import (
     claim_my_report,
     list_my_reports,
@@ -193,3 +195,21 @@ def test_owner_media_allows_private_evidence_only_for_owner(db: Session):
         assert public_hidden.value.status_code == 404
     finally:
         image_path.unlink(missing_ok=True)
+
+
+@pytest.mark.anyio
+async def test_owner_media_streams_s3_object_through_authenticated_api(db: Session, monkeypatch):
+    owner = make_user("cognito:s3-owner")
+    report = make_report("KL-S3-PRIVATE-0001", datetime.now(timezone.utc), user_id=owner.id)
+    report.image_storage_key = "evidence/private.jpg"
+    db.add_all([owner, report])
+    db.commit()
+
+    monkeypatch.setattr(main, "settings", replace(settings, storage_backend="s3", s3_bucket="test-bucket"))
+    monkeypatch.setattr(main, "stream_s3_object", lambda key: (iter([b"private evidence"]), "image/jpeg"))
+
+    response = main.owner_report_image(report.reference, current_user=owner, db=db)
+
+    assert response.media_type == "image/jpeg"
+    chunks = [chunk async for chunk in response.body_iterator]
+    assert b"".join(chunks) == b"private evidence"

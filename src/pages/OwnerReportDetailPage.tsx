@@ -119,6 +119,7 @@ export function OwnerReportDetailPage() {
     evidence: {
       prediction: report.prediction,
       imageUrl: report.imageUrl,
+      imageUnavailable: report.evidenceLoadFailed,
       imageAlt: `Evidence for ${report.reference}`,
       description: 'Submitted photo with model classification boundaries',
     },

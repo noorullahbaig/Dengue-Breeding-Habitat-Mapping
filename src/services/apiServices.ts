@@ -338,20 +338,28 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
         const response = await fetch(`${baseUrl}/my-reports/${encodeURIComponent(reference.trim())}`, { headers })
         const report = await parseJsonResponse<OwnerReportDetail>(response, baseUrl)
         let evidenceUrl = ''
-        try {
-          const authenticatedImageUrl = publicUrl(report.originalImageUrl ?? report.imageUrl)
-          const imageResponse = await fetch(authenticatedImageUrl, { headers })
-          if (imageResponse.ok) {
+        const evidenceCandidates = [report.originalImageUrl, report.imageUrl]
+          .filter((value): value is string => Boolean(value))
+          .map(publicUrl)
+          .filter((value, index, values) => values.indexOf(value) === index)
+
+        for (const authenticatedImageUrl of evidenceCandidates) {
+          try {
+            const imageResponse = await fetch(authenticatedImageUrl, { headers })
+            if (!imageResponse.ok) continue
             const evidenceBlob = await imageResponse.blob()
+            if (!evidenceBlob.size) continue
             evidenceUrl = URL.createObjectURL(evidenceBlob)
+            break
+          } catch {
+            // Try the annotated private image before reporting the preview unavailable.
           }
-        } catch {
-          evidenceUrl = ''
         }
         return {
           ...report,
           imageUrl: evidenceUrl,
           thumbnailUrl: publicUrl(report.thumbnailUrl),
+          evidenceLoadFailed: !evidenceUrl,
         }
       },
       async claimReport(reference, claimToken) {

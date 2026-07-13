@@ -118,6 +118,19 @@ describe("PredictionEvidencePanel", () => {
 		).toBeInTheDocument();
 	});
 
+	it("shows a visible failure state when authenticated evidence could not be downloaded", () => {
+		render(
+			<PredictionEvidencePanel
+				prediction={prediction}
+				imageUnavailable
+				showDetections
+			/>,
+		);
+
+		expect(screen.getByText("Photo preview unavailable")).toBeInTheDocument();
+		expect(screen.getByText(/The image could not be loaded/i)).toBeInTheDocument();
+	});
+
 	it("keeps the result summary visible when no detections are returned", () => {
 		render(
 			<PredictionEvidencePanel

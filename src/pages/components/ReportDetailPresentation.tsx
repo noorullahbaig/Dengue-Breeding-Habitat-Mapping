@@ -26,6 +26,7 @@ export interface ReportDetailViewModel {
   evidence: {
     prediction: PredictionSummary
     imageUrl?: string
+    imageUnavailable?: boolean
     imageAlt: string
     description: string
   }
@@ -163,6 +164,7 @@ export function ReportDetailPresentation({
                 <PredictionEvidencePanel
                   prediction={model.evidence.prediction}
                   imageUrl={model.evidence.imageUrl}
+                  imageUnavailable={model.evidence.imageUnavailable}
                   imageAlt={model.evidence.imageAlt}
                   showDetections
                   compact

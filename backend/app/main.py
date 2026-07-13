@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
@@ -46,6 +46,7 @@ from app.image_storage import (
     store_upload,
     check_s3_ready,
     get_s3_presigned_url,
+    stream_s3_object,
     persist_stored_image,
     cleanup_local_stored_image,
 )
@@ -777,13 +778,8 @@ def _owner_media_response(report: Report, variant: str) -> FileResponse | Redire
     if settings.storage_backend == "s3":
         if not storage_key:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
-        try:
-            return RedirectResponse(url=get_s3_presigned_url(storage_key), status_code=status.HTTP_302_FOUND)
-        except HTTPException:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Image storage is unavailable.",
-            )
+        stream, content_type = stream_s3_object(storage_key)
+        return StreamingResponse(stream, media_type=content_type)
 
     return FileResponse(resolve_public_upload_path(local_path), media_type="image/jpeg")
 
