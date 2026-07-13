@@ -211,7 +211,7 @@ export function ReportSuccessPage() {
 			trackReport(reference);
 			setSavedToActivity(true);
 		}
-	}, [alreadySaved, isAuthenticated, reference, savedToActivity, trackReport]);
+	}, [alreadySaved, isAuthenticated, reference, savedToActivity, trackReport, sessionMode]);
 
 	useEffect(() => {
 		if (!hasResetDraft.current) {

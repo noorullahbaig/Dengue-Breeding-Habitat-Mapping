@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { LocateFixed } from "lucide-react";
 import { useServices } from "@/app/useServices";
 import { Notice } from "@/components/ui";
 import { formatHabitatLabel } from "@/lib/formatters";
@@ -26,6 +27,7 @@ export function PublicMapExperience() {
 	const [habitatFilter, setHabitatFilter] = useState<HabitatFilter>("all");
 	const [isReportsLoading, setIsReportsLoading] = useState(true);
 	const [hotspotError, setHotspotError] = useState("");
+	const [locationError, setLocationError] = useState("");
 	const [showHotspots, _setShowHotspots] = useState(true);
 
 	const [centerOverride, setCenterOverride] = useState<
@@ -150,6 +152,24 @@ export function PublicMapExperience() {
 		setSelectedHotspotId(undefined);
 	}
 
+	function handleLocateMe() {
+		if (!navigator.geolocation) {
+			setLocationError("Location is not available on this device.");
+			return;
+		}
+
+		setLocationError("");
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				setCenterOverride([position.coords.latitude, position.coords.longitude]);
+			},
+			() => {
+				setLocationError("Allow location access to center the map on you.");
+			},
+			{ enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 },
+		);
+	}
+
 	return (
 		<div className="page page--map-fullscreen">
 			{/* Background Interactive Map */}
@@ -160,7 +180,6 @@ export function PublicMapExperience() {
 						reports={reports}
 						hotspots={hotspots}
 						showHotspots={showHotspots}
-						showLegend={!selectedHotspotId && !selectedReportGroup}
 						centerOverride={centerOverride}
 						onSelectHotspot={handleHotspotClick}
 						onSelectReportGroup={handleReportGroupClick}
@@ -171,6 +190,28 @@ export function PublicMapExperience() {
 					</div>
 				)}
 			</div>
+
+			{!selectedHotspotId && !selectedReportGroup ? (
+				<div className="map-page-controls">
+					<section className="map-priority-legend" aria-label="Map legend">
+						<div className="map-priority-legend__item">
+							<span className="map-priority-legend__dot map-priority-legend__dot--prioritized" aria-hidden="true" />
+							<span>Priority report</span>
+						</div>
+						<div className="map-priority-legend__item">
+							<span className="map-priority-legend__dot map-priority-legend__dot--normal" aria-hidden="true" />
+							<span>Report</span>
+						</div>
+						<div className="map-priority-legend__item">
+							<span className="map-priority-legend__diamond" aria-hidden="true" />
+							<span>Hotspot</span>
+						</div>
+					</section>
+					<button type="button" className="map-locate-control" onClick={handleLocateMe} aria-label="Center map on my location">
+						<LocateFixed size={21} aria-hidden="true" />
+					</button>
+				</div>
+			) : null}
 
 			{/* Compact Floating Header Chip */}
 			<div className="floating-header-chip floating-glass">
@@ -214,6 +255,8 @@ export function PublicMapExperience() {
 					<Notice tone="warning">{hotspotError}</Notice>
 				</div>
 			) : null}
+
+			{locationError ? <div className="map-location-error" role="status">{locationError}</div> : null}
 
 			{selectedHotspotId
 				? (() => {

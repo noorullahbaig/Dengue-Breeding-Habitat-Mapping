@@ -18,6 +18,22 @@ vi.mock('@/pages/components/PredictionEvidencePanel', () => ({
   PredictionEvidencePanel: () => <div>evidence-panel</div>,
 }))
 
+vi.mock('@/pages/components/ReportDetailPresentation', () => ({
+  ReportDetailPresentation: ({ model, primaryAfterEvidence, metadataAfter }: {
+    model: { evidence: { imageUrl?: string }; backTo: string; backLabel: string }
+    primaryAfterEvidence?: React.ReactNode
+    metadataAfter?: React.ReactNode
+  }) => (
+    <>
+      <a href={model.backTo}>{model.backLabel}</a>
+      <img alt="owner evidence" src={model.evidence.imageUrl} />
+      {primaryAfterEvidence}
+      {metadataAfter}
+    </>
+  ),
+  ReportDetailState: ({ title, action }: { title?: string; action?: React.ReactNode }) => <><h1>{title}</h1>{action}</>,
+}))
+
 vi.mock('@/pages/components/StaticReceiptMap', () => ({
   StaticReceiptMap: () => <div>location-map</div>,
 }))
@@ -79,6 +95,17 @@ describe('OwnerReportDetailPage', () => {
       'href',
       '/map/reports/KL-ROOT-0001',
     )
+  })
+
+  it('renders the authenticated blob URL instead of the protected original endpoint', async () => {
+    getMyReport.mockResolvedValue({
+      ...ownerDetail(),
+      imageUrl: 'blob:private-original',
+      originalImageUrl: '/api/my-reports/KL-PRIVATE-0001/original',
+    })
+    renderPage()
+
+    expect((await screen.findByRole('img', { name: 'owner evidence' })).getAttribute('src')).toBe('blob:private-original')
   })
 
   it('offers sign in with a return path when account access expires', async () => {

@@ -110,7 +110,7 @@ export function OwnerReportDetailPage() {
     eyebrow: 'Your private report details',
     evidence: {
       prediction: report.prediction,
-      imageUrl: report.originalImageUrl ?? report.imageUrl,
+      imageUrl: report.imageUrl,
       imageAlt: `Evidence for ${report.reference}`,
       description: 'Your submitted photo and model result',
     },

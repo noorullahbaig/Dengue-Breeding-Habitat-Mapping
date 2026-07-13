@@ -107,6 +107,7 @@ export function AppLayout() {
     }
 
     updateMobileChromeMetrics()
+    const firstLayoutFrame = window.requestAnimationFrame(updateMobileChromeMetrics)
     const resizeObserver =
       typeof ResizeObserver === 'function'
         ? new ResizeObserver(() => updateMobileChromeMetrics())
@@ -126,6 +127,7 @@ export function AppLayout() {
 
     return () => {
       resizeObserver?.disconnect()
+      window.cancelAnimationFrame(firstLayoutFrame)
       window.removeEventListener('resize', updateMobileChromeMetrics)
       window.removeEventListener('orientationchange', updateMobileChromeMetrics)
       window.visualViewport?.removeEventListener('resize', updateMobileChromeMetrics)

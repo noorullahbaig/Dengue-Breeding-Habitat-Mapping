@@ -16,6 +16,7 @@ const experienceHarness = vi.hoisted(() => ({
 	hotspot: undefined as PublicHotspot | undefined,
 	listPublicReports: vi.fn(),
 	listHotspots: vi.fn(),
+	centerOverride: undefined as [number, number] | undefined,
 }));
 
 vi.mock("@/app/useServices", () => ({
@@ -32,6 +33,7 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 		onSelectReportGroup,
 		onSelectHotspot,
 		showLegend,
+		centerOverride,
 	}: {
 		onSelectReportGroup?: (
 			group: NonNullable<typeof experienceHarness.group>,
@@ -40,10 +42,12 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 			hotspot: NonNullable<typeof experienceHarness.hotspot>,
 		) => void;
 		showLegend?: boolean;
+		centerOverride?: [number, number];
 	}) => (
 		<>
+			<div data-testid="map-center">{centerOverride?.join(',') ?? 'default center'}</div>
 			<div data-testid="legend-state">
-				{showLegend ? "legend visible" : "legend hidden"}
+				{showLegend === false ? "legend hidden" : "legend visible"}
 			</div>
 			<button
 				type="button"
@@ -116,6 +120,7 @@ const reports = [
 
 describe("PublicMapExperience report stack sheet", () => {
 	beforeEach(() => {
+		experienceHarness.centerOverride = undefined;
 		experienceHarness.group = {
 			reports,
 			center: [3.13902, 101.68692],
@@ -139,6 +144,40 @@ describe("PublicMapExperience report stack sheet", () => {
 		experienceHarness.listHotspots.mockResolvedValue([
 			experienceHarness.hotspot,
 		] satisfies PublicHotspot[]);
+	});
+
+	it("keeps the legend and location control in the map UI layer", async () => {
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		const legend = await screen.findByRole("region", { name: "Map legend" });
+		expect(legend.parentElement).toHaveClass("map-page-controls");
+		expect(screen.getByRole("button", { name: "Center map on my location" }).parentElement).toHaveClass("map-page-controls");
+	});
+
+	it("centers the map after the resident shares their current location", async () => {
+		const getCurrentPosition = vi.fn((success: PositionCallback) =>
+			success({ coords: { latitude: 3.139, longitude: 101.6869 } } as GeolocationPosition),
+		);
+		Object.defineProperty(navigator, "geolocation", {
+			configurable: true,
+			value: { getCurrentPosition },
+		});
+
+		const user = userEvent.setup();
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		await user.click(await screen.findByRole("button", { name: "Center map on my location" }));
+
+		expect(getCurrentPosition).toHaveBeenCalled();
+		expect(screen.getByTestId("map-center")).toHaveTextContent("3.139,101.6869");
 	});
 
 	afterEach(() => {
@@ -166,9 +205,7 @@ describe("PublicMapExperience report stack sheet", () => {
 				name: "3 reports at this location",
 			}),
 		).toBeInTheDocument();
-		expect(screen.getByTestId("legend-state")).toHaveTextContent(
-			"legend hidden",
-		);
+		expect(screen.queryByRole("region", { name: "Map legend" })).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: /Open report for Sentul/i }),
 		).toBeInTheDocument();
@@ -261,9 +298,7 @@ describe("PublicMapExperience report stack sheet", () => {
 			"calc(var(--app-mobile-bottom-clearance) + var(--space-sm))",
 		);
 		expect(screen.getByText("Active hotspot")).toBeInTheDocument();
-		expect(screen.getByTestId("legend-state")).toHaveTextContent(
-			"legend hidden",
-		);
+		expect(screen.queryByRole("region", { name: "Map legend" })).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("heading", { name: "Taman Melati" }),
 		).toBeInTheDocument();

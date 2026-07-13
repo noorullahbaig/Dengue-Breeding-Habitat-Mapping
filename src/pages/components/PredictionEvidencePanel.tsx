@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
-import {
-	formatDetectionLabel,
-	formatHabitatLabel,
-} from "@/lib/formatters";
+import { formatDetectionLabel, formatHabitatLabel } from "@/lib/formatters";
 import type { DetectionSummary, PredictionSummary } from "@/types/report";
 
 interface PredictionEvidencePanelProps {
@@ -13,6 +10,7 @@ interface PredictionEvidencePanelProps {
 	imageAlt?: string;
 	showDetections?: boolean;
 	compact?: boolean;
+	isAnalyzing?: boolean;
 }
 
 interface ImageSize {
@@ -58,6 +56,7 @@ export function PredictionEvidencePanel({
 	imageAlt = "Evidence image with computer-vision detections",
 	showDetections = false,
 	compact = false,
+	isAnalyzing = false,
 }: PredictionEvidencePanelProps) {
 	const [imageSize, setImageSize] = useState<ImageSize | null>(null);
 	const [imageFailed, setImageFailed] = useState(false);
@@ -76,18 +75,25 @@ export function PredictionEvidencePanel({
 	);
 	const hasInvalidDetections = validDetections.length !== detections.length;
 	const resultLabel = formatHabitatLabel(prediction.label);
-	const hasTargetDetection = prediction.label !== "unclassified" && validDetections.length > 0;
+	const hasTargetDetection =
+		prediction.label !== "unclassified" && validDetections.length > 0;
 	const outcome = !hasTargetDetection
 		? "not-detected"
 		: prediction.confidenceBand === "high"
 			? "detected"
 			: "review";
-	const outcomeLabel = outcome === "detected" ? "Detected" : outcome === "review" ? "Review needed" : "Not detected";
-	const outcomeHeading = outcome === "detected"
-		? `Potential ${resultLabel.toLowerCase()} detected.`
-		: outcome === "review"
-			? `Possible ${resultLabel.toLowerCase()}. Review needed.`
-			: "No target habitat detected.";
+	const outcomeLabel =
+		outcome === "detected"
+			? "Detected"
+			: outcome === "review"
+				? "Review needed"
+				: "Not detected";
+	const outcomeHeading =
+		outcome === "detected"
+			? `Potential ${resultLabel.toLowerCase()} detected.`
+			: outcome === "review"
+				? `Possible ${resultLabel.toLowerCase()}. Review needed.`
+				: "No target habitat detected.";
 
 	return (
 		<section
@@ -98,11 +104,11 @@ export function PredictionEvidencePanel({
 			{imageUrl ? (
 				<div className="prediction-evidence__media">
 					<div
-						className={`prediction-evidence__media-frame${imageFailed ? " prediction-evidence__media-frame--failed" : ""}`}
+						className={`prediction-evidence__media-frame${imageFailed ? " prediction-evidence__media-frame--failed" : ""}${imageSize ? " prediction-evidence__media-frame--measured" : ""}${isAnalyzing ? " prediction-evidence__media-frame--analyzing" : ""}`}
 						style={
 							imageSize
 								? ({
-										"--prediction-media-ratio": `${imageSize.width} / ${imageSize.height}`,
+										aspectRatio: `${imageSize.width} / ${imageSize.height}`,
 									} as CSSProperties)
 								: undefined
 						}
@@ -123,7 +129,17 @@ export function PredictionEvidencePanel({
 								setImageFailed(true);
 							}}
 						/>
-						{showDetections && imageSize && !imageFailed
+						{isAnalyzing ? (
+							<div
+								className="prediction-evidence__scan-state"
+								role="status"
+								aria-live="polite"
+							>
+								<strong>Analyzing evidence</strong>
+								<span>Looking for habitat cues in the photo</span>
+							</div>
+						) : null}
+						{showDetections && imageSize && !imageFailed && !isAnalyzing
 							? validDetections.map((detection) => (
 									<span
 										key={detectionKey(detection)}
@@ -131,40 +147,65 @@ export function PredictionEvidencePanel({
 										style={{
 											...boxStyle(detection, imageSize),
 										}}
-																				 title={formatDetectionLabel(detection.rawLabel)}
-										>
-											<span>
-												{formatDetectionLabel(detection.rawLabel)}
-											</span>
+										title={formatDetectionLabel(detection.rawLabel)}
+									>
+										<span>{formatDetectionLabel(detection.rawLabel)}</span>
 									</span>
 								))
 							: null}
 						{imageFailed ? (
-							<div className="prediction-evidence__image-error" role="status" aria-live="polite">
+							<div
+								className="prediction-evidence__image-error"
+								role="status"
+								aria-live="polite"
+							>
 								<strong>Photo preview unavailable</strong>
-								<span>The image could not be loaded. You can still review the AI result below.</span>
+								<span>
+									The image could not be loaded. You can still review the AI
+									result below.
+								</span>
+							</div>
+						) : null}
+						{!isAnalyzing && !imageFailed ? (
+							<div className="prediction-evidence__result-rail">
+								<div>
+									<span className="eyebrow">AI evidence</span>
+									<h2>{outcomeHeading}</h2>
+								</div>
+								<span className="prediction-evidence__status">
+									{outcomeLabel}
+								</span>
 							</div>
 						) : null}
 					</div>
 				</div>
 			) : null}
 			<div className="prediction-evidence__body">
-				<div className="prediction-evidence__header">
-					<div>
-									<span className="eyebrow">AI evidence review</span>
-									<h2>{outcomeHeading}</h2>
-								</div>
-								<span className="prediction-evidence__status">{outcomeLabel}</span>
-							</div>
+				{!imageUrl ? (
+					<div className="prediction-evidence__result-rail prediction-evidence__result-rail--standalone">
+						<div>
+							<span className="eyebrow">AI evidence</span>
+							<h2>{outcomeHeading}</h2>
+						</div>
+						<span className="prediction-evidence__status">{outcomeLabel}</span>
+					</div>
+				) : null}
 				<p className="prediction-evidence__empty">
-					{outcome === "detected" ? "The photo shows visual cues worth following up." : outcome === "review" ? "The result is uncertain. Please review the photo before taking action." : "No target habitat was identified in this photo."}
+					{outcome === "detected"
+						? "The photo shows visual cues worth following up."
+						: outcome === "review"
+							? "The result is uncertain. Please review the photo before taking action."
+							: "No target habitat was identified in this photo."}
 				</p>
 				{hasInvalidDetections ? (
 					<p className="prediction-evidence__warning" role="status">
-						Some detections could not be displayed because their bounding boxes were invalid.
+						Some detections could not be displayed because their bounding boxes
+						were invalid.
 					</p>
 				) : null}
-				<p className="prediction-evidence__explain">{prediction.advisoryText} AI results are advisory.</p>
+				<p className="prediction-evidence__explain">
+					{prediction.advisoryText} AI results are advisory.
+				</p>
 			</div>
 		</section>
 	);

@@ -21,7 +21,6 @@ interface PublicReportsMapProps {
 	reports: PublicMapReport[];
 	hotspots: PublicHotspot[];
 	showHotspots: boolean;
-	showLegend?: boolean;
 	hotspotError?: string;
 	centerOverride?: [number, number];
 	onSelectHotspot?: (hotspot: PublicHotspot) => void;
@@ -333,7 +332,6 @@ export function PublicReportsMap({
 	reports,
 	hotspots,
 	showHotspots,
-	showLegend = true,
 	hotspotError,
 	centerOverride,
 	onSelectHotspot,
@@ -378,29 +376,6 @@ export function PublicReportsMap({
 					<strong>Hotspot context unavailable</strong>
 					<p>{hotspotError}</p>
 				</div>
-			) : null}
-
-			{showLegend ? (
-				<section className="map-priority-legend" aria-label="Map legend">
-					<div className="map-priority-legend__item">
-						<span
-							className="map-priority-legend__dot map-priority-legend__dot--prioritized"
-							aria-hidden="true"
-						/>
-						<span>Priority report</span>
-					</div>
-					<div className="map-priority-legend__item">
-						<span
-							className="map-priority-legend__dot map-priority-legend__dot--normal"
-							aria-hidden="true"
-						/>
-						<span>Report</span>
-					</div>
-					<div className="map-priority-legend__item">
-						<span className="map-priority-legend__diamond" aria-hidden="true" />
-						<span>Hotspot</span>
-					</div>
-				</section>
 			) : null}
 
 			<MapContainer

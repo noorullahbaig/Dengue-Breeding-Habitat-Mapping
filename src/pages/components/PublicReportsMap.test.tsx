@@ -261,32 +261,6 @@ describe("PublicReportsMap marker grouping", () => {
 			expect.stringContaining("map-pin--priority-normal"),
 		);
 
-		const legend = screen.getByRole("region", { name: "Map legend" });
-		expect(legend.querySelectorAll(".map-priority-legend__item")).toHaveLength(
-			3,
-		);
-		expect(legend).toHaveTextContent("Priority report");
-		expect(legend).toHaveTextContent("Report");
-		expect(legend).toHaveTextContent("Hotspot");
-		expect(
-			legend.querySelector(".map-priority-legend__diamond"),
-		).not.toBeNull();
-		expect(legend).not.toHaveTextContent("400 m");
-	});
-
-	it("does not render the legend while a detail sheet is open", () => {
-		render(
-			<PublicReportsMap
-				reports={[]}
-				hotspots={[]}
-				showHotspots={false}
-				showLegend={false}
-			/>,
-		);
-
-		expect(
-			screen.queryByRole("region", { name: "Map legend" }),
-		).not.toBeInTheDocument();
 	});
 
 	it("groups nearby coordinates at low zoom and splits them at higher zoom", () => {

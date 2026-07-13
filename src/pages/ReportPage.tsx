@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef, type ChangeEvent, type UIEvent } from "react";
+import {
+	useState,
+	useEffect,
+	useRef,
+	type ChangeEvent,
+	type UIEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { LocateFixed } from "lucide-react";
 import { Notice, Surface, Button, MetaLabel } from "@/components/ui";
@@ -53,8 +59,7 @@ function precheckFailureCopy(error: AppApiError) {
 	switch (error.kind) {
 		case "network":
 			return {
-				title:
-					"Could not reach the backend API server.",
+				title: "Could not reach the backend API server.",
 				helper:
 					"Submission stays blocked until the API can be reached and returns an advisory result. If the backend is already running, check for a network issue or CORS mismatch.",
 			};
@@ -210,6 +215,13 @@ export function ReportPage({
 		(candidate) => candidate.reference === selectedStackReference,
 	);
 	const precheckImageUrl = precheck?.imageUrl ?? draft.photoPreviewUrl;
+	const precheckPrediction = precheck?.prediction ?? {
+		label: "unclassified" as const,
+		confidence: null,
+		confidenceBand: "low" as const,
+		advisoryText: "",
+		detections: [],
+	};
 	const needsStackDecision =
 		nearbyCandidates.length > 0 &&
 		decisionLocationSignature !== activeLocationSignature;
@@ -728,7 +740,9 @@ export function ReportPage({
 				: "default";
 
 	return (
-		<div className={`page page--report-v2${isOverlay ? " page--report-overlay" : ""}`}>
+		<div
+			className={`page page--report-v2${isOverlay ? " page--report-overlay" : ""}`}
+		>
 			<ReportWizardChrome
 				currentStep={currentStep}
 				steps={reportSteps}
@@ -752,12 +766,29 @@ export function ReportPage({
 						{currentStep === 0 && (
 							<div className="report-slide__content">
 								{isMobile ? (
-										// MOBILE ONLY REDESIGNED PHOTO FLOW
+									// MOBILE ONLY REDESIGNED PHOTO FLOW
 									<div className="report-photo-stage">
 										{draft.photoPreviewUrl ? (
 											<Surface className="premium-upload-card">
-												<div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-													<div className="report-photo-stage__preview" style={{ width: "100%", display: "flex", justifyContent: "center", padding: 0 }}>
+												<div
+													style={{
+														flex: 1,
+														display: "flex",
+														flexDirection: "column",
+														alignItems: "center",
+														justifyContent: "center",
+														width: "100%",
+													}}
+												>
+													<div
+														className="report-photo-stage__preview"
+														style={{
+															width: "100%",
+															display: "flex",
+															justifyContent: "center",
+															padding: 0,
+														}}
+													>
 														<img
 															src={draft.photoPreviewUrl}
 															alt="Captured preview"
@@ -766,7 +797,7 @@ export function ReportPage({
 													</div>
 												</div>
 												{cameraError ? (
-													<div style={{ padding: '0 1.25rem 1rem' }}>
+													<div style={{ padding: "0 1.25rem 1rem" }}>
 														<Notice tone="warning">{cameraError}</Notice>
 													</div>
 												) : null}
@@ -796,7 +827,17 @@ export function ReportPage({
 											</Surface>
 										) : (
 											<Surface className="premium-upload-card">
-												<div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', width: '100%' }}>
+												<div
+													style={{
+														flex: 1,
+														display: "flex",
+														flexDirection: "column",
+														alignItems: "center",
+														justifyContent: "center",
+														gap: "1.25rem",
+														width: "100%",
+													}}
+												>
 													<div className="premium-upload-card__icon-wrapper">
 														<svg
 															aria-hidden="true"
@@ -823,457 +864,421 @@ export function ReportPage({
 													</div>
 												</div>
 												{cameraError ? (
-													<div style={{ padding: '0 1.25rem 1rem' }}>
+													<div style={{ padding: "0 1.25rem 1rem" }}>
 														<Notice tone="warning">{cameraError}</Notice>
 													</div>
 												) : null}
 												<div className="premium-upload-card__actions">
-															<label className="premium-upload-btn premium-upload-btn--camera">
-															<svg
-																aria-hidden="true"
-																className="btn-icon"
-																viewBox="0 0 24 24"
-																fill="none"
-																stroke="currentColor"
-																strokeWidth="2.5"
-																strokeLinecap="round"
-																strokeLinejoin="round"
-															>
-																<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-																<circle cx="12" cy="13" r="4" />
-															</svg>
-															<span>Open Camera</span>
-															<input
-																type="file"
-																accept="image/*"
-																capture="environment"
-																className="u-static-5790ffba"
-																onClick={(e) => {
-																	e.currentTarget.value = "";
-																}}
-																onChange={handleFileSelection}
-															/>
-														</label>
-														</div>
-													</Surface>
-											)}
+													<label className="premium-upload-btn premium-upload-btn--camera">
+														<svg
+															aria-hidden="true"
+															className="btn-icon"
+															viewBox="0 0 24 24"
+															fill="none"
+															stroke="currentColor"
+															strokeWidth="2.5"
+															strokeLinecap="round"
+															strokeLinejoin="round"
+														>
+															<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+															<circle cx="12" cy="13" r="4" />
+														</svg>
+														<span>Open Camera</span>
+														<input
+															type="file"
+															accept="image/*"
+															capture="environment"
+															className="u-static-5790ffba"
+															onClick={(e) => {
+																e.currentTarget.value = "";
+															}}
+															onChange={handleFileSelection}
+														/>
+													</label>
+												</div>
+											</Surface>
+										)}
 									</div>
 								) : (
-										// DESKTOP CAMERA FLOW
+									// DESKTOP CAMERA FLOW
 									<div className="report-step-layout">
 										<div className="stack-md">
 											<Surface className="u-static-1a5debf7">
 												<div className="cluster-row">
-														<Button
-															variant="secondary"
-															onClick={handleLiveCamera}
-															disabled={isCameraBusy}
-														>
-															Use webcam
-														</Button>
-														{stream ? (
-															<>
-																<Button
-																	variant="primary"
-																	onClick={handleCaptureFrame}
-																	disabled={isCameraBusy}
-																>
-																	Capture frame
-																</Button>
-																<Button
-																	variant="ghost"
-																	onClick={() => {
-																		stopCameraStream(stream);
-																		setStream(null);
-																	}}
-																>
-																	Stop camera
-																</Button>
-															</>
-														) : null}
-													</div>
-
-													{cameraError ? (
-														<Notice tone="warning">
-															{cameraError}
-														</Notice>
+													<Button
+														variant="secondary"
+														onClick={handleLiveCamera}
+														disabled={isCameraBusy}
+													>
+														Use webcam
+													</Button>
+													{stream ? (
+														<>
+															<Button
+																variant="primary"
+																onClick={handleCaptureFrame}
+																disabled={isCameraBusy}
+															>
+																Capture frame
+															</Button>
+															<Button
+																variant="ghost"
+																onClick={() => {
+																	stopCameraStream(stream);
+																	setStream(null);
+																}}
+															>
+																Stop camera
+															</Button>
+														</>
 													) : null}
+												</div>
 
-													<div className="camera-preview u-static-4dcb0817">
-														{stream ? (
-															<video
-																ref={videoRef}
-																className="camera-preview__media"
-																autoPlay
-																muted
-																playsInline
-															/>
-														) : draft.photoPreviewUrl ? (
-															<img
-																src={draft.photoPreviewUrl}
-																alt="Evidence selected"
-																className="camera-preview__media u-static-71c35c12"
-															/>
-														) : (
-															<div className="camera-preview__placeholder">
-																<p>
-																	Capture a clear photo of the suspected
-																	habitat.
-																</p>
-																<p>
-																	Focus on the container or drain opening, not
-																	people or house numbers.
-																</p>
-															</div>
-														)}
-													</div>
-												</Surface>
-											</div>
+												{cameraError ? (
+													<Notice tone="warning">{cameraError}</Notice>
+												) : null}
 
-											<div className="stack-md">
-												<Notice>
-													A close, well-lit photo helps classification.
-													Low-confidence model results will not block
-													submission.
-												</Notice>
-												<Surface className="u-static-20a69043">
-													<MetaLabel>Guidance</MetaLabel>
-													<h2>Show the object and its water-holding area.</h2>
-													<p>
-														Tires, drain inlets, buckets, and containers are
-														most useful when the image includes enough
-													surrounding context for people to recognize and
-														locate the site.
-													</p>
-												</Surface>
-												{draft.photoPreviewUrl && (
-													<div className="report-slide__actions u-static-ac0d4af5">
-														<Button
-															variant="primary"
-															className="u-static-16000cc0"
-															onClick={() => setCurrentStep(1)}
-														>
-															Use photo &amp; continue
-														</Button>
-														<label className="ui-button ui-button--secondary u-static-5bdb4176">
-															<span>Retake photo</span>
-															<input
-																className="upload-tile__input"
-																type="file"
-																accept="image/*"
-																aria-label="Retake photo"
-																onChange={handleFileSelection}
-															/>
-														</label>
-													</div>
-												)}
+												<div className="camera-preview u-static-4dcb0817">
+													{stream ? (
+														<video
+															ref={videoRef}
+															className="camera-preview__media"
+															autoPlay
+															muted
+															playsInline
+														/>
+													) : draft.photoPreviewUrl ? (
+														<img
+															src={draft.photoPreviewUrl}
+															alt="Evidence selected"
+															className="camera-preview__media u-static-71c35c12"
+														/>
+													) : (
+														<div className="camera-preview__placeholder">
+															<p>
+																Capture a clear photo of the suspected habitat.
+															</p>
+															<p>
+																Focus on the container or drain opening, not
+																people or house numbers.
+															</p>
+														</div>
+													)}
+												</div>
+											</Surface>
+										</div>
+
+										<div className="stack-md">
+											<Notice>
+												A close, well-lit photo helps classification.
+												Low-confidence model results will not block submission.
+											</Notice>
+											<Surface className="u-static-20a69043">
+												<MetaLabel>Guidance</MetaLabel>
+												<h2>Show the object and its water-holding area.</h2>
+												<p>
+													Tires, drain inlets, buckets, and containers are most
+													useful when the image includes enough surrounding
+													context for people to recognize and locate the site.
+												</p>
+											</Surface>
+											{draft.photoPreviewUrl && (
+												<div className="report-slide__actions u-static-ac0d4af5">
+													<Button
+														variant="primary"
+														className="u-static-16000cc0"
+														onClick={() => setCurrentStep(1)}
+													>
+														Use photo &amp; continue
+													</Button>
+													<label className="ui-button ui-button--secondary u-static-5bdb4176">
+														<span>Retake photo</span>
+														<input
+															className="upload-tile__input"
+															type="file"
+															accept="image/*"
+															aria-label="Retake photo"
+															onChange={handleFileSelection}
+														/>
+													</label>
+												</div>
+											)}
 										</div>
 									</div>
 								)}
 							</div>
 						)}
 					</div>
-				{/* Slide 1: Location — wrapped in LocationPermissionGate */}
-				<div className="report-slide report-slide--map">
-					{currentStep === 1 && (
-						<LocationPermissionGate
-							onLocationObtained={handleGuideLocation}
-						>
-							{({ isLocating: gateIsLocating, onRetryLocation, locationError }) => (
-								isMobile ? (
-									<>
-										<div className="report-slide__content report-location-stage">
-											<div className="report-location-stage__surface">
-												<LocationReviewMap
-													location={mapLocation}
-													detectedLocation={guideLocation}
-													allowedRadiusMeters={allowedCorrectionRadius}
-													selectionMode="fixed-center"
-													onLocationChange={handlePinMove}
-												/>
-												<div className="report-location-map-control report-location-map-control--locate">
-													<button
-														type="button"
-														className="report-location-map-control__button"
-														disabled={gateIsLocating}
-														onClick={onRetryLocation}
-														aria-label="Use current location again"
-														aria-busy={gateIsLocating}
-														title={gateIsLocating ? "Refreshing location" : "Use current location again"}
-													>
-														<LocateFixed
-															aria-hidden="true"
-															size={19}
-															strokeWidth={2.25}
-															className={gateIsLocating ? "report-location-map-control__icon--spinning" : ""}
-														/>
-													</button>
+					{/* Slide 1: Location — wrapped in LocationPermissionGate */}
+					<div className="report-slide report-slide--map">
+						{currentStep === 1 && (
+							<LocationPermissionGate onLocationObtained={handleGuideLocation}>
+								{({
+									isLocating: gateIsLocating,
+									onRetryLocation,
+									locationError,
+								}) =>
+									isMobile ? (
+										<>
+											<div className="report-slide__content report-location-stage">
+												<div className="report-location-stage__surface">
+													<LocationReviewMap
+														location={mapLocation}
+														detectedLocation={guideLocation}
+														allowedRadiusMeters={allowedCorrectionRadius}
+														selectionMode="fixed-center"
+														onLocationChange={handlePinMove}
+													/>
+													<div className="report-location-map-control report-location-map-control--locate">
+														<button
+															type="button"
+															className="report-location-map-control__button"
+															disabled={gateIsLocating}
+															onClick={onRetryLocation}
+															aria-label="Use current location again"
+															aria-busy={gateIsLocating}
+															title={
+																gateIsLocating
+																	? "Refreshing location"
+																	: "Use current location again"
+															}
+														>
+															<LocateFixed
+																aria-hidden="true"
+																size={19}
+																strokeWidth={2.25}
+																className={
+																	gateIsLocating
+																		? "report-location-map-control__icon--spinning"
+																		: ""
+																}
+															/>
+														</button>
+													</div>
 												</div>
 											</div>
-										</div>
 
-										{locationError ? (
-											<Notice tone="warning">{locationError}</Notice>
-										) : null}
+											{locationError ? (
+												<Notice tone="warning">{locationError}</Notice>
+											) : null}
 
-										<MobileLocationConfirmation
-											status={pinWarning || mobileLocationStatus}
-											tone={mobileLocationStatusTone}
-											disabled={
-												!finalLocation ||
-												!finalLocationIsInServiceArea ||
-												!hasTrustedGuideLocation ||
-												!finalLocationWithinAllowedRadius ||
-												gateIsLocating
-											}
-											onConfirm={handleConfirmPin}
-										/>
-									</>
-								) : null
-							)}
-						</LocationPermissionGate>
-					)}
-				</div>
+											<MobileLocationConfirmation
+												status={pinWarning || mobileLocationStatus}
+												tone={mobileLocationStatusTone}
+												disabled={
+													!finalLocation ||
+													!finalLocationIsInServiceArea ||
+													!hasTrustedGuideLocation ||
+													!finalLocationWithinAllowedRadius ||
+													gateIsLocating
+												}
+												onConfirm={handleConfirmPin}
+											/>
+										</>
+									) : null
+								}
+							</LocationPermissionGate>
+						)}
+					</div>
 					{/* Slide 2: Details & Consent */}
 					<div
 						className={`report-slide${isMobileConsentStep ? " report-slide--consent-mobile" : ""}`}
 					>
-						{currentStep === 2 && (
-							isMobileConsentStep ? (
-									<div className="report-slide__content report-consent-stage">
-										<div className="report-consent-stage__surface">
-											<Surface className="report-consent-panel report-consent-panel--immersive">
-												<MetaLabel>
-													Privacy policy
-												</MetaLabel>
-												<section
-													ref={consentBodyRef}
-													className="report-consent-panel__body"
-													aria-label="Public consent text"
-													onScroll={handleConsentScroll}
+						{currentStep === 2 &&
+							(isMobileConsentStep ? (
+								<div className="report-slide__content report-consent-stage">
+									<div className="report-consent-stage__surface">
+										<Surface className="report-consent-panel report-consent-panel--immersive">
+											<MetaLabel>Privacy policy</MetaLabel>
+											<section
+												ref={consentBodyRef}
+												className="report-consent-panel__body"
+												aria-label="Public consent text"
+												onScroll={handleConsentScroll}
+											>
+												<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
+												<p>
+													This prototype publishes the exact pin, photo, and AI
+													evidence together so residents can review the same
+													report context.
+												</p>
+												<p>
+													Read to the end, then accept to move on to the AI
+													review.
+												</p>
+												<label
+													className={`report-consent-panel__accept${
+														!hasScrolledConsentToEnd
+															? " report-consent-panel__accept--locked"
+															: ""
+													}`}
 												>
-													<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
-													<p>
-														This prototype publishes the exact pin, photo, and
-													AI evidence together so residents can
-														review the same report context.
-													</p>
-													<p>
-														Read to the end, then accept to move on to the AI
-														review.
-													</p>
-													<label
-														className={`report-consent-panel__accept${
-															!hasScrolledConsentToEnd
-																? " report-consent-panel__accept--locked"
-																: ""
-														}`}
-													>
-														<input
-															type="checkbox"
-															checked={hasPublicConsent}
-															disabled={!hasScrolledConsentToEnd}
-															onChange={(event) =>
-																handleConsentChange(event.target.checked)
-															}
-														/>
-														<span>
-															{hasScrolledConsentToEnd
-																? "I accept this public consent."
-																: "Scroll to the end to unlock acceptance."}
-														</span>
-													</label>
-												</section>
-											</Surface>
-										</div>
-									</div>
-							) : (
-									<div className="report-step-layout">
-										<div className="stack-md">
-											<Surface className="report-consent-panel">
-												<MetaLabel>
-													Privacy policy
-												</MetaLabel>
-												<section
-													className="report-consent-panel__body"
-													aria-label="Public consent text"
-												>
-													<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
-													<p>
-														This prototype publishes the exact pin, photo, and
-													AI evidence together so residents can
-														review the same report context.
-													</p>
-													<p>
-														You can only continue after you accept this consent.
-													</p>
-												</section>
-											</Surface>
-										</div>
-
-										<div className="stack-md">
-											<Surface className="u-static-dbb32598">
-												<label className="report-consent-panel__accept u-static-2a0ca835">
 													<input
 														type="checkbox"
 														checked={hasPublicConsent}
+														disabled={!hasScrolledConsentToEnd}
 														onChange={(event) =>
 															handleConsentChange(event.target.checked)
 														}
 													/>
-													<span className="u-static-21a1be8a">
-														I accept this public consent.
+													<span>
+														{hasScrolledConsentToEnd
+															? "I accept this public consent."
+															: "Scroll to the end to unlock acceptance."}
 													</span>
 												</label>
-											</Surface>
-											<div className="report-slide__actions report-consent-desktop-actions u-static-ac0d4af5">
-												<Button
-													variant="primary"
-													className="u-static-16000cc0"
-													disabled={!hasPublicConsent}
-													onClick={() => setCurrentStep(3)}
-												>
-													Continue to AI review
-												</Button>
-											</div>
+											</section>
+										</Surface>
+									</div>
+								</div>
+							) : (
+								<div className="report-step-layout">
+									<div className="stack-md">
+										<Surface className="report-consent-panel">
+											<MetaLabel>Privacy policy</MetaLabel>
+											<section
+												className="report-consent-panel__body"
+												aria-label="Public consent text"
+											>
+												<p>{PUBLIC_REPORT_CONSENT_TEXT}</p>
+												<p>
+													This prototype publishes the exact pin, photo, and AI
+													evidence together so residents can review the same
+													report context.
+												</p>
+												<p>
+													You can only continue after you accept this consent.
+												</p>
+											</section>
+										</Surface>
+									</div>
+
+									<div className="stack-md">
+										<Surface className="u-static-dbb32598">
+											<label className="report-consent-panel__accept u-static-2a0ca835">
+												<input
+													type="checkbox"
+													checked={hasPublicConsent}
+													onChange={(event) =>
+														handleConsentChange(event.target.checked)
+													}
+												/>
+												<span className="u-static-21a1be8a">
+													I accept this public consent.
+												</span>
+											</label>
+										</Surface>
+										<div className="report-slide__actions report-consent-desktop-actions u-static-ac0d4af5">
+											<Button
+												variant="primary"
+												className="u-static-16000cc0"
+												disabled={!hasPublicConsent}
+												onClick={() => setCurrentStep(3)}
+											>
+												Continue to AI review
+											</Button>
 										</div>
 									</div>
-								)
-						)}
+								</div>
+							))}
 					</div>
 
 					{/* Slide 3: AI Review & Stacking */}
 					<div className="report-slide">
 						{currentStep === 3 && (
-							<div className="report-slide__content" data-inference-state={inferenceViewState}>
-									{isPrecheckLoading ? (
-										<div
-											className="scanning-image-container"
-											role="status"
-											aria-live="polite"
-										>
-											{precheckImageUrl ? (
-												<img
-													src={precheckImageUrl}
-													alt="Scanning evidence..."
-												/>
-											) : null}
-											<div className="scanning-image-overlay" />
-											<div className="scan-line" />
-												<div className="u-static-457dd306">
-													<div className="glass-panel u-static-760bbe82">
-											<div className="precheck-scan-copy">
-												<strong>Analyzing image…</strong>
-												<span>Checking for target habitat classes</span>
-											</div>
-													</div>
-												</div>
-										</div>
-									) : null}
-
-									{precheckError ? (
-										<div
-											className="precheck-recovery u-static-1a5debf7"
-											aria-live="polite"
-										>
-											<Notice tone="warning">
-												<strong>
-													{precheckFailureCopy(precheckError).title}
-												</strong>{" "}
-												{precheckFailureCopy(precheckError).helper}
-											</Notice>
-											{import.meta.env.DEV ? (
-												<Surface className="u-static-46348766">
-													<span className="detail-grid__label">
-														Dev diagnostics
-													</span>
-													<span className="caption-text">
-														API base URL:{" "}
-														{precheckError.apiBaseUrl ?? "Unavailable"}
-													</span>
-													<span className="caption-text">
-														Failure path:{" "}
-														{precheckError.transport === "network"
-															? "transport"
-															: "http"}
-													</span>
-													{precheckError.status ? (
-														<span className="caption-text">
-															HTTP status: {precheckError.status}
-														</span>
-													) : null}
-													{precheckError.health ? (
-														<span className="caption-text">
-															Health: database{" "}
-															{precheckError.health.database ? "ready" : "down"}
-															, model{" "}
-															{precheckError.health.model ? "ready" : "down"},
-															postgis{" "}
-															{precheckError.health.postgis ? "ready" : "down"}
-														</span>
-													) : precheckError.kind === "network" ? (
-														<span className="caption-text">
-															Health probe did not reach the backend.
-														</span>
-													) : null}
-												</Surface>
-											) : null}
-											<Button
-												variant="secondary"
-												onClick={retryPrecheck}
-											>
-												Retry backend pre-check
-											</Button>
-										</div>
-									) : null}
-
-									{precheckReady && precheck ? (
-										<PredictionEvidencePanel
-											prediction={precheck.prediction}
-											title="AI pre-check result"
-											imageUrl={precheckImageUrl}
-											imageAlt="Submitted evidence preview"
-											showDetections
-										/>
-									) : null}
-
-					{precheckReady && precheck ? (
-						precheck.prediction.label !== "unclassified" &&
-						precheck.prediction.confidenceBand === "high" ? (
-							<Notice tone="info">
-								<strong>ℹ️ AI Analysis:</strong> Potential breeding habitat candidate identified.
-							</Notice>
-						) : (
-							<Notice tone="neutral">
-								<strong>AI Analysis:</strong> No high-confidence target habitat identified.
-							</Notice>
-						)
-					) : null}
-
-									{selectedStack ? (
-										<Notice tone="success">
-											✓ Photo will be stacked onto existing report{" "}
-											{selectedStack.reference}.
+							<div
+								className="report-slide__content"
+								data-inference-state={inferenceViewState}
+							>
+								{precheckError ? (
+									<div
+										className="precheck-recovery u-static-1a5debf7"
+										aria-live="polite"
+									>
+										<Notice tone="warning">
+											<strong>
+												{precheckFailureCopy(precheckError).title}
+											</strong>{" "}
+											{precheckFailureCopy(precheckError).helper}
 										</Notice>
-									) : null}
-									{hasChosenSeparateReport ? (
-										<Notice tone="success">
-											✓ You chose to file a separate report for this nearby
-											location.
-										</Notice>
-									) : null}
-
-						<div className="stack-sm report-ai-actions">
-										<Button
-											variant="primary"
-											className="u-static-16000cc0"
-											disabled={!precheckReady || needsStackDecision}
-											onClick={handleContinueFromAiReview}
-											fullWidth
-										>
-											Continue to submit
+										{import.meta.env.DEV ? (
+											<Surface className="u-static-46348766">
+												<span className="detail-grid__label">
+													Dev diagnostics
+												</span>
+												<span className="caption-text">
+													API base URL:{" "}
+													{precheckError.apiBaseUrl ?? "Unavailable"}
+												</span>
+												<span className="caption-text">
+													Failure path:{" "}
+													{precheckError.transport === "network"
+														? "transport"
+														: "http"}
+												</span>
+												{precheckError.status ? (
+													<span className="caption-text">
+														HTTP status: {precheckError.status}
+													</span>
+												) : null}
+												{precheckError.health ? (
+													<span className="caption-text">
+														Health: database{" "}
+														{precheckError.health.database ? "ready" : "down"},
+														model{" "}
+														{precheckError.health.model ? "ready" : "down"},
+														postgis{" "}
+														{precheckError.health.postgis ? "ready" : "down"}
+													</span>
+												) : precheckError.kind === "network" ? (
+													<span className="caption-text">
+														Health probe did not reach the backend.
+													</span>
+												) : null}
+											</Surface>
+										) : null}
+										<Button variant="secondary" onClick={retryPrecheck}>
+											Retry backend pre-check
 										</Button>
 									</div>
+								) : null}
+
+								{precheckImageUrl &&
+								(isPrecheckLoading || (precheckReady && precheck)) ? (
+									<PredictionEvidencePanel
+										prediction={precheckPrediction}
+										title="AI pre-check result"
+										imageUrl={precheckImageUrl}
+										imageAlt="Submitted evidence preview"
+										showDetections
+										isAnalyzing={isPrecheckLoading}
+									/>
+								) : null}
+
+								{selectedStack ? (
+									<Notice tone="success">
+										✓ Photo will be stacked onto existing report{" "}
+										{selectedStack.reference}.
+									</Notice>
+								) : null}
+								{hasChosenSeparateReport ? (
+									<Notice tone="success">
+										✓ You chose to file a separate report for this nearby
+										location.
+									</Notice>
+								) : null}
+
+								<div className="stack-sm report-ai-actions">
+									<Button
+										variant="primary"
+										className="u-static-16000cc0"
+										disabled={!precheckReady || needsStackDecision}
+										onClick={handleContinueFromAiReview}
+										fullWidth
+									>
+										Continue to submit
+									</Button>
+								</div>
 							</div>
 						)}
 					</div>
@@ -1282,93 +1287,81 @@ export function ReportPage({
 					<div className="report-slide">
 						{currentStep === 4 && (
 							<div className="report-slide__content">
-									<div className="report-step-layout">
-										<div className="stack-md">
-											{precheck ? (
-												<PredictionEvidencePanel
-													prediction={precheck.prediction}
-													title="Captured evidence photo"
-													imageUrl={precheckImageUrl}
-													compact
-													showDetections
-												/>
-											) : null}
+								<div className="report-step-layout">
+									<div className="stack-md">
+										{precheck ? (
+											<PredictionEvidencePanel
+												prediction={precheck.prediction}
+												title="Captured evidence photo"
+												imageUrl={precheckImageUrl}
+												compact
+												showDetections
+											/>
+										) : null}
+									</div>
+
+									<Surface className="report-submit-panel stack-md">
+										<div>
+											<MetaLabel>Submission summary</MetaLabel>
+											<h2>Final confirmation</h2>
 										</div>
 
-										<Surface className="report-submit-panel stack-md">
+										{finalLocation ? (
+											<StaticReceiptMap location={finalLocation} />
+										) : null}
+
+										<div className="detail-grid">
 											<div>
-												<MetaLabel>
-													Submission summary
-												</MetaLabel>
-												<h2>Final confirmation</h2>
+												<MetaLabel>Captured timestamp</MetaLabel>
+												<strong>
+													{draft.capturedAt
+														? formatTimestamp(draft.capturedAt)
+														: "Now"}
+												</strong>
 											</div>
-
-											{finalLocation ? (
-												<StaticReceiptMap location={finalLocation} />
-											) : null}
-
-											<div className="detail-grid">
-												<div>
-													<MetaLabel>
-														Captured timestamp
-													</MetaLabel>
-													<strong>
-														{draft.capturedAt
-															? formatTimestamp(draft.capturedAt)
-															: "Now"}
-													</strong>
-												</div>
-												<div>
-													<MetaLabel>
-														Latitude
-													</MetaLabel>
-													<strong>
-														{finalLocation
-															? formatCoordinate(finalLocation.latitude)
-															: "Missing"}
-													</strong>
-												</div>
-												<div>
-													<MetaLabel>
-														Longitude
-													</MetaLabel>
-													<strong>
-														{finalLocation
-															? formatCoordinate(finalLocation.longitude)
-															: "Missing"}
-													</strong>
-												</div>
+											<div>
+												<MetaLabel>Latitude</MetaLabel>
+												<strong>
+													{finalLocation
+														? formatCoordinate(finalLocation.latitude)
+														: "Missing"}
+												</strong>
 											</div>
-
-											{submitError ? (
-												<Notice tone="warning">
-													{submitError}
-												</Notice>
-											) : null}
-
-												<div className="stack-sm report-submit-actions">
-												<Button
-													variant="primary"
-													disabled={isSubmitting}
-													onClick={handleSubmit}
-													fullWidth
-												>
-													{isSubmitting ? (
-														"Submitting..."
-													) : selectedStackReference ? (
-														"Submit Stacked Report"
-													) : (
-														"Submit Report"
-													)}
-												</Button>
-													<p className="caption-text report-submit-helper">
-													{isAuthenticated
-														? "This report will be linked to your account automatically."
-														: "After submitting, you'll receive a Tracking ID. Sign in on the next screen to save this to your account."}
-													</p>
-												</div>
-											</Surface>
+											<div>
+												<MetaLabel>Longitude</MetaLabel>
+												<strong>
+													{finalLocation
+														? formatCoordinate(finalLocation.longitude)
+														: "Missing"}
+												</strong>
+											</div>
 										</div>
+
+										{submitError ? (
+											<Notice tone="warning">{submitError}</Notice>
+										) : null}
+
+										<div className="stack-sm report-submit-actions">
+											<Button
+												variant="primary"
+												disabled={isSubmitting}
+												onClick={handleSubmit}
+												fullWidth
+											>
+												{isSubmitting
+													? "Submitting..."
+													: selectedStackReference
+														? "Submit Stacked Report"
+														: "Submit Report"}
+											</Button>
+											<p className="caption-text report-submit-helper">
+												{isAuthenticated
+													? "This report will be linked to your account automatically."
+													: "After submitting, you'll receive a Tracking ID. Sign in on the next screen to save this to your account."}
+											</p>
+										</div>
+									</Surface>
+								</div>
 							</div>
 						)}
 					</div>
@@ -1376,7 +1369,6 @@ export function ReportPage({
 			</div>
 
 			{/* Bottom Action Bar spacing placeholder (actual buttons are inside slides) */}
-
 
 			{/* Modal matching details */}
 			{isNearbyPromptOpen && precheckReady ? (
