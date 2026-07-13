@@ -33,7 +33,7 @@ describe('PredictionEvidencePanel', () => {
 
     fireEvent.load(image)
 
-    const box = screen.getByText(/Artificial container 91%/i).closest('.prediction-evidence__box')
+    const box = document.querySelector('.prediction-evidence__box')
     expect(box).not.toBeNull()
     expect(box).toHaveStyle({ left: '10%', top: '20%', width: '50%' })
     expect(Number.parseFloat(box?.style.height ?? '0')).toBeCloseTo(50, 3)
@@ -52,7 +52,7 @@ describe('PredictionEvidencePanel', () => {
     const image = screen.getByRole('img', { name: 'Submitted evidence preview' })
     fireEvent.error(image)
 
-    expect(screen.getByText('Evidence preview unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Photo preview unavailable')).toBeInTheDocument()
     expect(screen.getByText(/The image could not be loaded/i)).toBeInTheDocument()
   })
 
@@ -71,8 +71,8 @@ describe('PredictionEvidencePanel', () => {
       />,
     )
 
-    expect(screen.getByRole('heading', { name: 'No target habitat identified' })).toBeInTheDocument()
-    expect(screen.getByText(/No target habitat was identified with high confidence/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'No target habitat detected.' })).toBeInTheDocument()
+    expect(screen.getByText(/No target habitat was identified in this photo/i)).toBeInTheDocument()
   })
 
   it('reports malformed detections without rendering a misleading box', () => {
@@ -90,5 +90,12 @@ describe('PredictionEvidencePanel', () => {
 
     expect(screen.getByText(/Some detections could not be displayed/i)).toBeInTheDocument()
     expect(document.querySelector('.prediction-evidence__box')).toBeNull()
+  })
+
+  it('uses plain-language outcome states without exposing model confidence numbers', () => {
+    render(<PredictionEvidencePanel prediction={{ ...prediction, confidenceBand: 'high' }} />)
+    expect(screen.getByRole('heading', { name: 'Potential artificial container detected.' })).toBeInTheDocument()
+    expect(screen.getByText('Detected')).toBeInTheDocument()
+    expect(screen.queryByText(/91%/)).toBeNull()
   })
 })

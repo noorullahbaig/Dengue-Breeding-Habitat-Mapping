@@ -7,6 +7,7 @@ import { useServices } from "@/app/useServices";
 import { Notice, ButtonLink, LoadingState, Surface } from "@/components/ui";
 import { API_BASE_URL } from "@/config";
 import { formatTimestamp } from "@/lib/formatters";
+import { readPendingReportClaim } from "@/lib/pendingReportClaim";
 import reportSubmittedIllustration from "@/assets/report/report-submitted.png";
 import { PredictionEvidencePanel } from "@/pages/components/PredictionEvidencePanel";
 import type { ReportStatus } from "@/types/report";
@@ -96,13 +97,40 @@ interface AccountPanelProps {
 	isAuthenticated: boolean;
 	reference: string;
 	sessionMode: string;
+	pendingClaim: boolean;
 }
 
 function AccountPanel({
 	isAuthenticated,
 	reference,
 	sessionMode,
+	pendingClaim,
 }: AccountPanelProps) {
+	if (isAuthenticated && pendingClaim) {
+		return (
+			<Surface className="report-success-account-panel report-success-account-panel--warning">
+				<div className="report-success-account-panel__content">
+					<div className="report-attach-panel__copy">
+						<span className="detail-grid__label">Account save needs attention</span>
+						<h2>Report submitted, but not saved to My Reports</h2>
+						<p>
+							We couldn’t verify your account. Your Tracking ID is ready below, and you can sign in again to save this report.
+						</p>
+					</div>
+					<div className="report-attach-panel__actions">
+						<ButtonLink
+							to={`/profile?attachRef=${encodeURIComponent(reference)}&reauth=1&redirect=%2Factivity`}
+							variant="primary"
+							fullWidth
+						>
+							Sign in again to save report
+						</ButtonLink>
+					</div>
+				</div>
+			</Surface>
+		);
+	}
+
 	if (isAuthenticated) {
 		return (
 			<Surface className="report-success-account-panel report-success-account-panel--saved">
@@ -176,9 +204,10 @@ export function ReportSuccessPage() {
 
 	const reference = searchParams.get("ref") ?? lastSubmittedReference;
 	const alreadySaved = reference ? trackedReferences.includes(reference) : false;
+	const pendingClaim = reference ? Boolean(readPendingReportClaim(reference)) : false;
 
 	useEffect(() => {
-		if (isAuthenticated && reference && !alreadySaved && !savedToActivity) {
+		if (isAuthenticated && sessionMode === "local" && reference && !alreadySaved && !savedToActivity) {
 			trackReport(reference);
 			setSavedToActivity(true);
 		}
@@ -246,8 +275,9 @@ export function ReportSuccessPage() {
 							<PredictionEvidencePanel
 								prediction={report.prediction}
 								title="Submission evidence"
-								imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/image`}
+								imageUrl={`${API_BASE_URL}/public/reports/${report.reference}/original`}
 								imageAlt="Your submitted photo evidence"
+								showDetections
 								compact
 							/>
 						</div>
@@ -288,6 +318,7 @@ export function ReportSuccessPage() {
 							isAuthenticated={isAuthenticated}
 							reference={reference}
 							sessionMode={sessionMode}
+							pendingClaim={pendingClaim}
 						/>
 					) : null}
 				</div>
@@ -322,6 +353,7 @@ export function ReportSuccessPage() {
 						isAuthenticated={isAuthenticated}
 						reference={reference}
 						sessionMode={sessionMode}
+						pendingClaim={pendingClaim}
 					/>
 				</div>
 			) : (

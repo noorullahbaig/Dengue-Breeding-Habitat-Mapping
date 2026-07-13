@@ -4,6 +4,7 @@ import { storePendingReportClaim } from '@/lib/pendingReportClaim'
 import { ProfilePage } from '@/pages/ProfilePage'
 
 const claimReport = vi.fn()
+const signOut = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('@/app/useServices', () => ({
   useServices: () => ({
@@ -15,7 +16,7 @@ vi.mock('@/app/useAuth', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     isAuthLoading: false,
-    signOut: vi.fn(),
+    signOut,
     signInWithGoogle: vi.fn(),
     signInWithHostedUI: vi.fn(),
     sessionMode: 'cognito',
@@ -62,5 +63,17 @@ describe('ProfilePage report claims', () => {
       'This report can no longer be attached from this browser session.',
     )
     expect(claimReport).not.toHaveBeenCalled()
+  })
+
+  it('clears a stale session before returning to the claim sign-in flow', async () => {
+    render(
+      <MemoryRouter initialEntries={['/profile?attachRef=KL-CLAIM-0001&reauth=1&redirect=%2Factivity']}>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(signOut).toHaveBeenCalled()
+    })
   })
 })

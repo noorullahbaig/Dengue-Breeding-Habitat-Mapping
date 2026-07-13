@@ -3130,7 +3130,7 @@
 	transform: rotate(45deg);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 760px) {
 		.map-priority-legend {
 			left: 10px;
 			bottom: calc(var(--app-mobile-bottom-clearance) + 10px);

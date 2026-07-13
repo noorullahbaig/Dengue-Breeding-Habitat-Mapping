@@ -163,6 +163,7 @@ def owner_report_detail_out(report: Report) -> OwnerReportDetailOut:
             source="public",
         ),
         imageUrl=f"/api/my-reports/{quote(report.reference)}/image",
+        originalImageUrl=f"/api/my-reports/{quote(report.reference)}/original",
         thumbnailUrl=f"/api/my-reports/{quote(report.reference)}/thumbnail",
         publicReportReference=(
             root_report.reference if root_report.public_consent_accepted else None
@@ -251,6 +252,7 @@ def public_report_detail_out(root_report: Report, observations: list[Report]) ->
         reportCount=len(ordered_observations),
         thumbnailUrl=_media_url(latest_observation, "thumbnail"),
         imageUrl=_media_url(latest_observation, "image"),
+        originalImageUrl=_media_url(latest_observation, "original"),
         privacyNote=PRIVACY_NOTE,
         hotspotPriority=_hotspot_priority(root_report),
         observations=[
@@ -260,6 +262,7 @@ def public_report_detail_out(root_report: Report, observations: list[Report]) ->
                 capturedAt=observation.captured_at,
                 reportedAt=observation.created_at,
                 imageUrl=_media_url(observation, "image"),
+                originalImageUrl=_media_url(observation, "original"),
                 thumbnailUrl=_media_url(observation, "thumbnail"),
                 habitatClass=observation.prediction_label,
                 confidenceBand=observation.prediction_confidence_band,

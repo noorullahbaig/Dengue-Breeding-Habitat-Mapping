@@ -90,6 +90,7 @@ export function ReportDetailPresentation({
                   prediction={model.evidence.prediction}
                   imageUrl={model.evidence.imageUrl}
                   imageAlt={model.evidence.imageAlt}
+                  showDetections
                   compact
                 />
               </Surface>

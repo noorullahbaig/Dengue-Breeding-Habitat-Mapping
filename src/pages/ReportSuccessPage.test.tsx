@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { storePendingReportClaim } from '@/lib/pendingReportClaim'
 import { ReportSuccessPage } from '@/pages/ReportSuccessPage'
 
 const resetDraft = vi.fn()
@@ -22,12 +23,13 @@ vi.mock('@/app/useServices', () => ({
 
 const trackReport = vi.fn()
 let mockIsAuthenticated = false
+let mockSessionMode: 'local' | 'cognito' = 'local'
 let mockTrackedReferences: string[] = []
 
 vi.mock('@/app/useAuth', () => ({
   useAuth: () => ({
     isAuthenticated: mockIsAuthenticated,
-    sessionMode: 'local',
+    sessionMode: mockSessionMode,
     trackReport,
     trackedReferences: mockTrackedReferences,
   }),
@@ -41,7 +43,9 @@ describe('ReportSuccessPage Identity & Tracking', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockIsAuthenticated = false
+    mockSessionMode = 'local'
     mockTrackedReferences = []
+    window.sessionStorage.clear()
     getReportStatus.mockResolvedValue({
       reference: 'REF-12345',
       createdAt: '2026-06-22T12:00:00Z',
@@ -111,6 +115,26 @@ describe('ReportSuccessPage Identity & Tracking', () => {
       expect(screen.getByText(/You can still track this report anytime with the Tracking ID above, no account needed\./i)).toBeInTheDocument()
       expect(screen.getByRole('link', { name: 'Sign in to save it' })).toBeInTheDocument()
     })
+  })
+
+  it('explains when a signed-in-looking session could not save the report', async () => {
+    mockIsAuthenticated = true
+    mockSessionMode = 'cognito'
+    storePendingReportClaim('REF-12345', 'private-claim-token')
+
+    render(
+      <MemoryRouter initialEntries={['/report/success?ref=REF-12345']}>
+        <ReportSuccessPage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/couldn’t verify your account/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /sign in again to save report/i })).toHaveAttribute(
+      'href',
+      '/profile?attachRef=REF-12345&reauth=1&redirect=%2Factivity',
+    )
+    expect(screen.getByText('Your anonymous Tracking ID')).toBeInTheDocument()
+    expect(trackReport).not.toHaveBeenCalled()
   })
 
   it('copies the tracking id and exposes visible copied feedback', async () => {

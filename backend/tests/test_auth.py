@@ -36,16 +36,13 @@ def test_cognito_decode_validates_the_configured_audience(monkeypatch):
     assert captured["algorithms"] == ["RS256"]
 
 
-def test_optional_auth_rejects_an_invalid_present_token(monkeypatch):
+def test_optional_auth_treats_an_invalid_present_token_as_anonymous(monkeypatch):
     async def reject_token(*_args, **_kwargs):
         raise HTTPException(status_code=401, detail="invalid")
 
     monkeypatch.setattr(auth, "get_current_user", reject_token)
 
-    with pytest.raises(HTTPException) as error:
-        asyncio.run(auth.get_current_user_optional("Bearer invalid", db=object()))
-
-    assert error.value.status_code == 401
+    assert asyncio.run(auth.get_current_user_optional("Bearer invalid", db=object())) is None
 
 
 def test_cognito_decode_rejects_access_tokens(monkeypatch):

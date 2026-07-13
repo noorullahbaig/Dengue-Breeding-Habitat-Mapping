@@ -94,6 +94,7 @@ class OwnerReportOut(StatusReportOut):
 class OwnerReportDetailOut(OwnerReportOut):
     publicLocation: LocationPoint
     imageUrl: str
+    originalImageUrl: str
     thumbnailUrl: str
     publicReportReference: str | None = None
 
@@ -140,6 +141,7 @@ class PublicReportObservationOut(BaseModel):
     capturedAt: datetime
     reportedAt: datetime
     imageUrl: str
+    originalImageUrl: str
     thumbnailUrl: str
     habitatClass: str
     confidenceBand: str
@@ -159,6 +161,7 @@ class PublicReportDetailOut(BaseModel):
     reportCount: int
     thumbnailUrl: str
     imageUrl: str
+    originalImageUrl: str
     privacyNote: str
     hotspotPriority: HotspotPriorityOut
     observations: list[PublicReportObservationOut]

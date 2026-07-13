@@ -133,7 +133,7 @@ export function PublicReportDetailPage() {
     ],
     evidence: {
       prediction: activeObservation.prediction,
-      imageUrl: activeObservation.imageUrl,
+      imageUrl: activeObservation.originalImageUrl ?? activeObservation.imageUrl,
       imageAlt: `AI bounding boxes for ${activeObservation.reference}`,
       description: 'Submitted photo with model classification boundaries',
     },

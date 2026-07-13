@@ -108,6 +108,7 @@ export interface OwnerReport extends ReportStatus {
 export interface OwnerReportDetail extends OwnerReport {
   publicLocation: LocationPoint
   imageUrl: string
+  originalImageUrl?: string
   thumbnailUrl: string
   publicReportReference?: string | null
 }
@@ -125,6 +126,7 @@ export interface PublicMapReport {
   reportCount: number
   thumbnailUrl: string
   imageUrl: string
+  originalImageUrl?: string
   privacyNote: string
   hotspotPriority?: HotspotPriority
 }
@@ -156,6 +158,7 @@ export interface PublicReportObservation {
   capturedAt: string
   reportedAt: string
   imageUrl: string
+  originalImageUrl?: string
   thumbnailUrl: string
   habitatClass: HabitatClass
   confidenceBand: ConfidenceBand
@@ -175,6 +178,7 @@ export interface PublicReportDetail {
   reportCount: number
   thumbnailUrl: string
   imageUrl: string
+  originalImageUrl?: string
   privacyNote?: string
   hotspotPriority?: HotspotPriority
   observations: PublicReportObservation[]

@@ -1113,7 +1113,7 @@ img {
 .prediction-evidence__box > span {
   position: absolute;
   left: -3px;
-  bottom: 100%;
+  top: 3px;
   max-width: 220px;
   padding: 0.2rem 0.4rem;
   background: var(--prediction-box-color, var(--color-accent));
@@ -1123,9 +1123,9 @@ img {
   white-space: nowrap;
 }
 
-.prediction-evidence--low { --prediction-box-color: var(--color-warning); }
-.prediction-evidence--moderate { --prediction-box-color: var(--color-accent); }
-.prediction-evidence--high { --prediction-box-color: var(--color-success); }
+.prediction-evidence--not-detected { --prediction-box-color: var(--color-ink-soft); }
+.prediction-evidence--review { --prediction-box-color: var(--color-warning); }
+.prediction-evidence--detected { --prediction-box-color: var(--color-accent); }
 
 .prediction-evidence__body {
   display: grid;
@@ -1146,7 +1146,7 @@ img {
   line-height: 1.1;
 }
 
-.prediction-evidence__score {
+.prediction-evidence__status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1156,6 +1156,21 @@ img {
   font-family: var(--font-label);
   font-size: 0.76rem;
   font-weight: 800;
+}
+
+.prediction-evidence--not-detected .prediction-evidence__status {
+  background: rgba(2, 31, 41, 0.08);
+  color: var(--color-ink-soft);
+}
+
+.prediction-evidence--review .prediction-evidence__status {
+  background: rgba(186, 26, 26, 0.1);
+  color: #8c1d18;
+}
+
+.prediction-evidence--detected .prediction-evidence__status {
+  background: rgba(0, 112, 120, 0.12);
+  color: var(--color-accent);
 }
 
 .prediction-evidence__metrics {

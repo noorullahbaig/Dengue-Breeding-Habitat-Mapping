@@ -24,6 +24,7 @@ export function OwnerReportDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [accessExpired, setAccessExpired] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     if (isAuthLoading) return
@@ -37,6 +38,7 @@ export function OwnerReportDetailPage() {
     setIsLoading(true)
     setAccessExpired(false)
     setLoadFailed(false)
+    setNotFound(false)
 
     async function loadOwnerReport() {
       try {
@@ -46,6 +48,7 @@ export function OwnerReportDetailPage() {
         if (!active) return
         setReport(null)
         setAccessExpired(hasHttpStatus(error, 401))
+        setNotFound(hasHttpStatus(error, 404))
         setLoadFailed(!hasHttpStatus(error, 401))
       } finally {
         if (active) setIsLoading(false)
@@ -91,8 +94,8 @@ export function OwnerReportDetailPage() {
       <ReportDetailState
         backTo="/activity"
         backLabel="Back to My Reports"
-        title="Report unavailable"
-        message={<p>This report is unavailable in your account.</p>}
+        title={notFound ? 'Report not found in your account' : 'Report details unavailable'}
+        message={<p>{notFound ? 'This report may belong to another account or has not been claimed yet.' : 'We could not load the report details. Please try again.'}</p>}
       />
     )
   }
@@ -107,7 +110,7 @@ export function OwnerReportDetailPage() {
     eyebrow: 'Your private report details',
     evidence: {
       prediction: report.prediction,
-      imageUrl: report.imageUrl,
+      imageUrl: report.originalImageUrl ?? report.imageUrl,
       imageAlt: `Evidence for ${report.reference}`,
       description: 'Your submitted photo and model result',
     },

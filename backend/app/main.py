@@ -767,6 +767,9 @@ def _owner_media_response(report: Report, variant: str) -> FileResponse | Redire
             or report.thumbnail_storage_key
             or report.thumbnail_path
         )
+    elif variant == "original":
+        storage_key = report.image_storage_key
+        local_path = report.image_storage_key or report.image_path
     else:
         storage_key = report.annotated_image_storage_key or report.image_storage_key
         local_path = report.annotated_image_storage_key or report.image_storage_key or report.image_path
@@ -792,6 +795,15 @@ def owner_report_image(
     db: Session = Depends(get_db),
 ) -> FileResponse | RedirectResponse:
     return _owner_media_response(_owned_report_by_reference(db, reference, current_user), "image")
+
+
+@app.get("/api/my-reports/{reference}/original", response_model=None)
+def owner_report_original(
+    reference: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FileResponse | RedirectResponse:
+    return _owner_media_response(_owned_report_by_reference(db, reference, current_user), "original")
 
 
 @app.get("/api/my-reports/{reference}/thumbnail", response_model=None)
@@ -998,6 +1010,21 @@ def public_report_image(reference: str, db: Session = Depends(get_db)) -> FileRe
         resolve_public_upload_path(report.annotated_image_storage_key or report.image_storage_key or report.image_path),
         media_type="image/jpeg",
     )
+
+
+@app.get("/api/public/reports/{reference}/original")
+def public_report_original(reference: str, db: Session = Depends(get_db)) -> FileResponse:
+    report = _report_by_reference(db, reference)
+    if report is None or not report.public_consent_accepted or not is_within_service_area(report.latitude, report.longitude):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found.")
+    if settings.storage_backend == "s3":
+        if not report.image_storage_key:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in S3.")
+        try:
+            return RedirectResponse(url=get_s3_presigned_url(report.image_storage_key), status_code=status.HTTP_302_FOUND)
+        except HTTPException:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Image storage is unavailable.")
+    return FileResponse(resolve_public_upload_path(report.image_storage_key or report.image_path), media_type="image/jpeg")
 
 
 @app.get("/api/public/reports/{reference}", response_model=PublicReportDetailOut | None)

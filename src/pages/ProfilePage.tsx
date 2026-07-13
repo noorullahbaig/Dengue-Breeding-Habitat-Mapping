@@ -37,6 +37,7 @@ export function ProfilePage() {
 
 	const attachRef = searchParams.get("attachRef")?.trim().toUpperCase() ?? "";
 	const redirectPath = searchParams.get("redirect") ?? "/activity";
+	const shouldReauthenticate = searchParams.get("reauth") === "1";
 
 	useEffect(() => {
 		setMounted(true);
@@ -60,7 +61,7 @@ export function ProfilePage() {
 
 	useEffect(() => {
 		let isMounted = true;
-		if (!isAuthenticated || !attachRef) {
+		if (!isAuthenticated || !attachRef || shouldReauthenticate) {
 			return () => {
 				isMounted = false;
 			};
@@ -96,7 +97,23 @@ export function ProfilePage() {
 		return () => {
 			isMounted = false;
 		};
-	}, [attachRef, isAuthenticated, reportsService, searchParams, setSearchParams]);
+	}, [attachRef, isAuthenticated, reportsService, searchParams, setSearchParams, shouldReauthenticate]);
+
+	useEffect(() => {
+		if (!isAuthenticated || !shouldReauthenticate) return;
+		let isMounted = true;
+
+		void signOut().then(() => {
+			if (!isMounted) return;
+			const nextParams = new URLSearchParams(searchParams);
+			nextParams.delete("reauth");
+			setSearchParams(nextParams, { replace: true });
+		});
+
+		return () => {
+			isMounted = false;
+		};
+	}, [isAuthenticated, searchParams, setSearchParams, shouldReauthenticate, signOut]);
 
 	function handleSignOut() {
 		signOut();

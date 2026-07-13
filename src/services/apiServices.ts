@@ -280,6 +280,7 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
       ...report,
       thumbnailUrl: publicUrl(report.thumbnailUrl),
       imageUrl: publicUrl(report.imageUrl),
+      originalImageUrl: report.originalImageUrl ? publicUrl(report.originalImageUrl) : report.originalImageUrl,
     }
   }
 
@@ -303,6 +304,7 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
       ...observation,
       thumbnailUrl: publicUrl(observation.thumbnailUrl),
       imageUrl: publicUrl(observation.imageUrl),
+      originalImageUrl: observation.originalImageUrl ? publicUrl(observation.originalImageUrl) : observation.originalImageUrl,
     }
   }
 
@@ -317,6 +319,7 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
       ...report,
       thumbnailUrl: publicUrl(report.thumbnailUrl),
       imageUrl: publicUrl(report.imageUrl),
+      originalImageUrl: report.originalImageUrl ? publicUrl(report.originalImageUrl) : report.originalImageUrl,
       observations: report.observations.map(normalizeObservation),
     }
   }
@@ -334,23 +337,20 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
         const headers = await buildHeaders(true)
         const response = await fetch(`${baseUrl}/my-reports/${encodeURIComponent(reference.trim())}`, { headers })
         const report = await parseJsonResponse<OwnerReportDetail>(response, baseUrl)
-        const authenticatedImageUrl = publicUrl(report.imageUrl)
-        const imageResponse = await fetch(authenticatedImageUrl, { headers })
-        if (!imageResponse.ok) {
-          const detail = await readErrorDetail(imageResponse)
-          throw new AppApiError({
-            kind: 'server_error',
-            message: detail ?? 'Private report evidence could not be loaded.',
-            detail,
-            status: imageResponse.status,
-            transport: 'http',
-            apiBaseUrl: baseUrl,
-          })
+        let evidenceUrl = ''
+        try {
+          const authenticatedImageUrl = publicUrl(report.originalImageUrl ?? report.imageUrl)
+          const imageResponse = await fetch(authenticatedImageUrl, { headers })
+          if (imageResponse.ok) {
+            const evidenceBlob = await imageResponse.blob()
+            evidenceUrl = URL.createObjectURL(evidenceBlob)
+          }
+        } catch {
+          evidenceUrl = ''
         }
-        const evidenceBlob = await imageResponse.blob()
         return {
           ...report,
-          imageUrl: URL.createObjectURL(evidenceBlob),
+          imageUrl: evidenceUrl,
           thumbnailUrl: publicUrl(report.thumbnailUrl),
         }
       },

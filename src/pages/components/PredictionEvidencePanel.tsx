@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import {
-	formatConfidenceLabel,
-	formatConfidenceScore,
 	formatDetectionLabel,
-	formatDetectionCount,
 	formatHabitatLabel,
 } from "@/lib/formatters";
 import type { DetectionSummary, PredictionSummary } from "@/types/report";
@@ -80,10 +77,22 @@ export function PredictionEvidencePanel({
 	const hasInvalidDetections = validDetections.length !== detections.length;
 	const resultLabel = formatHabitatLabel(prediction.label);
 	const hasTargetDetection = prediction.label !== "unclassified" && validDetections.length > 0;
+	const outcome = !hasTargetDetection
+		? "not-detected"
+		: prediction.confidenceBand === "high"
+			? "detected"
+			: "review";
+	const outcomeLabel = outcome === "detected" ? "Detected" : outcome === "review" ? "Review needed" : "Not detected";
+	const outcomeHeading = outcome === "detected"
+		? `Potential ${resultLabel.toLowerCase()} detected.`
+		: outcome === "review"
+			? `Possible ${resultLabel.toLowerCase()}. Review needed.`
+			: "No target habitat detected.";
 
 	return (
 		<section
-			className={`prediction-evidence prediction-evidence--${prediction.confidenceBand}${compact ? " prediction-evidence--compact" : ""}`}
+			className={`prediction-evidence prediction-evidence--${outcome}${compact ? " prediction-evidence--compact" : ""}`}
+			data-outcome={outcome}
 			aria-label={title ?? "AI evidence analysis"}
 		>
 			{imageUrl ? (
@@ -122,18 +131,17 @@ export function PredictionEvidencePanel({
 										style={{
 											...boxStyle(detection, imageSize),
 										}}
-											title={`${formatDetectionLabel(detection.rawLabel)} ${formatConfidenceScore(detection.confidence)}`}
-									>
-										<span>
-											{formatDetectionLabel(detection.rawLabel)}{" "}
-											{formatConfidenceScore(detection.confidence)}
-										</span>
+																				 title={formatDetectionLabel(detection.rawLabel)}
+										>
+											<span>
+												{formatDetectionLabel(detection.rawLabel)}
+											</span>
 									</span>
 								))
 							: null}
 						{imageFailed ? (
 							<div className="prediction-evidence__image-error" role="status" aria-live="polite">
-								<strong>Evidence preview unavailable</strong>
+								<strong>Photo preview unavailable</strong>
 								<span>The image could not be loaded. You can still review the AI result below.</span>
 							</div>
 						) : null}
@@ -143,43 +151,14 @@ export function PredictionEvidencePanel({
 			<div className="prediction-evidence__body">
 				<div className="prediction-evidence__header">
 					<div>
-						<span className="eyebrow">AI evidence review</span>
-						<h2>{hasTargetDetection ? resultLabel : "No target habitat identified"}</h2>
-					</div>
-					<span className="prediction-evidence__score">
-						{formatConfidenceLabel(prediction.confidenceBand)}
-					</span>
-				</div>
-				<div className="prediction-evidence__metrics">
-					<div>
-						<span className="detail-grid__label">Top class</span>
-						<strong>{resultLabel}</strong>
-					</div>
-					<div>
-						<span className="detail-grid__label">Confidence</span>
-						<strong>{formatConfidenceScore(prediction.confidence)}</strong>
-					</div>
-					<div>
-						<span className="detail-grid__label">Detections</span>
-						<strong>{formatDetectionCount(validDetections.length)}</strong>
-					</div>
-				</div>
-				{validDetections.length > 0 ? (
-					<div className="prediction-evidence__detections">
-						<span className="detail-grid__label">Detected objects</span>
-						<ol>
-							{validDetections.map((detection) => (
-								<li key={detectionKey(detection)}>
-									{formatDetectionLabel(detection.rawLabel)} — {formatConfidenceScore(detection.confidence)}
-								</li>
-							))}
-						</ol>
-					</div>
-				) : (
-					<p className="prediction-evidence__empty">
-						No target habitat was identified with high confidence. Human verification is still recommended.
-					</p>
-				)}
+									<span className="eyebrow">AI evidence review</span>
+									<h2>{outcomeHeading}</h2>
+								</div>
+								<span className="prediction-evidence__status">{outcomeLabel}</span>
+							</div>
+				<p className="prediction-evidence__empty">
+					{outcome === "detected" ? "The photo shows visual cues worth following up." : outcome === "review" ? "The result is uncertain. Please review the photo before taking action." : "No target habitat was identified in this photo."}
+				</p>
 				{hasInvalidDetections ? (
 					<p className="prediction-evidence__warning" role="status">
 						Some detections could not be displayed because their bounding boxes were invalid.

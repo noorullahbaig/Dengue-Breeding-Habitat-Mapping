@@ -198,4 +198,12 @@ async def get_current_user_optional(
     if not authorization:
         return None
     
-    return await get_current_user(authorization, db)
+    try:
+        return await get_current_user(authorization, db)
+    except HTTPException as error:
+        # A stale or malformed client token should not prevent an otherwise
+        # valid report from being submitted anonymously. The receipt carries
+        # a claim token so the resident can attach it after signing in again.
+        if error.status_code in {status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN}:
+            return None
+        raise
