@@ -201,6 +201,21 @@ prune_old_release_images() {
   docker image prune -f || echo "Warning: final dangling-image cleanup failed; continuing." >&2
 }
 
+verify_running_release() {
+  local expected_backend="denguewatch/backend:${APP_VERSION}"
+  local expected_nginx="denguewatch/nginx:${APP_VERSION}"
+  local actual_backend="$(docker inspect --format '{{.Config.Image}}' denguewatch-backend 2>/dev/null || true)"
+  local actual_nginx="$(docker inspect --format '{{.Config.Image}}' denguewatch-nginx 2>/dev/null || true)"
+
+  if [[ "$actual_backend" != "$expected_backend" || "$actual_nginx" != "$expected_nginx" ]]; then
+    echo "Running containers do not match release ${APP_VERSION}." >&2
+    echo "Expected backend: ${expected_backend}; actual: ${actual_backend:-missing}" >&2
+    echo "Expected nginx: ${expected_nginx}; actual: ${actual_nginx:-missing}" >&2
+    APP_VERSION="$APP_VERSION" compose ps >&2 || true
+    exit 1
+  fi
+}
+
 if ! git diff --quiet --ignore-submodules -- || ! git diff --cached --quiet --ignore-submodules --; then
   echo "Refusing to deploy from a dirty tracked worktree on the server." >&2
   echo "Commit, stash, or discard tracked changes on EC2 before deploying." >&2
@@ -239,7 +254,8 @@ install -m 600 "$TMP_ENV_FILE" "$ENV_FILE"
 
 APP_VERSION="$APP_VERSION" compose config --quiet
 APP_VERSION="$APP_VERSION" compose build
-APP_VERSION="$APP_VERSION" compose up -d --remove-orphans
+APP_VERSION="$APP_VERSION" compose up -d --force-recreate --remove-orphans
+verify_running_release
 
 attempt=0
 until http_probe "$HEALTHCHECK_URL" && http_probe "$BACKEND_HEALTHCHECK_URL"; do
