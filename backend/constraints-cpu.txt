@@ -1,5 +1,0 @@
-# Keep the EC2 production image on the CPU-only PyTorch wheels. Without these
-# constraints, the Ultralytics dependency resolver can replace the CPU wheels
-# with the much larger CUDA-enabled PyPI wheels.
-torch==2.13.0+cpu
-torchvision==0.28.0+cpu

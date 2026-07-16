@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# EC2 production target: Linux x86_64, CPython 3.11, CPU-only wheels.
+# Direct URLs prevent pip from replacing these with CUDA wheels from PyPI.
+torch @ https://download.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl
+torchvision @ https://download.pytorch.org/whl/cpu/torchvision-0.28.0%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl

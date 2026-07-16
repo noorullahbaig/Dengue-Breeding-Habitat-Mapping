@@ -22,18 +22,12 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first for better caching
 COPY backend/requirements.txt /app/requirements.txt
-COPY backend/constraints-cpu.txt /app/constraints-cpu.txt
+COPY backend/requirements-cpu.txt /app/requirements-cpu.txt
 
-# Install CPU-only PyTorch before the application dependencies. The EC2
-# deployment hosts do not have an NVIDIA GPU, so the default PyPI wheels
-# would unnecessarily pull several gigabytes of CUDA runtime packages.
-RUN pip install --no-cache-dir \
-      --index-url https://download.pytorch.org/whl/cpu \
-      torch==2.13.0+cpu torchvision==0.28.0+cpu \
-    && pip install --no-cache-dir \
-      --extra-index-url https://download.pytorch.org/whl/cpu \
-      --constraint constraints-cpu.txt \
-      -r requirements.txt \
+# Install the direct CPU-only PyTorch wheels before the application
+# dependencies. This EC2 target has no NVIDIA GPU, so CUDA wheels would
+# unnecessarily consume several gigabytes of storage.
+RUN pip install --no-cache-dir -r requirements-cpu.txt \
     && python -c "import torch; assert torch.version.cuda is None; assert not torch.cuda.is_available(); print('CPU-only PyTorch verified')"
 
 # Copy backend application code
