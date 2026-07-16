@@ -742,7 +742,7 @@
 	}
 
 	.page--resident-home .home-hero__learn-link {
-		align-self: center;
+		align-self: flex-start;
 	}
 }
 

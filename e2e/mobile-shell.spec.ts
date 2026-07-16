@@ -88,6 +88,7 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
           (rect) => rect.left >= heroRect.left - 1 && rect.right <= heroRect.right + 1,
         ),
         learnLinkHeight: learnLinkRect.height,
+        learnLinkLeftDelta: Math.abs(learnLinkRect.left - title.getBoundingClientRect().left),
         imageEdges: {
           top: Math.abs(imageRect.top - heroRect.top),
           right: Math.abs(imageRect.right - heroRect.right),
@@ -106,6 +107,7 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
     expect(phoneHero?.heroHeight ?? 0).toBeLessThanOrEqual(546)
     expect(phoneHero?.contentContained).toBe(true)
     expect(phoneHero?.learnLinkHeight ?? 0).toBeGreaterThanOrEqual(44)
+    expect(phoneHero?.learnLinkLeftDelta ?? 0).toBeLessThanOrEqual(1)
     expect(phoneHero?.visualPosition).toBe('absolute')
     expect(phoneHero?.objectFit).toBe('cover')
     expect(phoneHero?.objectPosition).toBe('50% 50%')
