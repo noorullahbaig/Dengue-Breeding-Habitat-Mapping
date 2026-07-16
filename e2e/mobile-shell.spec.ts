@@ -40,6 +40,66 @@ for (const width of mobileWidths) {
   })
 }
 
+test('uses the KLCC artwork as a mobile-only full-bleed hero', async ({ page }) => {
+  await page.setViewportSize({ width: 759, height: 900 })
+  await page.goto('/')
+
+  const mobileHero = await page.locator('.home-hero').evaluate((hero) => {
+    const visual = hero.querySelector('.home-hero__visual')
+    const image = hero.querySelector('.home-hero__image')
+    const note = hero.querySelector('.home-hero__image-note')
+    if (!(visual instanceof HTMLElement) || !(image instanceof HTMLImageElement) || !note) {
+      return null
+    }
+
+    const heroRect = hero.getBoundingClientRect()
+    const imageRect = image.getBoundingClientRect()
+    const imageStyle = window.getComputedStyle(image)
+
+    return {
+      heroHeight: heroRect.height,
+      imageEdges: {
+        top: Math.abs(imageRect.top - heroRect.top),
+        right: Math.abs(imageRect.right - heroRect.right),
+        bottom: Math.abs(imageRect.bottom - heroRect.bottom),
+        left: Math.abs(imageRect.left - heroRect.left),
+      },
+      objectFit: imageStyle.objectFit,
+      objectPosition: imageStyle.objectPosition,
+      noteDisplay: window.getComputedStyle(note).display,
+      visualPosition: window.getComputedStyle(visual).position,
+    }
+  })
+
+  expect(mobileHero).not.toBeNull()
+  expect(mobileHero?.heroHeight ?? 0).toBeGreaterThanOrEqual(704)
+  // The 48rem content height includes the hero's 1px border on each edge.
+  expect(mobileHero?.heroHeight ?? 0).toBeLessThanOrEqual(770)
+  expect(mobileHero?.visualPosition).toBe('absolute')
+  expect(mobileHero?.objectFit).toBe('cover')
+  expect(mobileHero?.objectPosition).toBe('50% 50%')
+  expect(mobileHero?.noteDisplay).toBe('none')
+  for (const edgeDelta of Object.values(mobileHero?.imageEdges ?? {})) {
+    expect(edgeDelta).toBeLessThanOrEqual(1)
+  }
+
+  await page.setViewportSize({ width: 760, height: 900 })
+  await page.reload()
+
+  const tabletHero = await page.locator('.home-hero').evaluate((hero) => {
+    const visual = hero.querySelector('.home-hero__visual')
+    const note = hero.querySelector('.home-hero__image-note')
+    if (!(visual instanceof HTMLElement) || !note) return null
+
+    return {
+      visualPosition: window.getComputedStyle(visual).position,
+      noteDisplay: window.getComputedStyle(note).display,
+    }
+  })
+
+  expect(tabletHero).toEqual({ visualPosition: 'relative', noteDisplay: 'flex' })
+})
+
 test.describe('mobile shell regressions', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
