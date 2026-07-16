@@ -13,6 +13,7 @@ PREVIOUS_RELEASE_FILE="$STATE_DIR/previous-release.env"
 SSM_PARAMETER_NAME="${DEPLOY_PARAMETER_NAME:-/denguewatch/production/env}"
 HEALTHCHECK_URL="${DEPLOY_HEALTHCHECK_URL:-http://localhost/health}"
 BACKEND_HEALTHCHECK_URL="${DEPLOY_BACKEND_HEALTHCHECK_URL:-http://localhost/api/health}"
+MIN_FREE_GB="${DEPLOY_MIN_FREE_GB:-12}"
 SKIP_PULL=0
 
 usage() {
@@ -26,14 +27,17 @@ Behavior:
   - Validates and atomically installs .env.production
   - Validates docker compose configuration with --env-file
   - Builds versioned images using the current git SHA
+  - Prunes stale Docker build cache before building
   - Runs alembic migrations in a one-off backend container
   - Rolls the stack forward with docker compose up -d --remove-orphans
   - Waits for nginx and backend health endpoints
+  - Prunes dangling and old release images after health checks pass
 
 Environment:
   DEPLOY_PARAMETER_NAME         Override the default SSM parameter path
   DEPLOY_HEALTHCHECK_URL        Override the nginx health endpoint
   DEPLOY_BACKEND_HEALTHCHECK_URL Override the backend health endpoint
+  DEPLOY_MIN_FREE_GB             Minimum free disk space required before build (default: 12)
 EOF
 }
 
@@ -129,6 +133,74 @@ urllib.request.urlopen(sys.argv[1], timeout=5).read()
 PY
 }
 
+disk_free_kb() {
+  df -Pk "$ROOT_DIR" | awk 'NR == 2 { print $4 }'
+}
+
+report_disk_usage() {
+  echo "Disk usage:"
+  df -hT "$ROOT_DIR"
+  if command -v docker >/dev/null 2>&1; then
+    docker system df 2>/dev/null || true
+  fi
+}
+
+require_disk_space() {
+  local free_kb required_kb
+  if [[ ! "$MIN_FREE_GB" =~ ^[1-9][0-9]*$ ]]; then
+    echo "DEPLOY_MIN_FREE_GB must be a positive integer; got: $MIN_FREE_GB" >&2
+    exit 1
+  fi
+  required_kb=$((MIN_FREE_GB * 1024 * 1024))
+  free_kb="$(disk_free_kb)"
+
+  if [[ -z "$free_kb" || ! "$free_kb" =~ ^[0-9]+$ ]]; then
+    echo "Unable to determine free disk space on $ROOT_DIR." >&2
+    exit 1
+  fi
+
+  if (( free_kb < required_kb )); then
+    echo "Insufficient disk space: $((free_kb / 1024 / 1024)) GB available; ${MIN_FREE_GB} GB required." >&2
+    report_disk_usage >&2
+    exit 1
+  fi
+}
+
+prune_build_storage() {
+  if ! command -v docker >/dev/null 2>&1; then
+    return
+  fi
+
+  echo "Pruning Docker build cache older than 7 days."
+  docker builder prune -af --filter until=168h || echo "Warning: Docker builder cleanup failed; continuing." >&2
+  docker container prune -f || echo "Warning: stopped-container cleanup failed; continuing." >&2
+  docker image prune -f || echo "Warning: dangling-image cleanup failed; continuing." >&2
+}
+
+prune_old_release_images() {
+  if ! command -v docker >/dev/null 2>&1; then
+    return
+  fi
+
+  local previous_version=""
+  if [[ -f "$CURRENT_RELEASE_FILE" ]]; then
+    previous_version="$(sed -n 's/^APP_VERSION=//p' "$CURRENT_RELEASE_FILE" | head -n 1)"
+  fi
+
+  for repository in denguewatch/backend denguewatch/nginx; do
+    while IFS= read -r image; do
+      [[ -z "$image" ]] && continue
+      local tag="${image##*:}"
+      if [[ "$tag" != "$APP_VERSION" && "$tag" != "$previous_version" ]]; then
+        echo "Removing old release image: $image"
+        docker image rm "$image" >/dev/null 2>&1 || true
+      fi
+    done < <(docker image ls "$repository" --format '{{.Repository}}:{{.Tag}}')
+  done
+
+  docker image prune -f || echo "Warning: final dangling-image cleanup failed; continuing." >&2
+}
+
 if ! git diff --quiet --ignore-submodules -- || ! git diff --cached --quiet --ignore-submodules --; then
   echo "Refusing to deploy from a dirty tracked worktree on the server." >&2
   echo "Commit, stash, or discard tracked changes on EC2 before deploying." >&2
@@ -148,6 +220,11 @@ fi
 
 APP_VERSION="$(git rev-parse --short=12 HEAD)"
 TMP_ENV_FILE="$(mktemp "$STATE_DIR/.env.production.tmp.XXXXXX")"
+
+report_disk_usage
+require_disk_space
+prune_build_storage
+require_disk_space
 
 echo "Fetching production configuration from SSM parameter: $SSM_PARAMETER_NAME"
 aws ssm get-parameter \
@@ -175,6 +252,9 @@ until http_probe "$HEALTHCHECK_URL" && http_probe "$BACKEND_HEALTHCHECK_URL"; do
   fi
   sleep 5
 done
+
+prune_old_release_images
+report_disk_usage
 
 if [[ -f "$CURRENT_RELEASE_FILE" ]]; then
   TMP_PREVIOUS_RELEASE_FILE="$(mktemp "$STATE_DIR/.previous-release.tmp.XXXXXX")"

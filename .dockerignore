@@ -59,6 +59,7 @@ build/
 # Uploads and data (should not be in Docker image)
 backend/uploads/
 uploads/
+Model Training/
 
 # Logs
 *.log
