@@ -28,7 +28,7 @@ COPY backend/requirements-cpu.txt /app/requirements-cpu.txt
 # dependencies. This EC2 target has no NVIDIA GPU, so CUDA wheels would
 # unnecessarily consume several gigabytes of storage.
 RUN pip install --no-cache-dir -r requirements-cpu.txt \
-    && python -c "import torch; assert torch.version.cuda is None; assert not torch.cuda.is_available(); print('CPU-only PyTorch verified')"
+    && python -c "import importlib.metadata as metadata, torch; packages = {(dist.metadata.get('Name') or '').lower() for dist in metadata.distributions()}; offenders = sorted(name for name in packages if name.startswith('nvidia-') or name == 'triton' or 'cuda' in name or 'cudnn' in name); assert torch.version.cuda is None, f'CUDA-enabled PyTorch installed: {torch.version.cuda}'; assert not torch.cuda.is_available(); assert not offenders, f'GPU packages installed: {offenders}'; print(f'CPU-only PyTorch verified: {torch.__version__}')"
 
 # Copy backend application code
 COPY backend/app /app/app
