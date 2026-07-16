@@ -40,64 +40,96 @@ for (const width of mobileWidths) {
   })
 }
 
-test('uses the KLCC artwork as a mobile-only full-bleed hero', async ({ page }) => {
-  await page.setViewportSize({ width: 759, height: 900 })
-  await page.goto('/')
+test('uses the KLCC artwork as a compact phone hero and split tablet hero', async ({ page }) => {
+  const phoneViewports = [
+    { width: 320, height: 700 },
+    { width: 360, height: 844 },
+    { width: 390, height: 844 },
+    { width: 430, height: 932 },
+    { width: 599, height: 900 },
+  ]
 
-  const mobileHero = await page.locator('.home-hero').evaluate((hero) => {
-    const visual = hero.querySelector('.home-hero__visual')
-    const image = hero.querySelector('.home-hero__image')
-    const note = hero.querySelector('.home-hero__image-note')
-    if (!(visual instanceof HTMLElement) || !(image instanceof HTMLImageElement) || !note) {
-      return null
+  for (const viewport of phoneViewports) {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+
+    const phoneHero = await page.locator('.home-hero').evaluate((hero) => {
+      const visual = hero.querySelector('.home-hero__visual')
+      const image = hero.querySelector('.home-hero__image')
+      const note = hero.querySelector('.home-hero__image-note')
+      const title = hero.querySelector('.home-hero__title')
+      const description = hero.querySelector('.home-hero__description')
+      const actions = hero.querySelector('.home-hero__actions')
+      const buttons = [...hero.querySelectorAll('.ui-button')]
+      if (
+        !(visual instanceof HTMLElement) ||
+        !(image instanceof HTMLImageElement) ||
+        !note ||
+        !(title instanceof HTMLElement) ||
+        !(description instanceof HTMLElement) ||
+        !(actions instanceof HTMLElement)
+      ) {
+        return null
+      }
+
+      const heroRect = hero.getBoundingClientRect()
+      const imageRect = image.getBoundingClientRect()
+      const contentRects = [title, description, actions, ...buttons].map((element) =>
+        element.getBoundingClientRect(),
+      )
+      const imageStyle = window.getComputedStyle(image)
+
+      return {
+        heroHeight: heroRect.height,
+        contentContained: contentRects.every(
+          (rect) => rect.left >= heroRect.left - 1 && rect.right <= heroRect.right + 1,
+        ),
+        imageEdges: {
+          top: Math.abs(imageRect.top - heroRect.top),
+          right: Math.abs(imageRect.right - heroRect.right),
+          bottom: Math.abs(imageRect.bottom - heroRect.bottom),
+          left: Math.abs(imageRect.left - heroRect.left),
+        },
+        objectFit: imageStyle.objectFit,
+        objectPosition: imageStyle.objectPosition,
+        noteDisplay: window.getComputedStyle(note).display,
+        visualPosition: window.getComputedStyle(visual).position,
+      }
+    })
+
+    expect(phoneHero, `${viewport.width}px phone hero`).not.toBeNull()
+    expect(phoneHero?.heroHeight ?? 0).toBeGreaterThanOrEqual(512)
+    expect(phoneHero?.heroHeight ?? 0).toBeLessThanOrEqual(546)
+    expect(phoneHero?.contentContained).toBe(true)
+    expect(phoneHero?.visualPosition).toBe('absolute')
+    expect(phoneHero?.objectFit).toBe('cover')
+    expect(phoneHero?.objectPosition).toBe('50% 50%')
+    expect(phoneHero?.noteDisplay).toBe('none')
+    for (const edgeDelta of Object.values(phoneHero?.imageEdges ?? {})) {
+      expect(edgeDelta).toBeLessThanOrEqual(1)
     }
-
-    const heroRect = hero.getBoundingClientRect()
-    const imageRect = image.getBoundingClientRect()
-    const imageStyle = window.getComputedStyle(image)
-
-    return {
-      heroHeight: heroRect.height,
-      imageEdges: {
-        top: Math.abs(imageRect.top - heroRect.top),
-        right: Math.abs(imageRect.right - heroRect.right),
-        bottom: Math.abs(imageRect.bottom - heroRect.bottom),
-        left: Math.abs(imageRect.left - heroRect.left),
-      },
-      objectFit: imageStyle.objectFit,
-      objectPosition: imageStyle.objectPosition,
-      noteDisplay: window.getComputedStyle(note).display,
-      visualPosition: window.getComputedStyle(visual).position,
-    }
-  })
-
-  expect(mobileHero).not.toBeNull()
-  expect(mobileHero?.heroHeight ?? 0).toBeGreaterThanOrEqual(704)
-  // The 48rem content height includes the hero's 1px border on each edge.
-  expect(mobileHero?.heroHeight ?? 0).toBeLessThanOrEqual(770)
-  expect(mobileHero?.visualPosition).toBe('absolute')
-  expect(mobileHero?.objectFit).toBe('cover')
-  expect(mobileHero?.objectPosition).toBe('50% 50%')
-  expect(mobileHero?.noteDisplay).toBe('none')
-  for (const edgeDelta of Object.values(mobileHero?.imageEdges ?? {})) {
-    expect(edgeDelta).toBeLessThanOrEqual(1)
   }
 
-  await page.setViewportSize({ width: 760, height: 900 })
-  await page.reload()
+  for (const width of [600, 759, 760, 980, 1280]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
 
-  const tabletHero = await page.locator('.home-hero').evaluate((hero) => {
-    const visual = hero.querySelector('.home-hero__visual')
-    const note = hero.querySelector('.home-hero__image-note')
-    if (!(visual instanceof HTMLElement) || !note) return null
+    const splitHero = await page.locator('.home-hero').evaluate((hero) => {
+      const visual = hero.querySelector('.home-hero__visual')
+      const note = hero.querySelector('.home-hero__image-note')
+      if (!(visual instanceof HTMLElement) || !note) return null
 
-    return {
-      visualPosition: window.getComputedStyle(visual).position,
-      noteDisplay: window.getComputedStyle(note).display,
-    }
-  })
+      return {
+        visualPosition: window.getComputedStyle(visual).position,
+        noteDisplay: window.getComputedStyle(note).display,
+      }
+    })
 
-  expect(tabletHero).toEqual({ visualPosition: 'relative', noteDisplay: 'flex' })
+    expect(splitHero, `${width}px split hero`).toEqual({
+      visualPosition: 'relative',
+      noteDisplay: 'flex',
+    })
+  }
 })
 
 test.describe('mobile shell regressions', () => {
