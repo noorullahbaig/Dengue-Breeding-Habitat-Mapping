@@ -6,9 +6,11 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from sqlalchemy import or_, select, text
@@ -50,7 +52,7 @@ from app.image_storage import (
     persist_stored_image,
     cleanup_local_stored_image,
 )
-from app.inference import ModelInference
+from app.inference import ModelInference, PredictionSummary
 from app.models import Report, User
 from app.schemas import (
     HealthOut,
@@ -94,6 +96,7 @@ def migration_is_ready(db: Session) -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.inference_semaphore = asyncio.Semaphore(1)
     ensure_upload_dirs()
     cleanup_precheck_uploads()
 
@@ -136,6 +139,12 @@ async def periodic_hotspot_sync():
 app = FastAPI(title="Breeding Habitat Watch API", lifespan=lifespan)
 model_inference = ModelInference(settings.model_path)
 STACKABLE_HABITAT_CLASSES = {"tire", "drain_inlet", "artificial_container"}
+
+
+async def _run_model_prediction(image_path: Path) -> PredictionSummary:
+    async with app.state.inference_semaphore:
+        return await run_in_threadpool(model_inference.predict, image_path)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -479,8 +488,11 @@ async def create_report(
 
     stored_image = await store_upload(image)
     try:
-        prediction = model_inference.predict(stored_image.image_path)
+        prediction = await _run_model_prediction(stored_image.image_path)
         persist_stored_image(stored_image, prediction.detections)
+    except asyncio.CancelledError:
+        delete_stored_image(stored_image)
+        raise
     except Exception as exc:
         delete_stored_image(stored_image)
         raise HTTPException(
@@ -640,7 +652,7 @@ async def _precheck_report(
 
     stored_image = await store_precheck_image(image)
     try:
-        prediction = model_inference.predict(stored_image.image_path)
+        prediction = await _run_model_prediction(stored_image.image_path)
         result = NearbyCandidatesOut(
             prediction=prediction_summary_out(prediction),
             candidates=_nearby_candidates_for_prediction(
@@ -651,6 +663,9 @@ async def _precheck_report(
             ),
             imageUrl=None,
         )
+    except asyncio.CancelledError:
+        delete_precheck_image(stored_image)
+        raise
     except Exception as exc:
         delete_precheck_image(stored_image)
         raise HTTPException(

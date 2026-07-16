@@ -1,4 +1,16 @@
-from app.inference import Detection, confidence_band, normalize_bbox, summarize_detections
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import pytest
+
+from app.inference import (
+    Detection,
+    ModelInference,
+    confidence_band,
+    normalize_bbox,
+    summarize_detections,
+)
 
 
 def test_maps_retained_model_classes_to_public_habitat_classes():
@@ -73,3 +85,68 @@ def test_normalized_boxes_clamp_to_image_area():
         1.0,
         1.0,
     ]
+
+
+def test_model_inference_serializes_concurrent_predict_calls():
+    first_entered = threading.Event()
+    second_attempting = threading.Event()
+    second_entered = threading.Event()
+    release_first = threading.Event()
+
+    class ContendedModel:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def predict(self, image_path: str, *, verbose: bool):
+            self.calls += 1
+            if self.calls == 1:
+                first_entered.set()
+                assert release_first.wait(timeout=1)
+            else:
+                second_entered.set()
+            return []
+
+    inference = ModelInference(Path("unused.pt"))
+    inference.model = ContendedModel()
+
+    def run_second_prediction():
+        second_attempting.set()
+        return inference.predict(Path("second.jpg"))
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(inference.predict, Path("first.jpg"))
+        assert first_entered.wait(timeout=1)
+        second = executor.submit(run_second_prediction)
+        assert second_attempting.wait(timeout=1)
+
+        try:
+            assert not second_entered.wait(timeout=0.1)
+        finally:
+            release_first.set()
+
+        first.result(timeout=1)
+        second.result(timeout=1)
+
+    assert inference.model.calls == 2
+
+
+def test_model_inference_releases_lock_after_prediction_error():
+    class FailingOnceModel:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def predict(self, image_path: str, *, verbose: bool):
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("inference failed")
+            return []
+
+    inference = ModelInference(Path("unused.pt"))
+    inference.model = FailingOnceModel()
+
+    with pytest.raises(RuntimeError, match="inference failed"):
+        inference.predict(Path("first.jpg"))
+
+    summary = inference.predict(Path("second.jpg"))
+
+    assert summary.label == "unclassified"

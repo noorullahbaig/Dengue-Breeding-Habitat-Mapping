@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -121,6 +122,7 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
 
 class ModelInference:
     def __init__(self, model_path: Path):
+        self._lock = threading.Lock()
         self.model_path = model_path
         self.model = None
         self.names: dict[int, str] = {}
@@ -143,41 +145,42 @@ class ModelInference:
             self.load_error = str(exc)
 
     def predict(self, image_path: Path) -> PredictionSummary:
-        if self.model is None:
-            raise RuntimeError(self.load_error or "The detection model is not loaded.")
+        with self._lock:
+            if self.model is None:
+                raise RuntimeError(self.load_error or "The detection model is not loaded.")
 
-        results = self.model.predict(str(image_path), verbose=False)
-        detections: list[Detection] = []
+            results = self.model.predict(str(image_path), verbose=False)
+            detections: list[Detection] = []
 
-        for result in results:
-            image_height = None
-            image_width = None
-            orig_shape = getattr(result, "orig_shape", None)
-            if orig_shape and len(orig_shape) >= 2:
-                image_height = int(orig_shape[0])
-                image_width = int(orig_shape[1])
+            for result in results:
+                image_height = None
+                image_width = None
+                orig_shape = getattr(result, "orig_shape", None)
+                if orig_shape and len(orig_shape) >= 2:
+                    image_height = int(orig_shape[0])
+                    image_width = int(orig_shape[1])
 
-            boxes = getattr(result, "boxes", None)
-            if boxes is None:
-                continue
+                boxes = getattr(result, "boxes", None)
+                if boxes is None:
+                    continue
 
-            for box in boxes:
-                class_id = int(box.cls[0].item())
-                confidence = float(box.conf[0].item())
-                xyxy = [float(value) for value in box.xyxy[0].tolist()]
-                detections.append(
-                    Detection(
-                        raw_label=self.names.get(class_id, str(class_id)),
-                        confidence=confidence,
-                        bbox=xyxy,
-                        bbox_normalized=normalize_bbox(
-                            xyxy,
+                for box in boxes:
+                    class_id = int(box.cls[0].item())
+                    confidence = float(box.conf[0].item())
+                    xyxy = [float(value) for value in box.xyxy[0].tolist()]
+                    detections.append(
+                        Detection(
+                            raw_label=self.names.get(class_id, str(class_id)),
+                            confidence=confidence,
+                            bbox=xyxy,
+                            bbox_normalized=normalize_bbox(
+                                xyxy,
+                                image_width=image_width,
+                                image_height=image_height,
+                            ),
                             image_width=image_width,
                             image_height=image_height,
-                        ),
-                        image_width=image_width,
-                        image_height=image_height,
+                        )
                     )
-                )
 
-        return summarize_detections(detections)
+            return summarize_detections(detections)
