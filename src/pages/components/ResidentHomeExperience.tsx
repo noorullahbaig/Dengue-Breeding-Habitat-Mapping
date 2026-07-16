@@ -10,7 +10,7 @@ import {
 import type { PublicHotspot, PublicMapReport } from "@/types/report";
 import { StatusBadge } from "@/features/shared/StatusBadge";
 import { ButtonLink, MetaLabel } from "@/components/ui";
-import heroImage from "@/assets/home/dengue-tire-habitat.webp";
+import heroImage from "@/assets/home/klcc-reporting-hero.webp";
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 
