@@ -100,7 +100,7 @@ describe("ResidentHomeExperience", () => {
 			screen.getByRole("link", { name: "Track a report" }),
 		).toHaveAttribute("href", "/status");
 		expect(
-			screen.getByRole("link", { name: "What should I report?" }),
+			screen.getByRole("link", { name: "Learn what to report" }),
 		).toHaveAttribute("href", "/learn");
 		expect(
 			screen.getByRole("link", { name: "Explore common breeding habitats" }),

@@ -103,7 +103,7 @@ export function ResidentHomeExperience() {
 						</ButtonLink>
 					</div>
 					<Link to="/learn" className="home-hero__learn-link">
-						What should I report?
+						Learn what to report
 						<ArrowRight size={16} aria-hidden="true" />
 					</Link>
 				</div>
