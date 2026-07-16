@@ -338,7 +338,6 @@ img {
 .panel h3,
 .metric-card__value,
 .home-hero__title,
-.learn-hero h1,
 .app-rail__brand strong {
   font-family: var(--font-heading);
   letter-spacing: -0.04em;
@@ -1733,7 +1732,6 @@ img {
 }
 
 .home-hero,
-.learn-hero,
 .home-guidance,
 .home-activity,
 .map-toolbar,
@@ -1747,8 +1745,7 @@ img {
   box-shadow: var(--shadow-panel);
 }
 
-.home-hero,
-.learn-hero {
+.home-hero {
   display: grid;
   gap: 1rem;
   padding: 1.1rem;
@@ -1759,15 +1756,13 @@ img {
   gap: 0.85rem;
 }
 
-.home-hero__title,
-.learn-hero h1 {
+.home-hero__title {
   margin: 0;
   font-size: clamp(2.2rem, 5vw, 3.85rem);
   line-height: 0.95;
 }
 
-.home-hero__description,
-.learn-hero p {
+.home-hero__description {
   margin: 0;
   max-width: 34rem;
   color: var(--color-ink-soft);

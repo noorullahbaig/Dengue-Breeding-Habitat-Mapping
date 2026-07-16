@@ -12,6 +12,7 @@ import '@/styles/stitch.css'
 import '@/styles/map.css'
 import '@/styles/report.css'
 import '@/styles/home.css'
+import '@/styles/learn.css'
 import { Amplify } from 'aws-amplify'
 
 if (authRuntimeConfig.cognito) {
