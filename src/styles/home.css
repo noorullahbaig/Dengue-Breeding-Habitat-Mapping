@@ -102,6 +102,34 @@
 	background: rgba(255, 255, 255, 0.1);
 }
 
+.page--resident-home .home-hero__learn-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: fit-content;
+	min-height: 2.75rem;
+	font-family: var(--font-label);
+	font-size: 0.88rem;
+	font-weight: 800;
+	text-decoration: underline;
+	text-decoration-color: rgba(255, 255, 255, 0.5);
+	text-underline-offset: 0.22em;
+	color: #e8f7f9;
+}
+
+.page--resident-home .home-hero__learn-link:hover {
+	text-decoration-color: currentColor;
+	color: #fff;
+}
+
+.page--resident-home .home-hero__learn-link svg {
+	transition: transform 160ms var(--ease-out-expo);
+}
+
+.page--resident-home .home-hero__learn-link:hover svg {
+	transform: translateX(3px);
+}
+
 .page--resident-home .home-hero__visual {
 	position: relative;
 	min-height: 25rem;
@@ -712,6 +740,10 @@
 	.page--resident-home .home-hero__image-note {
 		display: none;
 	}
+
+	.page--resident-home .home-hero__learn-link {
+		align-self: center;
+	}
 }
 
 @media (min-width: 600px) and (max-width: 759px) {
@@ -758,6 +790,7 @@
 @media (prefers-reduced-motion: reduce) {
 	.page--resident-home .home-hero__image,
 	.page--resident-home .home-hero__actions .ui-button,
+	.page--resident-home .home-hero__learn-link svg,
 	.page--resident-home .home-readiness__learn svg,
 	.page--resident-home .home-activity__header-link svg,
 	.page--resident-home .home-activity__loading-bar {

@@ -102,6 +102,10 @@ export function ResidentHomeExperience() {
 							Track a report
 						</ButtonLink>
 					</div>
+					<Link to="/learn" className="home-hero__learn-link">
+						What should I report?
+						<ArrowRight size={16} aria-hidden="true" />
+					</Link>
 				</div>
 				<div className="home-hero__visual" aria-hidden="true">
 					<img src={heroImage} alt="" className="home-hero__image" />
@@ -138,7 +142,7 @@ export function ResidentHomeExperience() {
 				<div className="home-readiness__learn">
 					<span>Not sure what counts as a breeding site?</span>
 					<Link to="/learn">
-						Explore the 7 common habitats{" "}
+						Explore common breeding habitats{" "}
 						<ArrowRight size={16} aria-hidden="true" />
 					</Link>
 				</div>

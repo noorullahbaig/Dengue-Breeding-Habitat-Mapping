@@ -60,6 +60,7 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
       const title = hero.querySelector('.home-hero__title')
       const description = hero.querySelector('.home-hero__description')
       const actions = hero.querySelector('.home-hero__actions')
+      const learnLink = hero.querySelector('.home-hero__learn-link')
       const buttons = [...hero.querySelectorAll('.ui-button')]
       if (
         !(visual instanceof HTMLElement) ||
@@ -67,16 +68,18 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
         !note ||
         !(title instanceof HTMLElement) ||
         !(description instanceof HTMLElement) ||
-        !(actions instanceof HTMLElement)
+        !(actions instanceof HTMLElement) ||
+        !(learnLink instanceof HTMLElement)
       ) {
         return null
       }
 
       const heroRect = hero.getBoundingClientRect()
       const imageRect = image.getBoundingClientRect()
-      const contentRects = [title, description, actions, ...buttons].map((element) =>
+      const contentRects = [title, description, actions, learnLink, ...buttons].map((element) =>
         element.getBoundingClientRect(),
       )
+      const learnLinkRect = learnLink.getBoundingClientRect()
       const imageStyle = window.getComputedStyle(image)
 
       return {
@@ -84,6 +87,7 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
         contentContained: contentRects.every(
           (rect) => rect.left >= heroRect.left - 1 && rect.right <= heroRect.right + 1,
         ),
+        learnLinkHeight: learnLinkRect.height,
         imageEdges: {
           top: Math.abs(imageRect.top - heroRect.top),
           right: Math.abs(imageRect.right - heroRect.right),
@@ -101,6 +105,7 @@ test('uses the KLCC artwork as a compact phone hero and split tablet hero', asyn
     expect(phoneHero?.heroHeight ?? 0).toBeGreaterThanOrEqual(512)
     expect(phoneHero?.heroHeight ?? 0).toBeLessThanOrEqual(546)
     expect(phoneHero?.contentContained).toBe(true)
+    expect(phoneHero?.learnLinkHeight ?? 0).toBeGreaterThanOrEqual(44)
     expect(phoneHero?.visualPosition).toBe('absolute')
     expect(phoneHero?.objectFit).toBe('cover')
     expect(phoneHero?.objectPosition).toBe('50% 50%')

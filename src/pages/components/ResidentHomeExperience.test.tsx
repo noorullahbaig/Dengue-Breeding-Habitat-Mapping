@@ -100,8 +100,12 @@ describe("ResidentHomeExperience", () => {
 			screen.getByRole("link", { name: "Track a report" }),
 		).toHaveAttribute("href", "/status");
 		expect(
-			screen.getByRole("link", { name: "Explore the 7 common habitats" }),
+			screen.getByRole("link", { name: "What should I report?" }),
 		).toHaveAttribute("href", "/learn");
+		expect(
+			screen.getByRole("link", { name: "Explore common breeding habitats" }),
+		).toHaveAttribute("href", "/learn");
+		expect(screen.queryByText(/7 common habitats/i)).not.toBeInTheDocument();
 		expect(screen.queryByText("Photo of the habitat")).not.toBeInTheDocument();
 		await waitFor(() => {
 			expect(homeHarness.listPublicReports).toHaveBeenCalledTimes(1);
