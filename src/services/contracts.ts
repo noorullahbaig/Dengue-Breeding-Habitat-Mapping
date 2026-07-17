@@ -39,10 +39,14 @@ export interface ReportsService {
     draft: ReportDraft,
     options?: CreateReportOptions,
   ): Promise<SubmittedReport>
-  precheckReport(draft: ReportDraft): Promise<ReportPrecheck>
+  precheckReport(draft: ReportDraft, options?: RequestOptions): Promise<ReportPrecheck>
   findNearbyReportCandidates(draft: ReportDraft): Promise<NearbyReportCheck>
   getReportStatus(reference: string): Promise<ReportStatus | null>
   getPublicReport(reference: string): Promise<PublicReportDetail | null>
+}
+
+export interface RequestOptions {
+  signal?: AbortSignal
 }
 
 export interface MapService {

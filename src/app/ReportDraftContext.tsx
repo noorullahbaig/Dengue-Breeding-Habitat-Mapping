@@ -1,4 +1,6 @@
 import {
+  useCallback,
+  useMemo,
   useState,
   type PropsWithChildren,
 } from 'react'
@@ -16,32 +18,35 @@ export function ReportDraftProvider({ children }: PropsWithChildren) {
     return window.sessionStorage.getItem(LAST_REFERENCE_KEY) ?? ''
   })
 
-  function updateDraft(updates: Partial<ReportDraft>) {
+  const updateDraft = useCallback((updates: Partial<ReportDraft>) => {
     setDraft((current) => ({
       ...current,
       ...updates,
     }))
-  }
+  }, [])
 
-  function resetDraft() {
+  const resetDraft = useCallback(() => {
     setDraft({})
-  }
+  }, [])
 
-  function setLastSubmittedReference(reference: string) {
+  const setLastSubmittedReference = useCallback((reference: string) => {
     setLastSubmittedReferenceState(reference)
     window.sessionStorage.setItem(LAST_REFERENCE_KEY, reference)
-  }
+  }, [])
+
+  const contextValue = useMemo(
+    () => ({
+      draft,
+      updateDraft,
+      resetDraft,
+      lastSubmittedReference,
+      setLastSubmittedReference,
+    }),
+    [draft, lastSubmittedReference, resetDraft, setLastSubmittedReference, updateDraft],
+  )
 
   return (
-    <ReportDraftContext.Provider
-      value={{
-        draft,
-        updateDraft,
-        resetDraft,
-        lastSubmittedReference,
-        setLastSubmittedReference,
-      }}
-    >
+    <ReportDraftContext.Provider value={contextValue}>
       {children}
     </ReportDraftContext.Provider>
   )

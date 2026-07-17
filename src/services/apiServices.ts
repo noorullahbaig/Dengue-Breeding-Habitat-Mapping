@@ -1,6 +1,6 @@
 import { pointInBounds } from '@/services/mapBounds'
 import { preparePhotoForUpload, StaleFileError } from '@/lib/imageProcessing'
-import type { AppServices, CreateReportOptions, PublicReportFilters } from '@/services/contracts'
+import type { AppServices, CreateReportOptions, PublicReportFilters, RequestOptions } from '@/services/contracts'
 import type {
   ApiHealthStatus,
   NearbyReportCheck,
@@ -25,6 +25,7 @@ export type AppApiErrorKind =
   | 'network'
   | 'model_not_ready'
   | 'model_processing_failed'
+  | 'timeout'
   | 'server_error'
   | 'stale_file'
 
@@ -204,7 +205,10 @@ async function buildReportFormData(
   return formData
 }
 
-async function buildNearbyCandidateFormData(draft: ReportDraft) {
+async function buildNearbyCandidateFormData(
+  draft: ReportDraft,
+  options?: RequestOptions,
+) {
   const location = draft.correctedLocation ?? draft.detectedLocation
   const detectedLocation = draft.detectedLocation
 
@@ -212,7 +216,7 @@ async function buildNearbyCandidateFormData(draft: ReportDraft) {
     throw new Error('The report draft is incomplete.')
   }
 
-  const processedBlob = await preparePhotoForUpload(draft.photoFile)
+  const processedBlob = await preparePhotoForUpload(draft.photoFile, options)
 
   const formData = new FormData()
   formData.append('image', processedBlob, 'image.jpg')
@@ -396,19 +400,20 @@ export function createApiAppServices(apiBaseUrl: string, getAuthToken?: () => Pr
           throw error
         }
       },
-      async precheckReport(draft) {
-        const body = await buildNearbyCandidateFormData(draft)
-
+      async precheckReport(draft, options?: RequestOptions) {
         try {
+          const body = await buildNearbyCandidateFormData(draft, options)
           let response = await fetch(`${baseUrl}/reports/precheck`, {
             method: 'POST',
             body,
+            signal: options?.signal,
           })
 
           if (response.status === 404) {
             response = await fetch(`${baseUrl}/reports/nearby-candidates`, {
               method: 'POST',
               body,
+              signal: options?.signal,
             })
           }
 

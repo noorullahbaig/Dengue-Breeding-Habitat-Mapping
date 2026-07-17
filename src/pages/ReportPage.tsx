@@ -46,8 +46,8 @@ import {
 import type {
 	LocationPoint,
 	NearbyReportCandidate,
-	ReportPrecheck,
 } from "@/types/report";
+import { useReportPrecheck } from "@/pages/useReportPrecheck";
 
 function locationSignature(location?: LocationPoint | null) {
 	return location
@@ -57,6 +57,11 @@ function locationSignature(location?: LocationPoint | null) {
 
 function precheckFailureCopy(error: AppApiError) {
 	switch (error.kind) {
+		case "timeout":
+			return {
+				title: "The AI check took too long.",
+				helper: "Retry the check, or choose a clearer, smaller photo before submitting.",
+			};
 		case "network":
 			return {
 				title: "Could not reach the backend API server.",
@@ -115,10 +120,7 @@ export function ReportPage({
 	);
 	const [hasScrolledConsentToEnd, setHasScrolledConsentToEnd] = useState(false);
 	const [pinWarning, setPinWarning] = useState("");
-	const [precheck, setPrecheck] = useState<ReportPrecheck | null>(null);
 	const [precheckSignature, setPrecheckSignature] = useState("");
-	const [isPrecheckLoading, setIsPrecheckLoading] = useState(false);
-	const [precheckError, setPrecheckError] = useState<AppApiError | null>(null);
 	const [nearbyCandidates, setNearbyCandidates] = useState<
 		NearbyReportCandidate[]
 	>([]);
@@ -197,6 +199,22 @@ export function ReportPage({
 					draft.photoEvidence?.size ?? 0
 				}:${activeLocationSignature}`
 			: "";
+	const precheckRequest = useReportPrecheck({
+		enabled:
+			currentStep >= 3 &&
+			photoReady &&
+			pinReady &&
+			Boolean(finalLocation) &&
+			Boolean(activePrecheckSignature) &&
+			precheckSignature !== activePrecheckSignature,
+		requestKey: activePrecheckSignature,
+		draft,
+		correctedLocation: finalLocation ?? KL_CENTER,
+		reportsService,
+	});
+	const precheck = precheckRequest.precheck;
+	const isPrecheckLoading = precheckRequest.isLoading;
+	const precheckError = precheckRequest.error;
 	const precheckReady = Boolean(
 		precheck && precheckSignature === activePrecheckSignature,
 	);
@@ -235,6 +253,36 @@ export function ReportPage({
 			setIsNearbyPromptOpen(true);
 		}
 	}, [currentStep, needsStackDecision, precheckReady]);
+
+	useEffect(() => {
+		if (
+			precheckRequest.status === "success" &&
+			precheck &&
+			activePrecheckSignature &&
+			precheckSignature !== activePrecheckSignature
+		) {
+			setPrecheckSignature(activePrecheckSignature);
+			setNearbyCandidates(precheck.candidates);
+		}
+
+		if (precheckRequest.error?.kind === "stale_file") {
+			alert(precheckRequest.error.message);
+			updateDraft({
+				photoFile: null,
+				photoPreviewUrl: "",
+				photoEvidence: undefined,
+			});
+			setCurrentStep(0);
+			setPrecheckSignature("");
+		}
+	}, [
+		activePrecheckSignature,
+		precheck,
+		precheckRequest.error,
+		precheckRequest.status,
+		precheckSignature,
+		updateDraft,
+	]);
 	const isMobileLocationStep = isMobile && currentStep === 1;
 	const isMobileConsentStep = isMobile && currentStep === 2;
 	const stepState = {
@@ -247,8 +295,6 @@ export function ReportPage({
 
 	useEffect(() => {
 		if (precheckSignature && precheckSignature !== activePrecheckSignature) {
-			setPrecheck(null);
-			setPrecheckError(null);
 			setNearbyCandidates([]);
 			setSelectedStackReference("");
 			setDecisionLocationSignature("");
@@ -299,93 +345,12 @@ export function ReportPage({
 		};
 	}, []);
 
-	useEffect(() => {
-		if (
-			currentStep < 3 ||
-			!photoReady ||
-			!pinReady ||
-			!finalLocation ||
-			!activePrecheckSignature ||
-			precheckSignature === activePrecheckSignature
-		) {
-			return;
-		}
-
-		let isMounted = true;
-		setPrecheck(null);
-		setIsPrecheckLoading(true);
-		setPrecheckError(null);
-
-		reportsService
-			.precheckReport({
-				...draft,
-				correctedLocation: finalLocation,
-			})
-			.then((result) => {
-				if (!isMounted) return;
-
-				setPrecheck(result);
-				setPrecheckSignature(activePrecheckSignature);
-				setNearbyCandidates(result.candidates);
-			})
-			.catch((error) => {
-				if (isMounted) {
-					if (error instanceof AppApiError && error.kind === "stale_file") {
-						alert(error.message);
-						updateDraft({
-							photoFile: null,
-							photoPreviewUrl: "",
-							photoEvidence: undefined,
-						});
-						setCurrentStep(0);
-						setPrecheck(null);
-						setPrecheckError(null);
-						return;
-					}
-
-					setPrecheck(null);
-					setPrecheckError(
-						error instanceof AppApiError
-							? error
-							: new AppApiError({
-									kind: "server_error",
-									message:
-										"The backend returned an unexpected error during AI pre-check.",
-									detail:
-										error instanceof Error ? error.message : String(error),
-									transport: "http",
-								}),
-					);
-				}
-			})
-			.finally(() => {
-				if (isMounted) {
-					setIsPrecheckLoading(false);
-				}
-			});
-
-		return () => {
-			isMounted = false;
-		};
-	}, [
-		activePrecheckSignature,
-		currentStep,
-		draft,
-		finalLocation,
-		photoReady,
-		pinReady,
-		precheckSignature,
-		reportsService,
-		updateDraft,
-	]);
-
 	function retryPrecheck() {
-		setPrecheck(null);
-		setPrecheckError(null);
 		setNearbyCandidates([]);
 		setSelectedStackReference("");
 		setDecisionLocationSignature("");
-		setPrecheckSignature(`${activePrecheckSignature}:retry`);
+		setPrecheckSignature("");
+		precheckRequest.retry();
 	}
 
 	function goToStep(nextStep: number) {
@@ -486,7 +451,6 @@ export function ReportPage({
 			},
 			capturedAt: new Date().toISOString(),
 		});
-		setPrecheck(null);
 		setPrecheckSignature("");
 		stopCameraStream(stream);
 		setStream(null);
@@ -502,7 +466,6 @@ export function ReportPage({
 		updateDraft({ hasConfirmedPin: false });
 		setLocationRequestError("");
 		setPinWarning(isInside ? "" : SERVICE_AREA_ERROR);
-		setPrecheck(null);
 		setPrecheckSignature("");
 	}
 
@@ -516,7 +479,6 @@ export function ReportPage({
 		setHasConfirmedPin(false);
 		updateDraft({ hasConfirmedPin: false });
 		setPinWarning(isWithinServiceArea(location) ? "" : SERVICE_AREA_ERROR);
-		setPrecheck(null);
 		setPrecheckSignature("");
 	}
 

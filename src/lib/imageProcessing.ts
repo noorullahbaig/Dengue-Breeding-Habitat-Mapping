@@ -5,7 +5,10 @@ export class StaleFileError extends Error {
   }
 }
 
-export async function preparePhotoForUpload(file: File | Blob | null | undefined): Promise<Blob> {
+export async function preparePhotoForUpload(
+  file: File | Blob | null | undefined,
+  options: { signal?: AbortSignal } = {},
+): Promise<Blob> {
   console.log('Validating photo upload:', {
     name: file instanceof File ? file.name : undefined,
     type: file?.type,
@@ -33,8 +36,30 @@ export async function preparePhotoForUpload(file: File | Blob | null | undefined
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
-    
+    let settled = false
+
+    const cleanup = () => {
+      URL.revokeObjectURL(url)
+      options.signal?.removeEventListener('abort', abort)
+    }
+
+    const abort = () => {
+      if (settled) return
+      settled = true
+      img.src = ''
+      cleanup()
+      reject(new DOMException('Photo processing was cancelled.', 'AbortError'))
+    }
+
+    if (options.signal?.aborted) {
+      abort()
+      return
+    }
+
+    options.signal?.addEventListener('abort', abort, { once: true })
+
     img.onload = () => {
+      if (settled) return
       URL.revokeObjectURL(url)
       
       const canvas = document.createElement('canvas')
@@ -43,6 +68,8 @@ export async function preparePhotoForUpload(file: File | Blob | null | undefined
       
       const ctx = canvas.getContext('2d')
       if (!ctx) {
+        settled = true
+        options.signal?.removeEventListener('abort', abort)
         reject(new Error('Could not process image.'))
         return
       }
@@ -51,6 +78,9 @@ export async function preparePhotoForUpload(file: File | Blob | null | undefined
       
       canvas.toBlob(
         (blob) => {
+          if (settled) return
+          settled = true
+          options.signal?.removeEventListener('abort', abort)
           if (!blob) {
             reject(new Error('Failed to encode image.'))
             return
@@ -61,9 +91,11 @@ export async function preparePhotoForUpload(file: File | Blob | null | undefined
         0.88
       )
     }
-    
+
     img.onerror = () => {
-      URL.revokeObjectURL(url)
+      if (settled) return
+      settled = true
+      cleanup()
       reject(new StaleFileError())
     }
     
