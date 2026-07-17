@@ -55,8 +55,12 @@ export function useReportPrecheck({
   const requestToken = requestKey ? `${requestKey}:${retryNonce}` : ''
 
   useEffect(() => {
-    if (!enabled || !requestToken) {
+    if (!requestToken) {
       setState({ status: 'idle', precheck: null, error: null })
+      return
+    }
+
+    if (!enabled) {
       return
     }
 

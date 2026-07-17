@@ -117,4 +117,80 @@ describe('useReportPrecheck', () => {
     expect(firstSignal.aborted).toBe(true)
     expect(reportsService.precheckReport).toHaveBeenCalledTimes(2)
   })
+
+  it('retains a successful result when the request becomes disabled', async () => {
+    const reportsService = createService()
+    const result = {
+      prediction: {
+        label: 'tire' as const,
+        confidence: 0.9,
+        confidenceBand: 'high' as const,
+        topRawLabel: 'Tire',
+        detections: [],
+        advisoryText: 'Advisory only.',
+      },
+      candidates: [],
+      imageUrl: null,
+    }
+    reportsService.precheckReport.mockResolvedValue(result)
+
+    const { result: hookResult, rerender } = renderHook(
+      ({ enabled }) =>
+        useReportPrecheck({
+          ...baseOptions,
+          enabled,
+          reportsService,
+        }),
+      { initialProps: { enabled: true } },
+    )
+
+    await waitFor(() => {
+      expect(hookResult.current.status).toBe('success')
+    })
+
+    rerender({ enabled: false })
+
+    await waitFor(() => {
+      expect(hookResult.current.status).toBe('success')
+      expect(hookResult.current.precheck).toEqual(result)
+    })
+    expect(reportsService.precheckReport).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears the result when the request key is removed', async () => {
+    const reportsService = createService()
+    reportsService.precheckReport.mockResolvedValue({
+      prediction: {
+        label: 'tire',
+        confidence: 0.9,
+        confidenceBand: 'high',
+        topRawLabel: 'Tire',
+        detections: [],
+        advisoryText: 'Advisory only.',
+      },
+      candidates: [],
+      imageUrl: null,
+    })
+
+    const { result: hookResult, rerender } = renderHook(
+      ({ requestKey }) =>
+        useReportPrecheck({
+          ...baseOptions,
+          requestKey,
+          reportsService,
+        }),
+      { initialProps: { requestKey: baseOptions.requestKey } },
+    )
+
+    await waitFor(() => {
+      expect(hookResult.current.status).toBe('success')
+    })
+
+    rerender({ requestKey: '' })
+
+    await waitFor(() => {
+      expect(hookResult.current.status).toBe('idle')
+      expect(hookResult.current.precheck).toBeNull()
+    })
+  })
 })
