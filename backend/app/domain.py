@@ -25,10 +25,6 @@ MIN_ALLOWED_CORRECTION_RADIUS_METERS = 75
 EARTH_RADIUS_METERS = 6_371_000
 
 
-def coarsen_location(latitude: float, longitude: float) -> tuple[float, float]:
-    return round(latitude * 200) / 200, round(longitude * 200) / 200
-
-
 def distance_meters(
     latitude_a: float,
     longitude_a: float,
