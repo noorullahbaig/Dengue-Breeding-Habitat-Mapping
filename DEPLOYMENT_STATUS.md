@@ -64,17 +64,11 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 
 ---
 
-## 📄 Documentation Generated
+## 📄 Current Deployment Guide
 
-1. **DEPLOYMENT_READINESS_REPORT.md** - Full audit report with all details
-2. **DEPLOYMENT_FIXES_SUMMARY.md** - Quick summary of changes
-3. **PRE_DEPLOYMENT_CHECKLIST.md** - Step-by-step checklist
-4. **DEPLOYMENT_STATUS.md** - This file (executive summary)
-
-**Existing guides (unchanged):**
-
-- AWS_SETUP_GUIDE.md - Complete deployment instructions
-- DEPLOYMENT_README.md - Quick reference
+Use [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) as the authoritative
+EC2 deployment workflow. This status file is retained only as a historical
+snapshot of the original deployment audit.
 
 ---
 
@@ -82,11 +76,11 @@ All deployment files have been audited, **7 critical issues fixed**, and the dep
 
 ### Step 1: Review (5 minutes)
 
-Read `DEPLOYMENT_READINESS_REPORT.md` to understand all fixes
+Read `PRODUCTION_DEPLOYMENT.md` for the current deployment workflow
 
 ### Step 2: AWS Resources (30 minutes)
 
-Follow `AWS_SETUP_GUIDE.md` to create:
+Follow the AWS resource prerequisites in `PRODUCTION_DEPLOYMENT.md` to create:
 
 - RDS PostgreSQL instance with PostGIS
 - EC2 t3.medium instance
@@ -153,10 +147,9 @@ Follow `AWS_SETUP_GUIDE.md` to create:
 
 If issues occur during deployment:
 
-1. Check `docker compose logs -f`
-2. Verify health endpoint
-3. Review DEPLOYMENT_READINESS_REPORT.md troubleshooting section
-4. Check PRE_DEPLOYMENT_CHECKLIST.md for common mistakes
+1. Check `docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=100`
+2. Verify both `/health` and `/api/health`
+3. Review `PRODUCTION_DEPLOYMENT.md` troubleshooting and rollback sections
 
 ---
 

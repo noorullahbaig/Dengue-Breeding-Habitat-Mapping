@@ -85,10 +85,10 @@
 **All blocking issues resolved.** You can now proceed with AWS deployment.
 
 **Next Steps:**
-1. Review `DEPLOYMENT_READINESS_REPORT.md` for full details
-2. Follow `AWS_SETUP_GUIDE.md` step-by-step
-3. Create RDS and EC2 resources manually via AWS Console
-4. Upload code and run validation on EC2
-5. Deploy with `docker compose -f docker-compose.prod.yml up -d --build`
+1. Review [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for the authoritative workflow
+2. Create RDS and EC2 resources manually via AWS Console
+3. Populate production configuration through AWS Systems Manager Parameter Store
+4. Run `./scripts/deploy-production.sh` on EC2
+5. Verify both health endpoints and the resident submission flow
 
 **Confidence:** HIGH ✅
