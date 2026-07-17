@@ -129,6 +129,42 @@ describe('LocationPermissionGate', () => {
     expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled()
   })
 
+  it('recovers when the location request rejects unexpectedly', async () => {
+    requestCurrentLocation.mockRejectedValueOnce(new Error('browser request failed'))
+    renderGate()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+
+    expect(await screen.findByRole('button', { name: 'Try Again' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'Share My Location' })).not.toBeInTheDocument()
+  })
+
+  it('recovers when starting the location request throws synchronously', async () => {
+    requestCurrentLocation.mockImplementationOnce(() => {
+      throw new Error('browser request failed')
+    })
+    renderGate()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+
+    expect(await screen.findByRole('button', { name: 'Try Again' })).toBeEnabled()
+  })
+
+  it('starts a fresh request after an unexpected rejection', async () => {
+    requestCurrentLocation
+      .mockRejectedValueOnce(new Error('browser request failed'))
+      .mockResolvedValueOnce({ ok: true, location })
+    const onLocationObtained = vi.fn()
+    renderGate(onLocationObtained)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Try Again' }))
+
+    expect(await screen.findByText('Location map')).toBeInTheDocument()
+    expect(requestCurrentLocation).toHaveBeenCalledTimes(2)
+    expect(onLocationObtained).toHaveBeenCalledWith(location)
+  })
+
   it('ignores a location result after unmount', async () => {
     let resolveRequest: (result: LocationRequestResult) => void = () => {}
     requestCurrentLocation.mockReturnValue(

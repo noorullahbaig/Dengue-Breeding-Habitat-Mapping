@@ -35,6 +35,8 @@ const POSITION_OPTIONS: Record<LocationRequestMode, Required<PositionOptions>> =
   },
 }
 
+const REQUEST_WATCHDOG_TIMEOUT_MS = 30_000
+
 const FAILURE_MESSAGES: Record<Exclude<LocationFailureReason, 'timeout'>, string> = {
   denied:
     'Location access is blocked for this website. In Safari, change the website Location setting to Ask or Allow and confirm iOS Location Services are on, then try again.',
@@ -100,26 +102,46 @@ export function requestCurrentLocation({
   }
 
   return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          ok: true,
-          location: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracyMeters: position.coords.accuracy,
-            source: 'browser',
-          },
-        })
-      },
-      (error) => {
-        resolve({
-          ok: false,
-          reason: failureReasonForBrowserCode(error.code),
-          browserCode: error.code,
-        })
-      },
-      POSITION_OPTIONS[mode],
-    )
+    let settled = false
+    let watchdogId: number | undefined
+
+    function settle(result: LocationRequestResult) {
+      if (settled) return
+      settled = true
+      if (watchdogId !== undefined) {
+        window.clearTimeout(watchdogId)
+      }
+      resolve(result)
+    }
+
+    watchdogId = window.setTimeout(() => {
+      settle({ ok: false, reason: 'timeout' })
+    }, REQUEST_WATCHDOG_TIMEOUT_MS)
+
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          settle({
+            ok: true,
+            location: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracyMeters: position.coords.accuracy,
+              source: 'browser',
+            },
+          })
+        },
+        (error) => {
+          settle({
+            ok: false,
+            reason: failureReasonForBrowserCode(error.code),
+            browserCode: error.code,
+          })
+        },
+        POSITION_OPTIONS[mode],
+      )
+    } catch {
+      settle({ ok: false, reason: 'unavailable' })
+    }
   })
 }

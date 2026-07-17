@@ -243,6 +243,29 @@ describe("PublicMapExperience report stack sheet", () => {
 		).toBeInTheDocument();
 	});
 
+	it("re-enables the location control when the request rejects", async () => {
+		experienceHarness.requestCurrentLocation.mockRejectedValueOnce(
+			new Error("browser request failed"),
+		);
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Center map on my location" }),
+		);
+
+		const button = await screen.findByRole("button", {
+			name: "Center map on my location",
+		});
+		expect(button).toBeEnabled();
+		expect(
+			await screen.findByText(/could not determine its location/i),
+		).toBeInTheDocument();
+	});
+
 	afterEach(() => {
 		vi.clearAllMocks();
 	});

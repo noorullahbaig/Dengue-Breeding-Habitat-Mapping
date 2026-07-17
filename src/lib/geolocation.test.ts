@@ -154,6 +154,62 @@ describe('requestCurrentLocation', () => {
       requestCurrentLocation({ mode: 'verification' }),
     ).resolves.toEqual({ ok: false, reason: 'unsupported' })
   })
+
+  it('converts a synchronous browser API error into an unavailable result', async () => {
+    const getCurrentPosition = vi.fn(() => {
+      throw new Error('browser request failed')
+    })
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    })
+
+    await expect(
+      requestCurrentLocation({ mode: 'verification' }),
+    ).resolves.toEqual({ ok: false, reason: 'unavailable' })
+  })
+
+  it('settles with timeout when the browser never invokes a callback', async () => {
+    vi.useFakeTimers()
+    try {
+      const geolocation = installGeolocation()
+      const resultPromise = requestCurrentLocation({ mode: 'verification' })
+
+      await vi.advanceTimersByTimeAsync(30_000)
+
+      await expect(resultPromise).resolves.toEqual({ ok: false, reason: 'timeout' })
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledOnce()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('ignores a late browser success after the watchdog has settled', async () => {
+    vi.useFakeTimers()
+    try {
+      const geolocation = installGeolocation()
+      const resultPromise = requestCurrentLocation({ mode: 'verification' })
+
+      await vi.advanceTimersByTimeAsync(30_000)
+      geolocation.request?.success({
+        coords: {
+          latitude: 3.139,
+          longitude: 101.6869,
+          accuracy: 20,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: 1,
+        toJSON: () => ({}),
+      })
+
+      await expect(resultPromise).resolves.toEqual({ ok: false, reason: 'timeout' })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe('getLocationFailureMessage', () => {

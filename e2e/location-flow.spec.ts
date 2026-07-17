@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
+
+const evidenceImage = readFileSync(resolve(process.cwd(), 'src/assets/learn/habitat-tire.webp'))
 
 test('public map centers from an explicitly granted browser location', async ({ context, page }) => {
   await context.grantPermissions(['geolocation'])
@@ -26,6 +30,32 @@ test('public map exposes a stable recovery message when browser location is deni
   await expect(
     page.getByRole('button', { name: 'Center map on my location' }),
   ).toBeEnabled()
+})
+
+test('report location denial removes the stale share button and supports retry', async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await context.clearPermissions()
+
+  await page.goto('/report')
+  await page.locator('input[type="file"]').first().setInputFiles({
+    name: 'location-denial-recovery.webp',
+    mimeType: 'image/webp',
+    buffer: evidenceImage,
+  })
+  await page.getByRole('button', { name: 'Use photo & continue' }).click()
+  await page.getByRole('button', { name: 'Share My Location' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Location Access Blocked' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Share My Location' })).toHaveCount(0)
+
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
+  await page.getByRole('button', { name: "I've updated settings — Try Again" }).click()
+
+  await expect(page.getByRole('button', { name: 'Use current location again' })).toBeVisible()
 })
 
 test('embedded pages explain a geolocation Permissions Policy block', async ({ page }) => {

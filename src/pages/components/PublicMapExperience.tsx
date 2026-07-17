@@ -176,7 +176,28 @@ export function PublicMapExperience() {
 		setLocationError("");
 		setIsLocating(true);
 
-		void requestCurrentLocation({ mode: "map-centering" }).then((result) => {
+		const handleUnexpectedFailure = () => {
+			if (
+				!isMountedRef.current ||
+				activeLocationRequestRef.current !== requestId
+			) {
+				return;
+			}
+
+			activeLocationRequestRef.current = null;
+			setIsLocating(false);
+			setLocationError(getLocationFailureMessage("unavailable", "map-centering"));
+		};
+
+		let locationRequest: ReturnType<typeof requestCurrentLocation>;
+		try {
+			locationRequest = requestCurrentLocation({ mode: "map-centering" });
+		} catch {
+			handleUnexpectedFailure();
+			return;
+		}
+
+		void locationRequest.then((result) => {
 			if (
 				!isMountedRef.current ||
 				activeLocationRequestRef.current !== requestId
@@ -196,7 +217,7 @@ export function PublicMapExperience() {
 			}
 
 			setLocationError(getLocationFailureMessage(result.reason, "map-centering"));
-		});
+		}).catch(handleUnexpectedFailure);
 	}
 
 	return (

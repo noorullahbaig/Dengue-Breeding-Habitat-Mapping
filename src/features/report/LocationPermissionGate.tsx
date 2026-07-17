@@ -52,7 +52,24 @@ export function LocationPermissionGate({
     setIsLocating(true)
     setPhase((currentPhase) => currentPhase === 'ready' ? 'ready' : 'locating')
 
-    void requestCurrentLocation({ mode: 'verification' }).then((result) => {
+    const handleUnexpectedFailure = () => {
+      if (!mountedRef.current || activeRequestRef.current !== requestId) return
+
+      activeRequestRef.current = null
+      setIsLocating(false)
+      setFailureReason('unavailable')
+      setPhase('failed')
+    }
+
+    let locationRequest: ReturnType<typeof requestCurrentLocation>
+    try {
+      locationRequest = requestCurrentLocation({ mode: 'verification' })
+    } catch {
+      handleUnexpectedFailure()
+      return
+    }
+
+    void locationRequest.then((result) => {
       if (!mountedRef.current || activeRequestRef.current !== requestId) return
 
       activeRequestRef.current = null
@@ -66,7 +83,7 @@ export function LocationPermissionGate({
 
       setFailureReason(result.reason)
       setPhase(result.reason === 'denied' ? 'blocked' : 'failed')
-    })
+    }).catch(handleUnexpectedFailure)
   }, [onLocationObtained])
 
   if (phase === 'blocked') {
