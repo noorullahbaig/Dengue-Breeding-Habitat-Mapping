@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { MOBILE_VIEWPORT_MEDIA_QUERY } from '@/app/layoutConstants'
@@ -6,6 +6,8 @@ import { ReportPage } from '@/pages/ReportPage'
 import type { ReportDraft } from '@/types/report'
 
 const updateDraft = vi.fn()
+const resetDraft = vi.fn()
+const precheckReport = vi.fn()
 
 const draft: ReportDraft = {
   photoFile: new File(['photo'], 'evidence.jpg', { type: 'image/jpeg' }),
@@ -33,6 +35,7 @@ vi.mock('@/app/useReportDraft', () => ({
   useReportDraft: () => ({
     draft,
     updateDraft,
+    resetDraft,
     setLastSubmittedReference: vi.fn(),
   }),
 }))
@@ -48,7 +51,7 @@ vi.mock('@/app/useAuth', () => ({
 
 vi.mock('@/app/useServices', () => ({
   useServices: () => ({
-    reportsService: {},
+    reportsService: { precheckReport },
   }),
 }))
 
@@ -76,6 +79,8 @@ vi.mock('@/pages/components/StaticReceiptMap', () => ({
 describe('ReportPage mobile photo review', () => {
   beforeEach(() => {
     updateDraft.mockClear()
+    resetDraft.mockClear()
+    precheckReport.mockReset()
     draft.wizardStep = 0
     draft.hasConfirmedPin = false
     draft.hasPublicConsent = false
@@ -123,5 +128,49 @@ describe('ReportPage mobile photo review', () => {
 
     expect(screen.getByRole('heading', { name: 'Confirm location' })).toBeInTheDocument()
     expect(screen.getByText('Location map')).toBeInTheDocument()
+  })
+
+  it('fully restarts the report when retaking after no habitat is detected', async () => {
+    const user = userEvent.setup()
+    draft.wizardStep = 3
+    draft.hasConfirmedPin = true
+    draft.hasPublicConsent = true
+    precheckReport.mockResolvedValue({
+      prediction: {
+        label: 'unclassified',
+        confidence: null,
+        confidenceBand: 'low',
+        detections: [],
+        advisoryText: 'No target habitat was identified.',
+      },
+      candidates: [],
+      imageUrl: null,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage />
+      </MemoryRouter>,
+    )
+
+    const continueButton = await screen.findByRole('button', {
+      name: 'Continue to submit',
+    })
+    await waitFor(() => expect(continueButton).toBeEnabled())
+    await user.click(continueButton)
+
+    const warning = await screen.findByRole('dialog', {
+      name: 'Our AI couldn\'t confirm a habitat',
+    })
+    await user.click(
+      within(warning).getByRole('button', { name: 'Retake photo' }),
+    )
+
+    await waitFor(() => {
+      expect(resetDraft).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('heading', { name: 'Take image' })).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Prediction panel')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Our AI couldn\'t confirm a habitat' })).not.toBeInTheDocument()
   })
 })

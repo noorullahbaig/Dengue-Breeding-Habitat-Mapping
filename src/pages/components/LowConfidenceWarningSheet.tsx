@@ -6,11 +6,13 @@ const MAX_NOTE_LENGTH = 150;
 interface LowConfidenceWarningSheetProps {
 	onConfirm: (note: string) => void;
 	onCancel: () => void;
+	onRetake: () => void;
 }
 
 export function LowConfidenceWarningSheet({
 	onConfirm,
 	onCancel,
+	onRetake,
 }: LowConfidenceWarningSheetProps) {
 	const [note, setNote] = useState("");
 	const [isClosing, setIsClosing] = useState(false);
@@ -42,6 +44,11 @@ export function LowConfidenceWarningSheet({
 	function handleConfirm() {
 		setIsClosing(true);
 		setTimeout(() => onConfirm(note.trim()), 220);
+	}
+
+	function handleRetake() {
+		setIsClosing(true);
+		setTimeout(onRetake, 220);
 	}
 
 	const charsLeft = MAX_NOTE_LENGTH - note.length;
@@ -120,7 +127,7 @@ export function LowConfidenceWarningSheet({
 						type="button"
 						id="lc-sheet-cancel"
 						className="lc-sheet__btn lc-sheet__btn--secondary"
-						onClick={handleCancel}
+						onClick={handleRetake}
 					>
 						Retake photo
 					</button>

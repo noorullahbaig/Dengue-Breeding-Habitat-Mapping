@@ -104,7 +104,12 @@ export function ReportPage({
 }: ReportPageProps = {}) {
 	const navigate = useNavigate();
 	const { reportsService } = useServices();
-	const { draft, setLastSubmittedReference, updateDraft } = useReportDraft();
+	const {
+		draft,
+		resetDraft,
+		setLastSubmittedReference,
+		updateDraft,
+	} = useReportDraft();
 	const { isAuthenticated } = useAuth();
 	const stepHeadingRef = useRef<HTMLHeadingElement>(null);
 	const consentBodyRef = useRef<HTMLDivElement>(null);
@@ -634,6 +639,24 @@ export function ReportPage({
 		updateDraft({ notes: note });
 		setIsLowConfirmOpen(false);
 		setCurrentStep(4);
+	}
+
+	function handleLowConfidenceRetake() {
+		setIsLowConfirmOpen(false);
+		resetDraft();
+		setCurrentStep(0);
+		setHasConfirmedPin(false);
+		setHasPublicConsent(false);
+		setHasScrolledConsentToEnd(false);
+		setPinWarning("");
+		setLocationRequestError("");
+		setPrecheckSignature("");
+		setNearbyCandidates([]);
+		setIsNearbyPromptOpen(false);
+		setSelectedStackReference("");
+		setDecisionLocationSignature("");
+		setSubmitError("");
+		setIsSubmitting(false);
 	}
 
 	function handleContinueFromAiReview() {
@@ -1357,6 +1380,7 @@ export function ReportPage({
 				<LowConfidenceWarningSheet
 					onConfirm={handleLowConfidenceConfirm}
 					onCancel={() => setIsLowConfirmOpen(false)}
+					onRetake={handleLowConfidenceRetake}
 				/>
 			) : null}
 		</div>
