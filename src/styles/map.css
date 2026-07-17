@@ -2480,6 +2480,10 @@
 
 .map-page-controls > * { pointer-events: auto; }
 
+.map-locate-control--loading svg {
+	animation: report-location-spin 1s linear infinite;
+}
+
 .map-locate-control {
 	position: absolute;
 	right: 0;

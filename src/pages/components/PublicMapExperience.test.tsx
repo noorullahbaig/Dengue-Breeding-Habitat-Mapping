@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { PublicMapExperience } from "@/pages/components/PublicMapExperience";
+import type { LocationRequestResult } from "@/lib/geolocation";
 import type { PublicHotspot, PublicMapReport } from "@/types/report";
 
 const experienceHarness = vi.hoisted(() => ({
@@ -17,7 +18,16 @@ const experienceHarness = vi.hoisted(() => ({
 	listPublicReports: vi.fn(),
 	listHotspots: vi.fn(),
 	centerOverride: undefined as [number, number] | undefined,
+	requestCurrentLocation: vi.fn<() => Promise<LocationRequestResult>>(),
 }));
+
+vi.mock("@/lib/geolocation", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@/lib/geolocation")>();
+	return {
+		...actual,
+		requestCurrentLocation: () => experienceHarness.requestCurrentLocation(),
+	};
+});
 
 vi.mock("@/app/useServices", () => ({
 	useServices: () => ({
@@ -159,12 +169,14 @@ describe("PublicMapExperience report stack sheet", () => {
 	});
 
 	it("centers the map after the resident shares their current location", async () => {
-		const getCurrentPosition = vi.fn((success: PositionCallback) =>
-			success({ coords: { latitude: 3.139, longitude: 101.6869 } } as GeolocationPosition),
-		);
-		Object.defineProperty(navigator, "geolocation", {
-			configurable: true,
-			value: { getCurrentPosition },
+		experienceHarness.requestCurrentLocation.mockResolvedValue({
+			ok: true,
+			location: {
+				latitude: 3.139,
+				longitude: 101.6869,
+				accuracyMeters: 20,
+				source: "browser",
+			},
 		});
 
 		const user = userEvent.setup();
@@ -176,8 +188,59 @@ describe("PublicMapExperience report stack sheet", () => {
 
 		await user.click(await screen.findByRole("button", { name: "Center map on my location" }));
 
-		expect(getCurrentPosition).toHaveBeenCalled();
+		expect(experienceHarness.requestCurrentLocation).toHaveBeenCalledOnce();
 		expect(screen.getByTestId("map-center")).toHaveTextContent("3.139,101.6869");
+	});
+
+	it("shows progress and ignores duplicate location taps", async () => {
+		let resolveRequest: (result: LocationRequestResult) => void = () => {};
+		experienceHarness.requestCurrentLocation.mockReturnValue(
+			new Promise((resolve) => {
+				resolveRequest = resolve;
+			}),
+		);
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		const button = await screen.findByRole("button", {
+			name: "Center map on my location",
+		});
+		fireEvent.click(button);
+		fireEvent.click(button);
+
+		expect(experienceHarness.requestCurrentLocation).toHaveBeenCalledOnce();
+		expect(
+			screen.getByRole("button", { name: "Finding current location" }),
+		).toBeDisabled();
+
+		resolveRequest({ ok: false, reason: "timeout", browserCode: 3 });
+		expect(
+			await screen.findByText(/couldn't get your location within 10 seconds/i),
+		).toBeInTheDocument();
+	});
+
+	it("shows the specific denial recovery message", async () => {
+		experienceHarness.requestCurrentLocation.mockResolvedValue({
+			ok: false,
+			reason: "denied",
+			browserCode: 1,
+		});
+		render(
+			<MemoryRouter>
+				<PublicMapExperience />
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Center map on my location" }),
+		);
+
+		expect(
+			await screen.findByText(/Location access is blocked for this website/i),
+		).toBeInTheDocument();
 	});
 
 	afterEach(() => {

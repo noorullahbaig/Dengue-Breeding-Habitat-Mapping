@@ -1,78 +1,125 @@
 import type { LocationPoint } from '@/types/report'
-import { isWithinServiceArea } from './serviceArea'
 
-const fallbackMessage =
-  'Location access is unavailable. Please check your device signal and browser settings.'
+export type LocationRequestMode = 'verification' | 'map-centering'
 
-export function getGeolocationFallbackMessage() {
-  return fallbackMessage
+export type LocationFailureReason =
+  | 'denied'
+  | 'timeout'
+  | 'unavailable'
+  | 'insecure-context'
+  | 'policy-blocked'
+  | 'unsupported'
+
+export type LocationRequestResult =
+  | { ok: true; location: LocationPoint }
+  | {
+      ok: false
+      reason: LocationFailureReason
+      browserCode?: number
+    }
+
+interface LocationFeaturePolicy {
+  allowsFeature(feature: string): boolean
 }
 
-export async function requestCurrentPosition(): Promise<LocationPoint> {
+const POSITION_OPTIONS: Record<LocationRequestMode, Required<PositionOptions>> = {
+  verification: {
+    enableHighAccuracy: true,
+    timeout: 12_000,
+    maximumAge: 0,
+  },
+  'map-centering': {
+    enableHighAccuracy: true,
+    timeout: 10_000,
+    maximumAge: 30_000,
+  },
+}
+
+const FAILURE_MESSAGES: Record<Exclude<LocationFailureReason, 'timeout'>, string> = {
+  denied:
+    'Location access is blocked for this website. In Safari, change the website Location setting to Ask or Allow and confirm iOS Location Services are on, then try again.',
+  unavailable:
+    'Your device could not determine its location. Turn on Location Services, Wi-Fi, and Precise Location, then try again.',
+  'insecure-context':
+    'Location requires a secure HTTPS connection. Open the official secure site and try again.',
+  'policy-blocked':
+    'Location is blocked by the page or browser that opened this site. Open the site directly in Safari and try again.',
+  unsupported:
+    'This browser does not provide website location. Open the site in Safari or another supported browser.',
+}
+
+export function getLocationFailureMessage(
+  reason: LocationFailureReason,
+  mode: LocationRequestMode = 'verification',
+) {
+  if (reason === 'timeout') {
+    const timeoutSeconds = POSITION_OPTIONS[mode].timeout / 1_000
+    return `We couldn't get your location within ${timeoutSeconds} seconds. Move near a window, make sure Location Services and Wi-Fi are on, then try again.`
+  }
+  return FAILURE_MESSAGES[reason]
+}
+
+function getLocationPolicy(): LocationFeaturePolicy | undefined {
+  const documentWithPolicy = document as Document & {
+    permissionsPolicy?: LocationFeaturePolicy
+    featurePolicy?: LocationFeaturePolicy
+  }
+  return documentWithPolicy.permissionsPolicy ?? documentWithPolicy.featurePolicy
+}
+
+function isLocationBlockedByPolicy() {
+  const policy = getLocationPolicy()
+  if (!policy) return false
+
+  try {
+    return !policy.allowsFeature('geolocation')
+  } catch {
+    return false
+  }
+}
+
+function failureReasonForBrowserCode(code: number): LocationFailureReason {
+  if (code === 1) return 'denied'
+  if (code === 3) return 'timeout'
+  return 'unavailable'
+}
+
+export function requestCurrentLocation({
+  mode,
+}: {
+  mode: LocationRequestMode
+}): Promise<LocationRequestResult> {
+  if (window.isSecureContext === false) {
+    return Promise.resolve({ ok: false, reason: 'insecure-context' })
+  }
+  if (isLocationBlockedByPolicy()) {
+    return Promise.resolve({ ok: false, reason: 'policy-blocked' })
+  }
   if (!navigator.geolocation) {
-    if (import.meta.env.DEV) {
-      console.warn('Geolocation API not supported. Falling back to mock KL location in DEV mode.')
-      return {
-        latitude: 3.13902,
-        longitude: 101.68692,
-        accuracyMeters: 42,
-        source: 'browser',
-      }
-    }
-    throw new Error(fallbackMessage)
+    return Promise.resolve({ ok: false, reason: 'unsupported' })
   }
 
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const coords: LocationPoint = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracyMeters: position.coords.accuracy,
-          source: 'browser',
-        }
-
-        if (import.meta.env.DEV && !isWithinServiceArea(coords)) {
-          console.warn('Retrieved coordinates are outside Kuala Lumpur. Overriding with mock KL location in DEV mode:', coords)
-          resolve({
-            latitude: 3.13902,
-            longitude: 101.68692,
-            accuracyMeters: 42,
+        resolve({
+          ok: true,
+          location: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracyMeters: position.coords.accuracy,
             source: 'browser',
-          })
-          return
-        }
-
-        resolve(coords)
+          },
+        })
       },
       (error) => {
-        if (import.meta.env.DEV) {
-          console.warn('Geolocation failed or was denied. Falling back to mock KL location in DEV mode:', error)
-          resolve({
-            latitude: 3.13902,
-            longitude: 101.68692,
-            accuracyMeters: 42,
-            source: 'browser',
-          })
-          return
-        }
-
-        if (error.code === error.PERMISSION_DENIED) {
-          reject(
-            new Error(
-              'Location access is blocked. Please enable Location in your browser settings to continue.',
-            ),
-          )
-          return
-        }
-
-        reject(new Error(fallbackMessage))
+        resolve({
+          ok: false,
+          reason: failureReasonForBrowserCode(error.code),
+          browserCode: error.code,
+        })
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
-      },
+      POSITION_OPTIONS[mode],
     )
   })
 }

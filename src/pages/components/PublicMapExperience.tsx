@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LocateFixed } from "lucide-react";
 import { useServices } from "@/app/useServices";
 import { Notice } from "@/components/ui";
 import { formatHabitatLabel } from "@/lib/formatters";
+import {
+	getLocationFailureMessage,
+	requestCurrentLocation,
+} from "@/lib/geolocation";
 import { toLeafletPosition } from "@/lib/map";
 import {
 	MapHotspotSheet,
@@ -28,7 +32,11 @@ export function PublicMapExperience() {
 	const [isReportsLoading, setIsReportsLoading] = useState(true);
 	const [hotspotError, setHotspotError] = useState("");
 	const [locationError, setLocationError] = useState("");
+	const [isLocating, setIsLocating] = useState(false);
 	const [showHotspots, _setShowHotspots] = useState(true);
+	const isMountedRef = useRef(false);
+	const locationRequestSequenceRef = useRef(0);
+	const activeLocationRequestRef = useRef<number | null>(null);
 
 	const [centerOverride, setCenterOverride] = useState<
 		[number, number] | undefined
@@ -55,6 +63,14 @@ export function PublicMapExperience() {
 	const clearSelectedReportGroup = useCallback(() => {
 		setSelectedReportGroup(undefined);
 		setSelectedReport(undefined);
+	}, []);
+
+	useEffect(() => {
+		isMountedRef.current = true;
+		return () => {
+			isMountedRef.current = false;
+			activeLocationRequestRef.current = null;
+		};
 	}, []);
 
 	useEffect(() => {
@@ -153,21 +169,34 @@ export function PublicMapExperience() {
 	}
 
 	function handleLocateMe() {
-		if (!navigator.geolocation) {
-			setLocationError("Location is not available on this device.");
-			return;
-		}
+		if (activeLocationRequestRef.current !== null) return;
 
+		const requestId = ++locationRequestSequenceRef.current;
+		activeLocationRequestRef.current = requestId;
 		setLocationError("");
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				setCenterOverride([position.coords.latitude, position.coords.longitude]);
-			},
-			() => {
-				setLocationError("Allow location access to center the map on you.");
-			},
-			{ enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 },
-		);
+		setIsLocating(true);
+
+		void requestCurrentLocation({ mode: "map-centering" }).then((result) => {
+			if (
+				!isMountedRef.current ||
+				activeLocationRequestRef.current !== requestId
+			) {
+				return;
+			}
+
+			activeLocationRequestRef.current = null;
+			setIsLocating(false);
+
+			if (result.ok === true) {
+				setCenterOverride([
+					result.location.latitude,
+					result.location.longitude,
+				]);
+				return;
+			}
+
+			setLocationError(getLocationFailureMessage(result.reason, "map-centering"));
+		});
 	}
 
 	return (
@@ -207,7 +236,14 @@ export function PublicMapExperience() {
 							<span>Hotspot</span>
 						</div>
 					</section>
-					<button type="button" className="map-locate-control" onClick={handleLocateMe} aria-label="Center map on my location">
+					<button
+						type="button"
+						className={`map-locate-control${isLocating ? " map-locate-control--loading" : ""}`}
+						onClick={handleLocateMe}
+						disabled={isLocating}
+						aria-busy={isLocating}
+						aria-label={isLocating ? "Finding current location" : "Center map on my location"}
+					>
 						<LocateFixed size={21} aria-hidden="true" />
 					</button>
 				</div>

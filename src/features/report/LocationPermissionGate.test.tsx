@@ -1,56 +1,186 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { LocationPermissionGate } from '@/features/report/LocationPermissionGate'
+import type { LocationRequestResult } from '@/lib/geolocation'
 
-const queryPermissionState = vi.fn()
-const watchPermissionState = vi.fn(() => vi.fn())
-const requestCurrentPosition = vi.fn()
+const requestCurrentLocation = vi.fn<() => Promise<LocationRequestResult>>()
 
-vi.mock('@/lib/permissions', () => ({
-  queryPermissionState: (...args: unknown[]) => queryPermissionState(...args),
-  watchPermissionState: (...args: unknown[]) => watchPermissionState(...args),
-}))
+vi.mock('@/lib/geolocation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/geolocation')>()
+  return {
+    ...actual,
+    requestCurrentLocation: () => requestCurrentLocation(),
+  }
+})
 
-vi.mock('@/lib/geolocation', () => ({
-  requestCurrentPosition: (...args: unknown[]) => requestCurrentPosition(...args),
-}))
+const location = {
+  latitude: 3.139,
+  longitude: 101.6869,
+  accuracyMeters: 20,
+  source: 'browser' as const,
+}
+
+function renderGate(onLocationObtained = vi.fn()) {
+  return render(
+    <LocationPermissionGate onLocationObtained={onLocationObtained}>
+      {({ isLocating, onRetryLocation, locationError }) => (
+        <div>
+          <span>Location map</span>
+          <span>{locationError}</span>
+          <button type="button" onClick={onRetryLocation} disabled={isLocating}>
+            Refresh location
+          </button>
+        </div>
+      )}
+    </LocationPermissionGate>,
+  )
+}
 
 describe('LocationPermissionGate', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    watchPermissionState.mockReturnValue(vi.fn())
   })
 
-  it('explains that the selected exact pin is public only after consent', async () => {
-    queryPermissionState.mockResolvedValue('prompt')
+  it('requires an explicit tap before every initial location request', () => {
+    renderGate()
 
-    render(
-      <LocationPermissionGate onLocationObtained={vi.fn()}>
-        {() => <div>Location map</div>}
-      </LocationPermissionGate>,
-    )
-
-    expect(await screen.findByText('Your selected exact pin is published only after you consent')).toBeInTheDocument()
-    expect(screen.queryByText('Your exact coordinates are never shared publicly')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Share My Location' })).toBeEnabled()
+    expect(requestCurrentLocation).not.toHaveBeenCalled()
   })
 
-  it('fetches a granted location and then renders the location review', async () => {
-    const location = {
-      latitude: 3.139,
-      longitude: 101.6869,
-      accuracyMeters: 20,
-      source: 'browser' as const,
-    }
-    const onLocationObtained = vi.fn()
-    queryPermissionState.mockResolvedValue('granted')
-    requestCurrentPosition.mockResolvedValue(location)
-
-    render(
-      <LocationPermissionGate onLocationObtained={onLocationObtained}>
-        {() => <div>Location map</div>}
-      </LocationPermissionGate>,
+  it('shows immediate progress and prevents duplicate requests', async () => {
+    let resolveRequest: (result: LocationRequestResult) => void = () => {}
+    requestCurrentLocation.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRequest = resolve
+      }),
     )
+    renderGate()
 
+    const button = screen.getByRole('button', { name: 'Share My Location' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+
+    expect(requestCurrentLocation).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: 'Finding location…' })).toBeDisabled()
+
+    resolveRequest({ ok: true, location })
     expect(await screen.findByText('Location map')).toBeInTheDocument()
-    await waitFor(() => expect(onLocationObtained).toHaveBeenCalledWith(location))
+  })
+
+  it('keeps a real denial blocked even when the Permissions API reports prompt', async () => {
+    const permissionQuery = vi.fn().mockResolvedValue({ state: 'prompt' })
+    Object.defineProperty(navigator, 'permissions', {
+      configurable: true,
+      value: { query: permissionQuery },
+    })
+    requestCurrentLocation.mockResolvedValue({
+      ok: false,
+      reason: 'denied',
+      browserCode: 1,
+    })
+    renderGate()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+
+    expect(await screen.findByRole('heading', { name: 'Location Access Blocked' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Share My Location' })).not.toBeInTheDocument()
+    expect(permissionQuery).not.toHaveBeenCalled()
+  })
+
+  it('performs a real request when retrying after Settings', async () => {
+    const onLocationObtained = vi.fn()
+    let resolveRetry: (result: LocationRequestResult) => void = () => {}
+    requestCurrentLocation
+      .mockResolvedValueOnce({ ok: false, reason: 'denied', browserCode: 1 })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRetry = resolve
+        }),
+      )
+    renderGate(onLocationObtained)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: "I've updated settings — Try Again",
+      }),
+    )
+
+    await waitFor(() => expect(requestCurrentLocation).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('button', { name: 'Finding location…' })).toBeDisabled()
+    resolveRetry({ ok: true, location })
+    expect(await screen.findByText('Location map')).toBeInTheDocument()
+    expect(onLocationObtained).toHaveBeenCalledWith(location)
+  })
+
+  it.each([
+    ['timeout', "We couldn't get your location within 12 seconds."],
+    ['unavailable', 'Your device could not determine its location.'],
+    ['insecure-context', 'Location requires a secure HTTPS connection.'],
+    ['policy-blocked', 'Location is blocked by the page or browser that opened this site.'],
+    ['unsupported', 'This browser does not provide website location.'],
+  ] as const)('shows an actionable, retryable %s failure', async (reason, message) => {
+    requestCurrentLocation.mockResolvedValue({ ok: false, reason })
+    renderGate()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+
+    expect(await screen.findByText(new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled()
+  })
+
+  it('ignores a location result after unmount', async () => {
+    let resolveRequest: (result: LocationRequestResult) => void = () => {}
+    requestCurrentLocation.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRequest = resolve
+      }),
+    )
+    const onLocationObtained = vi.fn()
+    const view = renderGate(onLocationObtained)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+    view.unmount()
+    resolveRequest({ ok: true, location })
+
+    await Promise.resolve()
+    expect(onLocationObtained).not.toHaveBeenCalled()
+  })
+
+  it('ignores a stale result from a gate that was unmounted and remounted', async () => {
+    let resolveStaleRequest: (result: LocationRequestResult) => void = () => {}
+    requestCurrentLocation
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveStaleRequest = resolve
+        }),
+      )
+      .mockResolvedValueOnce({ ok: true, location })
+
+    const staleCallback = vi.fn()
+    const first = renderGate(staleCallback)
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+    first.unmount()
+
+    const currentCallback = vi.fn()
+    renderGate(currentCallback)
+    fireEvent.click(screen.getByRole('button', { name: 'Share My Location' }))
+    expect(await screen.findByText('Location map')).toBeInTheDocument()
+
+    resolveStaleRequest({ ok: true, location })
+    await Promise.resolve()
+
+    expect(staleCallback).not.toHaveBeenCalled()
+    expect(currentCallback).toHaveBeenCalledOnce()
+  })
+
+  it('requires another explicit tap after remounting', () => {
+    const first = renderGate()
+    first.unmount()
+
+    renderGate()
+
+    expect(screen.getByRole('button', { name: 'Share My Location' })).toBeEnabled()
+    expect(requestCurrentLocation).not.toHaveBeenCalled()
   })
 })

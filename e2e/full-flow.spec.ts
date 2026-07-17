@@ -49,6 +49,7 @@ test('resident public report completes against the local backend', async ({
   })
   await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
   await page.getByRole('button', { name: 'Use photo & continue' }).click()
+  await page.getByRole('button', { name: 'Share My Location' }).click()
   await expect(page.getByRole('button', { name: 'Use current location again' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Confirm this exact site' })).toBeEnabled()
   await page.getByRole('button', { name: 'Confirm this exact site' }).click()
@@ -118,6 +119,7 @@ test('desktop resident can confirm the selected location', async ({ context, pag
   })
   await expect(page.getByRole('button', { name: 'Use photo & continue' })).toBeVisible()
   await page.getByRole('button', { name: 'Use photo & continue' }).click()
+  await page.getByRole('button', { name: 'Share My Location' }).click()
 
   const confirmButton = page.getByRole('button', { name: 'Confirm this exact site' })
   await expect(confirmButton).toBeVisible()
@@ -195,6 +197,7 @@ for (const viewport of [
     expect(previewStyles.objectFit).toBe('cover')
 
     await page.getByRole('button', { name: 'Use photo & continue' }).click()
+    await page.getByRole('button', { name: 'Share My Location' }).click()
 
     const confirmButton = page.getByRole('button', { name: 'Confirm this exact site' })
     const progressHeader = page.getByRole('navigation', { name: 'Report progress' })

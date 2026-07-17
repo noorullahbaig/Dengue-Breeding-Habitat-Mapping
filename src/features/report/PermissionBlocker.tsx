@@ -33,9 +33,10 @@ const LOCATION_STEPS: BrowserStep[] = [
   {
     browser: 'Safari (iPhone / iPad)',
     steps: [
-      'Open the Settings app on your device',
-      'Scroll to "Safari" → "Location"',
-      'Set to "Allow" or "Ask"',
+      'In Safari, open the Page Menu → More → Website Settings → Location',
+      'Set this website to "Ask" or "Allow"',
+      'If Location is still blocked, open Settings → Apps → Safari → Location and choose "Ask" or "Allow"',
+      'Also confirm Settings → Privacy & Security → Location Services is turned on',
       'Come back here and tap "Try Again"',
     ],
   },
@@ -126,8 +127,11 @@ export function PermissionBlocker({ permission, onRetry }: PermissionBlockerProp
   const steps = getRelevantSteps(permission, browser)
   const isLocation = permission === 'location'
 
-  // Auto-retry when the user returns to this tab after fixing settings
+  // Camera keeps its existing return-from-Settings behavior. Location must
+  // always be requested from an explicit tap so the result is unambiguous.
   useEffect(() => {
+    if (permission === 'location') return
+
     function handleVisibility() {
       if (document.visibilityState === 'visible') {
         onRetry()
@@ -135,7 +139,7 @@ export function PermissionBlocker({ permission, onRetry }: PermissionBlockerProp
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [onRetry])
+  }, [onRetry, permission])
 
   return (
     <div className="permission-blocker">
