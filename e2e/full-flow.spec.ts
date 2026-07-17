@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 const evidenceImage = readFileSync(
-  resolve(process.cwd(), 'src/assets/home/dengue-tire-habitat.webp'),
+  resolve(process.cwd(), 'src/assets/learn/habitat-tire.webp'),
 )
 
 async function expectEvidencePreview(
@@ -61,7 +61,7 @@ test('resident public report completes against the local backend', async ({
   })
   await page.locator('input[type="checkbox"]').check()
   await expectEvidencePreview(page)
-  await expect(page.getByText(/Advisory only/)).toBeVisible()
+  await expect(page.getByText(/AI results are advisory/i)).toBeVisible()
 
   const nearbyDialog = page.getByRole('dialog', { name: 'We found a similar report nearby' })
   if (await nearbyDialog.isVisible().catch(() => false)) {
