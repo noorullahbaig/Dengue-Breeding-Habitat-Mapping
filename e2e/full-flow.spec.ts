@@ -64,7 +64,15 @@ test('resident public report completes against the local backend', async ({
   await expect(page.getByText(/AI results are advisory/i)).toBeVisible()
 
   const nearbyDialog = page.getByRole('dialog', { name: 'We found a similar report nearby' })
-  if (await nearbyDialog.isVisible().catch(() => false)) {
+  const continueButton = page.getByRole('button', { name: 'Continue to submit' })
+
+  await expect(async () => {
+    const isDialogVisible = await nearbyDialog.isVisible()
+    const isButtonEnabled = await continueButton.isEnabled()
+    expect(isDialogVisible || isButtonEnabled).toBe(true)
+  }).toPass({ timeout: 20000 })
+
+  if (await nearbyDialog.isVisible()) {
     const [dialogBox, createSeparateBox] = await Promise.all([
       nearbyDialog.boundingBox(),
       page.getByRole('button', { name: 'Create separate report' }).boundingBox(),
