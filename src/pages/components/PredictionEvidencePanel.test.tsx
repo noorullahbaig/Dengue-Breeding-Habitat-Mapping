@@ -17,6 +17,36 @@ const prediction: PredictionSummary = {
 };
 
 describe("PredictionEvidencePanel", () => {
+	it("renders a nearby decision inside the existing inference result body", () => {
+		render(
+			<PredictionEvidencePanel
+				prediction={prediction}
+				decision={{ kind: "stack", reference: "KL-STACK-0001" }}
+			/>,
+		);
+
+		const decision = document.querySelector(".prediction-evidence__decision");
+		expect(decision).toHaveAttribute("data-decision", "stack");
+		expect(screen.getByText("Added to nearby report")).toBeInTheDocument();
+		expect(screen.getByText("KL-STACK-0001")).toBeInTheDocument();
+	});
+
+	it("renders a separate-report decision using the inference result status treatment", () => {
+		render(
+			<PredictionEvidencePanel
+				prediction={prediction}
+				decision={{ kind: "separate" }}
+			/>,
+		);
+
+		const decision = document.querySelector(".prediction-evidence__decision");
+		expect(decision).toHaveAttribute("data-decision", "separate");
+		expect(screen.getByText("Separate report selected")).toBeInTheDocument();
+		expect(
+			screen.getByText("This photo will be submitted as a new report."),
+		).toBeInTheDocument();
+	});
+
 	it("renders the preview image and contained normalized bounding boxes after load", () => {
 		render(
 			<PredictionEvidencePanel

@@ -5,6 +5,9 @@ import type { DetectionSummary, PredictionSummary } from "@/types/report";
 
 interface PredictionEvidencePanelProps {
 	prediction: PredictionSummary;
+	decision?:
+		| { kind: "stack"; reference: string }
+		| { kind: "separate" };
 	title?: string;
 	imageUrl?: string;
 	imageUnavailable?: boolean;
@@ -52,6 +55,7 @@ function detectionKey(detection: DetectionSummary) {
 
 export function PredictionEvidencePanel({
 	prediction,
+	decision,
 	title,
 	imageUrl,
 	imageUnavailable = false,
@@ -190,6 +194,29 @@ export function PredictionEvidencePanel({
 							<h2>{outcomeHeading}</h2>
 						</div>
 						<span className="prediction-evidence__status">{outcomeLabel}</span>
+					</div>
+				) : null}
+				{decision ? (
+					<div
+						className={`prediction-evidence__decision prediction-evidence__decision--${decision.kind}`}
+						data-decision={decision.kind}
+					>
+						<div className="prediction-evidence__decision-copy">
+							<span className="eyebrow">Report path</span>
+							<strong>
+								{decision.kind === "stack"
+									? "Added to nearby report"
+									: "Separate report selected"}
+							</strong>
+							<span>
+								{decision.kind === "stack"
+									? `This photo will be added to ${decision.reference}.`
+									: "This photo will be submitted as a new report."}
+							</span>
+						</div>
+						<span className="prediction-evidence__decision-status">
+							{decision.kind === "stack" ? decision.reference : "Ready"}
+						</span>
 					</div>
 				) : null}
 				<p className="prediction-evidence__empty">

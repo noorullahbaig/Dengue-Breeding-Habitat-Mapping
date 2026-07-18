@@ -89,7 +89,12 @@ vi.mock('@/pages/components/NearbyReportPrompt', () => ({
 }))
 
 vi.mock('@/pages/components/PredictionEvidencePanel', () => ({
-  PredictionEvidencePanel: () => <div>Prediction panel</div>,
+  PredictionEvidencePanel: ({ decision }: { decision?: { kind: string; reference?: string } }) => (
+    <div data-testid="report-ai-decision" data-decision={decision?.kind ?? 'none'}>
+      Prediction panel
+      {decision?.reference ? ` ${decision.reference}` : ''}
+    </div>
+  ),
 }))
 
 vi.mock('@/pages/components/StaticReceiptMap', () => ({
@@ -244,7 +249,7 @@ describe('ReportPage mobile photo review', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Similar report nearby' })).not.toBeInTheDocument()
-      expect(screen.getByText(/You chose to file a separate report/i)).toBeInTheDocument()
+      expect(screen.getByTestId('report-ai-decision')).toHaveAttribute('data-decision', 'separate')
       expect(screen.getByRole('button', { name: 'Continue to submit' })).toBeEnabled()
     })
   })

@@ -1226,27 +1226,24 @@ export function ReportPage({
 
 								{precheckImageUrl &&
 								(isPrecheckLoading || (precheckReady && precheck)) ? (
-									<PredictionEvidencePanel
-										prediction={precheckPrediction}
-										title="AI pre-check result"
+										<PredictionEvidencePanel
+											prediction={precheckPrediction}
+											decision={
+												selectedStack
+													? {
+															kind: "stack",
+															reference: selectedStack.reference,
+														}
+													: hasChosenSeparateReport
+														? { kind: "separate" }
+														: undefined
+											}
+											title="AI pre-check result"
 										imageUrl={precheckImageUrl}
 										imageAlt="Submitted evidence preview"
 										showDetections
 										isAnalyzing={isPrecheckLoading}
 									/>
-								) : null}
-
-								{selectedStack ? (
-									<Notice tone="success">
-										✓ Photo will be stacked onto existing report{" "}
-										{selectedStack.reference}.
-									</Notice>
-								) : null}
-								{hasChosenSeparateReport ? (
-									<Notice tone="success">
-										✓ You chose to file a separate report for this nearby
-										location.
-									</Notice>
 								) : null}
 
 								<div className="stack-sm report-ai-actions">
