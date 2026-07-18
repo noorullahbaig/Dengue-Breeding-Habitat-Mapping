@@ -1291,20 +1291,28 @@ img {
   font-weight: 700;
 }
 
-.nearby-modal,
-.nearby-panel {
+.nearby-review {
   box-sizing: border-box;
   min-width: 0;
-}
-
-.nearby-modal {
   width: min(680px, calc(100dvw - 2rem));
   max-width: calc(100dvw - 2rem);
   max-height: min(88dvh, 760px);
 }
 
-.nearby-panel {
-  padding: 1rem;
+.nearby-review__content {
+  display: grid;
+  gap: 1rem;
+}
+
+.nearby-review__intro {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+
+.nearby-review__footer {
+  width: 100%;
 }
 
 .modal-backdrop {
@@ -1663,9 +1671,56 @@ img {
   }
 }
 
-@media (max-width: 620px) {
-  .nearby-modal {
+@media (max-width: 760px) {
+  .nearby-review--popup {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 0;
     width: calc(100dvw - 2rem);
+    max-width: calc(100dvw - 2rem);
+    max-height: min(88dvh, 720px);
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-strong);
+  }
+
+  .nearby-review--popup .ui-dialog__header {
+    position: relative;
+    z-index: 1;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-strong);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
+
+  .nearby-review--popup .ui-dialog__title {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .nearby-review--popup .ui-dialog__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nearby-review--popup .nearby-review__content {
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+  .nearby-review--popup .ui-dialog__actions {
+    position: relative;
+    z-index: 1;
+    display: block;
+    padding: 0.85rem 1rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-strong);
+    box-shadow: 0 -6px 18px color-mix(in srgb, var(--color-ink) 5%, transparent);
   }
 
   .nearby-card {
@@ -1680,6 +1735,13 @@ img {
 
   .nearby-card__meta {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nearby-review--popup {
+    animation: none;
+    transition: none;
   }
 }
 

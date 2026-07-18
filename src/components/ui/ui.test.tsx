@@ -122,7 +122,41 @@ describe('canonical UI primitives', () => {
     expect(screen.getByRole('region', { name: 'Report coordinates' })).toHaveClass('ui-map-frame')
     expect(screen.getByRole('dialog', { name: 'Nearby report found' })).toBeInTheDocument()
 
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Nearby report found' }), {
+      key: 'Escape',
+    })
     expect(handleClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('configures dialog dismissal without leaking Escape to an outer dialog', () => {
+    const handleClose = vi.fn()
+    const handleOuterKeyDown = vi.fn()
+
+    const { container } = render(
+      <div role="dialog" aria-label="Outer report flow" onKeyDown={handleOuterKeyDown}>
+        <Dialog
+          open
+          title="Similar report nearby"
+          closeLabel="Continue with a separate report"
+          dismissOnBackdrop={false}
+          onClose={handleClose}
+        >
+          <button type="button">Add to this report</button>
+        </Dialog>
+      </div>,
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Continue with a separate report' }),
+    ).toBeInTheDocument()
+
+    fireEvent.mouseDown(container.querySelector('.ui-dialog-backdrop') as HTMLElement)
+    expect(handleClose).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Similar report nearby' }), {
+      key: 'Escape',
+    })
+    expect(handleClose).toHaveBeenCalledTimes(1)
+    expect(handleOuterKeyDown).not.toHaveBeenCalled()
   })
 })

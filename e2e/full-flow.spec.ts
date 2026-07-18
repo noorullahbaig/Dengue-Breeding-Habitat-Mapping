@@ -63,7 +63,7 @@ test('resident public report completes against the local backend', async ({
   await expectEvidencePreview(page)
   await expect(page.getByText(/AI results are advisory/i)).toBeVisible()
 
-  const nearbyDialog = page.getByRole('dialog', { name: 'We found a similar report nearby' })
+  const nearbyDialog = page.getByRole('dialog', { name: 'Similar report nearby' })
   const continueButton = page.getByRole('button', { name: 'Continue to submit' })
 
   await expect(async () => {
@@ -73,22 +73,29 @@ test('resident public report completes against the local backend', async ({
   }).toPass({ timeout: 20000 })
 
   if (await nearbyDialog.isVisible()) {
-    const [dialogBox, createSeparateBox] = await Promise.all([
+    const [dialogBox, continueSeparateBox] = await Promise.all([
       nearbyDialog.boundingBox(),
-      page.getByRole('button', { name: 'Create separate report' }).boundingBox(),
+      page.getByRole('button', { name: 'Continue separately' }).boundingBox(),
     ])
     expect(dialogBox).not.toBeNull()
-    expect(createSeparateBox).not.toBeNull()
-    expect(dialogBox!.x).toBeGreaterThanOrEqual(0)
-    expect(dialogBox!.y).toBeGreaterThanOrEqual(0)
-    expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
-    expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
-    expect(createSeparateBox!.y + createSeparateBox!.height).toBeLessThanOrEqual(
+    expect(continueSeparateBox).not.toBeNull()
+    expect(dialogBox!.x).toBeGreaterThanOrEqual(15)
+    expect(dialogBox!.y).toBeGreaterThanOrEqual(15)
+    expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(page.viewportSize()!.width - 15)
+    expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height - 15)
+    expect(continueSeparateBox!.y + continueSeparateBox!.height).toBeLessThanOrEqual(
       dialogBox!.y + dialogBox!.height + 1,
     )
 
-    const separateButton = page.getByRole('button', { name: 'Create separate report' })
-    await separateButton.click()
+    const closeButton = page.getByRole('button', {
+      name: 'Continue with a separate report',
+    })
+    await expect(closeButton).toBeVisible()
+    const closeBox = await closeButton.boundingBox()
+    expect(closeBox).not.toBeNull()
+    expect(closeBox!.width).toBeGreaterThanOrEqual(44)
+    expect(closeBox!.height).toBeGreaterThanOrEqual(44)
+    await closeButton.click()
   }
 
   await expect(page.getByRole('button', { name: 'Continue to submit' })).toBeEnabled()
@@ -99,7 +106,8 @@ test('resident public report completes against the local backend', async ({
   await submitButton.click()
   const referenceBadge = page.getByRole('button', { name: 'Copy tracking ID to clipboard' })
   await expect(referenceBadge).toBeVisible({ timeout: 120_000 })
-  const reference = (await referenceBadge.textContent())?.trim() ?? ''
+  const referenceText = (await referenceBadge.textContent())?.trim() ?? ''
+  const reference = referenceText.match(/KL-[A-Z0-9]+-\d+/)?.[0] ?? ''
   expect(reference).toMatch(/^KL-[A-Z0-9]+-\d+$/)
 
   await page.goto(`/map/reports/${reference}`)

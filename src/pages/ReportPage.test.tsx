@@ -65,7 +65,27 @@ vi.mock('@/features/report/LocationPermissionGate', () => ({
 }))
 
 vi.mock('@/pages/components/NearbyReportPrompt', () => ({
-  NearbyReportPrompt: () => null,
+  NearbyReportPrompt: ({
+    onCreateSeparate,
+    presentation,
+  }: {
+    onCreateSeparate: () => void
+    presentation?: string
+  }) => (
+    <section
+      role="dialog"
+      aria-label="Similar report nearby"
+      data-presentation={presentation}
+    >
+      <button
+        type="button"
+        aria-label="Continue with a separate report"
+        onClick={onCreateSeparate}
+      >
+        ×
+      </button>
+    </section>
+  ),
 }))
 
 vi.mock('@/pages/components/PredictionEvidencePanel', () => ({
@@ -172,5 +192,60 @@ describe('ReportPage mobile photo review', () => {
     })
     expect(screen.queryByText('Prediction panel')).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog', { name: 'Our AI couldn\'t confirm a habitat' })).not.toBeInTheDocument()
+  })
+
+  it('resolves a nearby match as separate when the phone review is closed', async () => {
+    const user = userEvent.setup()
+    draft.wizardStep = 3
+    draft.hasConfirmedPin = true
+    draft.hasPublicConsent = true
+    precheckReport.mockResolvedValue({
+      prediction: {
+        label: 'artificial_container',
+        confidence: 0.92,
+        confidenceBand: 'high',
+        detections: [],
+        advisoryText: 'A likely breeding habitat was identified.',
+      },
+      candidates: [
+        {
+          id: 'nearby-1',
+          reference: 'KL-TEST-1',
+          publicLocation: {
+            latitude: 3.139,
+            longitude: 101.6869,
+            source: 'public',
+          },
+          habitatClass: 'artificial_container',
+          status: 'submitted',
+          neighborhood: 'Kuala Lumpur Central',
+          distanceMeters: 18,
+          latestReportedAt: '2026-07-18T08:00:00Z',
+          reportCount: 2,
+          thumbnailUrl: 'https://example.com/thumb.jpg',
+        },
+      ],
+      imageUrl: null,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage isOverlay />
+      </MemoryRouter>,
+    )
+
+    const review = await screen.findByRole('dialog', { name: 'Similar report nearby' })
+    expect(review).toHaveAttribute('data-presentation', 'popup')
+    expect(screen.getByRole('button', { name: 'Continue to submit' })).toBeDisabled()
+
+    await user.click(
+      within(review).getByRole('button', { name: 'Continue with a separate report' }),
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Similar report nearby' })).not.toBeInTheDocument()
+      expect(screen.getByText(/You chose to file a separate report/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Continue to submit' })).toBeEnabled()
+    })
   })
 })

@@ -1,25 +1,27 @@
 import { StatusBadge } from "@/features/shared/StatusBadge";
 import { formatHabitatLabel, formatTimestamp } from "@/lib/formatters";
 import type { NearbyReportCandidate } from "@/types/report";
-import { Dialog, SectionHeader, Surface, Button } from "@/components/ui";
+import { Button, Dialog } from "@/components/ui";
 
 interface NearbyReportPromptProps {
 	candidates: NearbyReportCandidate[];
 	onStack: (reference: string) => void;
 	onCreateSeparate: () => void;
-	onDismiss?: () => void;
-	variant?: "modal" | "inline";
+	presentation?: "dialog" | "popup";
 }
 
 export function NearbyReportPrompt({
 	candidates,
 	onStack,
 	onCreateSeparate,
-	onDismiss,
-	variant = "modal",
+	presentation = "dialog",
 }: NearbyReportPromptProps) {
 	const content = (
-		<div className="stack-lg">
+		<div className="nearby-review__content">
+			<p className="nearby-review__intro">
+				This may be the same breeding site. Add your photo to an existing
+				report, or continue separately.
+			</p>
 			<div className="nearby-list stack-md">
 				{candidates.map((candidate) => (
 					<article className="nearby-card" key={candidate.reference}>
@@ -27,6 +29,8 @@ export function NearbyReportPrompt({
 							src={candidate.thumbnailUrl}
 							alt={`Annotated evidence for nearby report ${candidate.reference}`}
 							className="nearby-card__image"
+							loading="lazy"
+							decoding="async"
 						/>
 						<div className="nearby-card__body">
 							<div className="cluster-row cluster-row--between">
@@ -97,7 +101,7 @@ export function NearbyReportPrompt({
 							</div>
 
 							<Button
-								variant="primary"
+								variant="secondary"
 								fullWidth
 								onClick={() => onStack(candidate.reference)}
 							>
@@ -107,40 +111,23 @@ export function NearbyReportPrompt({
 					</article>
 				))}
 			</div>
-
-			{variant === "inline" ? (
-				<div className="u-static-65f9d5a3">
-					<Button
-						variant="secondary"
-						fullWidth
-						onClick={onCreateSeparate}
-					>
-						Create separate report
-					</Button>
-				</div>
-			) : null}
 		</div>
 	);
-
-	if (variant === "inline") {
-		return (
-			<Surface as="section" className="nearby-panel">
-				<SectionHeader title="We found a similar report nearby" />
-				{content}
-			</Surface>
-		);
-	}
 
 	return (
 		<Dialog
 			open
-			title="We found a similar report nearby"
-			onClose={onDismiss ?? onCreateSeparate}
-			className="nearby-modal animate-rise"
+			title="Similar report nearby"
+			onClose={onCreateSeparate}
+			closeLabel="Continue with a separate report"
+			dismissOnBackdrop={presentation === "dialog"}
+			className={`nearby-review nearby-review--${presentation}`}
 			actions={(
-				<Button variant="secondary" fullWidth onClick={onCreateSeparate}>
-					Create separate report
-				</Button>
+				<div className="nearby-review__footer">
+					<Button variant="primary" fullWidth onClick={onCreateSeparate}>
+						Continue separately
+					</Button>
+				</div>
 			)}
 		>
 			{content}

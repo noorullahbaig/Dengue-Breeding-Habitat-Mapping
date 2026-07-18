@@ -483,6 +483,8 @@ interface DialogProps extends PropsWithChildren {
 	description?: string;
 	className?: string;
 	actions?: ReactNode;
+	closeLabel?: string;
+	dismissOnBackdrop?: boolean;
 }
 
 export function Dialog({
@@ -492,6 +494,8 @@ export function Dialog({
 	description,
 	className,
 	actions,
+	closeLabel = "Close dialog",
+	dismissOnBackdrop = true,
 	children,
 }: DialogProps) {
 	const titleId = useId();
@@ -521,6 +525,7 @@ export function Dialog({
 	function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
 		if (event.key === "Escape") {
 			event.preventDefault();
+			event.stopPropagation();
 			onClose();
 			return;
 		}
@@ -557,7 +562,9 @@ export function Dialog({
 			className="ui-dialog-backdrop"
 			role="presentation"
 			onMouseDown={(event) => {
-				if (event.target === event.currentTarget) onClose();
+				if (dismissOnBackdrop && event.target === event.currentTarget) {
+					onClose();
+				}
 			}}
 		>
 			<div
@@ -581,7 +588,7 @@ export function Dialog({
 							</p>
 						) : null}
 					</div>
-					<IconButton aria-label="Close dialog" onClick={onClose}>
+					<IconButton aria-label={closeLabel} onClick={onClose}>
 						×
 					</IconButton>
 				</header>
