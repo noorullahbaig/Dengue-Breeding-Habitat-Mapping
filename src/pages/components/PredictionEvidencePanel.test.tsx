@@ -169,7 +169,7 @@ describe("PredictionEvidencePanel", () => {
 					confidence: null,
 					confidenceBand: "low",
 					advisoryText:
-						"The image is ambiguous; human verification is required.",
+						"The model produced uncertain evidence; human verification is required.",
 					detections: [],
 				}}
 				imageUrl="blob:empty-preview"

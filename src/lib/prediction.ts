@@ -21,9 +21,9 @@ export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
   const photoName = draft.photoEvidence?.name.toLowerCase() ?? ''
   const confidence = label === 'tire' ? 0.84 : label === 'drain_inlet' ? 0.62 : 0.62
   const thresholds = {
-    artificial_container: 0.48,
-    drain_inlet: 0.66,
-    tire: 0.62,
+    artificial_container: 0.674,
+    drain_inlet: 0.553,
+    tire: 0.712,
     unclassified: 1,
   } as const
   const confidenceBand = confidence >= thresholds[label] ? 'high' : 'low'
@@ -51,7 +51,7 @@ export function predictHabitatForDraft(draft: ReportDraft): PredictionSummary {
     ],
     advisoryText:
       confidenceBand === 'high'
-        ? 'The model is highly confident in this detection, but final verification is still required.'
-        : 'The image is ambiguous; human verification is required.',
+        ? 'The model produced stronger evidence for this habitat class, but final verification is still required.'
+        : 'The model produced uncertain evidence; human verification is required.',
   }
 }

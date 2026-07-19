@@ -13,8 +13,11 @@
 - Roboflow dataset: workspace `mosquito-detection-nqnla`, project `dengue-real-world-eval`, version `1`, export format `yolov8`.
 - Evaluate all unique images across train, valid/validation, and test; expected total is exactly 100.
 - Model input is a manual `.pt` upload in Colab or Kaggle.
-- Raw production inference must call `model.predict(source, verbose=False)` without explicit confidence, IoU, image-size, augmentation, or max-detection overrides.
-- Production thresholds are Artificial Container `0.48`, Drain Inlet `0.66`, Tire `0.62`.
+- Raw production inference must call `model.predict(source, verbose=False, imgsz=640, conf=0.08, iou=0.70, augment=False)`.
+- Required checkpoint SHA-256 is `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`; abort on mismatch.
+- Detection floors are Artificial Container `0.316`, Drain Inlet `0.080`, Tire `0.448`.
+- Stronger-evidence thresholds are Artificial Container `0.674`, Drain Inlet `0.553`, Tire `0.712`.
+- The independent evaluation consumes this locked profile and must not tune or revise it.
 - Standard benchmark uses Ultralytics validation; coarse localization uses class-aware one-to-one matching at IoU >= 0.30; primary operational evaluation is image-level presence detection without an IoU requirement.
 - Roboflow annotations are the reference standard. Audit warnings do not block evaluation unless the dataset cannot be parsed safely.
 - API keys and other secrets must never be written to output files.
@@ -62,11 +65,11 @@
 - Consumes: `DATA_YAML`, `IMAGE_DF`, `GT_DF`, `MODEL_PATH`.
 - Produces: `STANDARD_METRICS`, `RAW_PRED_DF`, `PRODUCTION_PRED_DF`, and copied Ultralytics validation artifacts.
 
-- [ ] **Step 1: Extend the contract test to require `model.val(...)`, the exact raw call `model.predict(str(image_path), verbose=False)`, and all three threshold constants.**
+- [ ] **Step 1: Extend the contract test to require `model.val(...)`, the exact locked production call, the expected checkpoint SHA, all three detection floors, and all three stronger-evidence thresholds.**
 - [ ] **Step 2: Run the test and verify failure before adding the cells.**
 - [ ] **Step 3: Add a combined evaluation directory/YAML containing all unique images and labels, preserving split metadata externally while avoiding filename collisions.**
 - [ ] **Step 4: Add Ultralytics validation with plots and JSON output, then serialize overall and per-class precision, recall, F1, AP50, and mAP50-95 defensively across Ultralytics result-object variations.**
-- [ ] **Step 5: Add sequential per-image production inference using the exact production call, save every raw prediction, apply class-specific thresholds, and validate model class mapping.**
+- [ ] **Step 5: Add sequential per-image production inference using the exact production call, save every raw prediction, apply class-specific floors and advisory bands, and validate model identity and class mapping.**
 - [ ] **Step 6: Re-run the contract test and verify all standard-validation and production-inference assertions pass.**
 
 ### Task 4: Add coarse-localization and operational metrics

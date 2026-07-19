@@ -17,16 +17,16 @@ def test_maps_retained_model_classes_to_public_habitat_classes():
     summary = summarize_detections(
         [
             Detection(raw_label="Coconut-Exocarp", confidence=0.99, bbox=[0, 0, 10, 10]),
-            Detection(raw_label="Vase", confidence=0.62, bbox=[1, 1, 20, 20]),
+            Detection(raw_label="Vase", confidence=0.80, bbox=[1, 1, 20, 20]),
         ]
     )
 
     assert summary.label == "artificial_container"
-    assert summary.confidence == 0.62
+    assert summary.confidence == 0.80
     assert summary.top_raw_label == "Vase"
     assert summary.confidence_band == "high"
     assert summary.advisory_text == (
-        "The model is highly confident in this detection, but final verification is still required."
+        "The model produced stronger evidence for this habitat class, but final verification is still required."
     )
 
 
@@ -54,13 +54,44 @@ def test_accepts_new_retained_three_class_model_labels():
     assert summary.confidence_band == "high"
 
 
-def test_confidence_bands_use_class_specific_validation_thresholds():
-    assert confidence_band("artificial_container", 0.48) == "high"
-    assert confidence_band("artificial_container", 0.479) == "low"
-    assert confidence_band("drain_inlet", 0.66) == "high"
-    assert confidence_band("drain_inlet", 0.659) == "low"
-    assert confidence_band("tire", 0.62) == "high"
-    assert confidence_band("tire", 0.619) == "low"
+def test_confidence_bands_use_precision_weighted_stronger_evidence_thresholds():
+    assert confidence_band("artificial_container", 0.674) == "high"
+    assert confidence_band("artificial_container", 0.673) == "low"
+    assert confidence_band("drain_inlet", 0.553) == "high"
+    assert confidence_band("drain_inlet", 0.552) == "low"
+    assert confidence_band("tire", 0.712) == "high"
+    assert confidence_band("tire", 0.711) == "low"
+
+
+@pytest.mark.parametrize(
+    ("raw_label", "floor", "below_floor"),
+    [
+        ("artificial_container", 0.316, 0.315),
+        ("drain_inlet", 0.080, 0.079),
+        ("tire", 0.448, 0.447),
+    ],
+)
+def test_detection_floors_keep_review_evidence_and_exclude_weaker_detections(
+    raw_label: str,
+    floor: float,
+    below_floor: float,
+):
+    retained = summarize_detections(
+        [Detection(raw_label=raw_label, confidence=floor, bbox=[0, 0, 10, 10])]
+    )
+    excluded = summarize_detections(
+        [Detection(raw_label=raw_label, confidence=below_floor, bbox=[0, 0, 10, 10])]
+    )
+
+    assert retained.label == raw_label
+    assert retained.confidence_band == "low"
+    assert retained.detections[0].confidence == floor
+    assert retained.advisory_text == (
+        "The model produced uncertain evidence; human verification is required."
+    )
+    assert excluded.label == "unclassified"
+    assert excluded.confidence is None
+    assert excluded.detections == []
 
 
 def test_confidence_bands_keep_unknown_and_missing_predictions_low():
@@ -97,7 +128,7 @@ def test_model_inference_serializes_concurrent_predict_calls():
         def __init__(self) -> None:
             self.calls = 0
 
-        def predict(self, image_path: str, *, verbose: bool):
+        def predict(self, image_path: str, **kwargs):
             self.calls += 1
             if self.calls == 1:
                 first_entered.set()
@@ -135,7 +166,7 @@ def test_model_inference_releases_lock_after_prediction_error():
         def __init__(self) -> None:
             self.calls = 0
 
-        def predict(self, image_path: str, *, verbose: bool):
+        def predict(self, image_path: str, **kwargs):
             self.calls += 1
             if self.calls == 1:
                 raise RuntimeError("inference failed")
@@ -150,3 +181,27 @@ def test_model_inference_releases_lock_after_prediction_error():
     summary = inference.predict(Path("second.jpg"))
 
     assert summary.label == "unclassified"
+
+
+def test_model_inference_uses_lowest_class_floor_and_locked_validation_settings():
+    class CapturingModel:
+        def __init__(self) -> None:
+            self.kwargs = None
+
+        def predict(self, image_path: str, **kwargs):
+            self.kwargs = kwargs
+            return []
+
+    model = CapturingModel()
+    inference = ModelInference(Path("unused.pt"))
+    inference.model = model
+
+    inference.predict(Path("image.jpg"))
+
+    assert model.kwargs == {
+        "verbose": False,
+        "imgsz": 640,
+        "conf": 0.08,
+        "iou": 0.70,
+        "augment": False,
+    }

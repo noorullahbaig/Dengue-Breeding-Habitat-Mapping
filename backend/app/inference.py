@@ -16,14 +16,19 @@ RAW_TO_PUBLIC_LABEL = {
     "tire": "tire",
 }
 
-CLASS_CONFIDENCE_THRESHOLDS = {
-    "artificial_container": 0.48,
-    "drain_inlet": 0.66,
-    "tire": 0.62,
+CLASS_DETECTION_FLOORS = {
+    "artificial_container": 0.316,
+    "drain_inlet": 0.080,
+    "tire": 0.448,
 }
-LOW_ADVISORY_TEXT = "The image is ambiguous; human verification is required."
+CLASS_STRONG_EVIDENCE_THRESHOLDS = {
+    "artificial_container": 0.674,
+    "drain_inlet": 0.553,
+    "tire": 0.712,
+}
+LOW_ADVISORY_TEXT = "The model produced uncertain evidence; human verification is required."
 HIGH_ADVISORY_TEXT = (
-    "The model is highly confident in this detection, but final verification is still required."
+    "The model produced stronger evidence for this habitat class, but final verification is still required."
 )
 
 
@@ -48,7 +53,7 @@ class PredictionSummary:
 
 
 def confidence_band(label: str, confidence: float | None) -> str:
-    threshold = CLASS_CONFIDENCE_THRESHOLDS.get(label)
+    threshold = CLASS_STRONG_EVIDENCE_THRESHOLDS.get(label)
     if threshold is None or confidence is None:
         return "low"
     return "high" if confidence >= threshold else "low"
@@ -90,6 +95,8 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
         detection
         for detection in detections
         if detection.raw_label in RAW_TO_PUBLIC_LABEL
+        and detection.confidence
+        >= CLASS_DETECTION_FLOORS[RAW_TO_PUBLIC_LABEL[detection.raw_label]]
     ]
     top_retained = max(retained, key=lambda item: item.confidence, default=None)
 
@@ -99,7 +106,7 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
             confidence=None,
             confidence_band="low",
             top_raw_label=top_detection.raw_label if top_detection else None,
-            detections=detections,
+            detections=retained,
         )
 
     return PredictionSummary(
@@ -110,7 +117,7 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
             top_retained.confidence,
         ),
         top_raw_label=top_retained.raw_label,
-        detections=detections,
+        detections=retained,
         advisory_text=advisory_text_for_band(
             confidence_band(
                 RAW_TO_PUBLIC_LABEL[top_retained.raw_label],
@@ -149,7 +156,14 @@ class ModelInference:
             if self.model is None:
                 raise RuntimeError(self.load_error or "The detection model is not loaded.")
 
-            results = self.model.predict(str(image_path), verbose=False)
+            results = self.model.predict(
+                str(image_path),
+                verbose=False,
+                imgsz=640,
+                conf=0.08,
+                iou=0.70,
+                augment=False,
+            )
             detections: list[Detection] = []
 
             for result in results:

@@ -25,6 +25,7 @@ The notebook will evaluate the current Roboflow annotations immediately. Annotat
 - Evaluate all exported images across `train`, `valid`, and `test`
 - Expected unique image count: `100`
 - Model input method: manual `.pt` file upload
+- Required model SHA-256: `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`
 - Ultralytics version: `8.4.8`
 - Model architecture expected: YOLOv8s
 - Production public classes:
@@ -36,25 +37,30 @@ The notebook will evaluate the current Roboflow annotations immediately. Annotat
 
 The notebook must reproduce the deployed prototype behavior rather than inventing new tuning settings.
 
-Raw inference uses:
+Raw inference uses the locked application settings:
 
 ```python
-model.predict(source, verbose=False)
+model.predict(source, verbose=False, imgsz=640, conf=0.08, iou=0.70, augment=False)
 ```
 
-No explicit confidence, IoU, image-size, augmentation, or maximum-detection overrides are applied to the production inference call. Ultralytics 8.4.8 defaults therefore control raw prediction generation.
+The global `0.08` confidence argument is the minimum class-specific detection floor. Predictions are subsequently filtered by predicted class.
 
-Production class-specific advisory thresholds are:
+Production class-specific detection floors and stronger-evidence thresholds are:
 
 ```python
-PRODUCTION_THRESHOLDS = {
-    "Artificial Container": 0.48,
-    "Drain Inlet": 0.66,
-    "Tire": 0.62,
+DETECTION_FLOORS = {
+    "Artificial Container": 0.316,
+    "Drain Inlet": 0.080,
+    "Tire": 0.448,
+}
+STRONGER_EVIDENCE_THRESHOLDS = {
+    "Artificial Container": 0.674,
+    "Drain Inlet": 0.553,
+    "Tire": 0.712,
 }
 ```
 
-A prediction passes the production decision rule only when its confidence is at or above the threshold for its predicted class.
+A prediction is returned only when it reaches its class's detection floor. A returned prediction receives the stronger-evidence band only when it also reaches its class's stronger-evidence threshold; otherwise it remains uncertain evidence. These values are locked before independent evaluation and cannot be tuned from its results.
 
 ## Dataset ingestion and audit
 
@@ -86,7 +92,7 @@ The standard benchmark remains the academically comparable localization result.
 
 ### 2. Coarse-localization analysis
 
-Run custom class-aware matching at IoU >= 0.30 using production-threshold-filtered predictions.
+Run custom class-aware matching at IoU >= 0.30 using detection-floor-filtered predictions.
 
 Use one-to-one greedy matching within each image and class, ordered by prediction confidence. Report object-level TP, FP, FN, precision, recall, and F1 overall and per class.
 
@@ -99,24 +105,24 @@ The application only needs to determine whether a target habitat class is presen
 For each target class independently:
 
 - Ground-truth positive: at least one annotation of that class exists in the image.
-- Predicted positive: at least one prediction of that class passes its production confidence threshold.
+- Predicted positive: at least one prediction of that class passes its class-specific detection floor.
 - Calculate TP, FP, TN, FN, sensitivity/recall, specificity, precision, negative predictive value, F1, balanced accuracy, and accuracy.
 
-Also report exact image-level class-set match, any-habitat detection sensitivity, background rejection specificity, false alert rate on zero-annotation background images, image-level multilabel confusion data, and a single-label prototype-style outcome based on the highest-confidence retained prediction after production thresholding, with `background/unclassified` when no prediction passes.
+Also report exact image-level class-set match, any-habitat detection sensitivity, background rejection specificity, false alert rate on zero-annotation background images, image-level multilabel confusion data, and a single-label prototype-style outcome based on the highest-confidence detection-floor-qualified prediction, with `background/unclassified` when no prediction passes. Stratify retained predictions by uncertain and stronger-evidence advisory band without changing the locked thresholds.
 
 For multi-class ground-truth images, the multilabel metrics are authoritative. The prototype-style single-label summary is a secondary operational description.
 
 ## Prediction and matching records
 
-The notebook must save every raw model prediction before production thresholding and every retained production prediction after thresholding.
+The notebook must save every raw model prediction emitted at the global `0.08` inference setting and every prediction retained after class-specific detection-floor filtering.
 
-Each prediction record must include image ID and filename, Roboflow split, predicted class ID and name, confidence, class-specific production threshold, threshold pass/fail, normalized and absolute bounding box, matched ground-truth record when applicable, IoU when matched, and outcome category such as TP, FP, duplicate prediction, class error, or unmatched.
+Each prediction record must include image ID and filename, Roboflow split, predicted class ID and name, confidence, class-specific detection floor, stronger-evidence threshold, floor pass/fail, advisory band, normalized and absolute bounding box, matched ground-truth record when applicable, IoU when matched, and outcome category such as TP, FP, duplicate prediction, class error, or unmatched.
 
 Ground-truth records must include equivalent image, class, and bounding-box fields.
 
 ## Reproducibility records
 
-The notebook must capture execution platform, Python version, operating system/runtime details, GPU name and CUDA availability, package versions, exact Ultralytics version, Roboflow workspace/project/version/export format/download timestamp, dataset YAML content, dataset image count and annotation inventory, uploaded model filename/size/SHA-256/task/class names/architecture information available from Ultralytics, random seed, fixed production thresholds, standard and coarse IoU criteria, and notebook execution timestamp.
+The notebook must capture execution platform, Python version, operating system/runtime details, GPU name and CUDA availability, package versions, exact Ultralytics version, Roboflow workspace/project/version/export format/download timestamp, dataset YAML content, dataset image count and annotation inventory, uploaded model filename/size/SHA-256/task/class names/architecture information available from Ultralytics, random seed, both locked threshold tiers, standard and coarse IoU criteria, and notebook execution timestamp.
 
 Secrets must never be written to output files.
 
@@ -133,7 +139,7 @@ Create readable PNG outputs without requiring an HTML report:
 - confidence distributions by class and outcome
 - example annotated images for true positives, false positives, false negatives, class errors, and background false alerts
 
-Ground-truth and prediction boxes must be visually distinguishable, and captions must state the confidence and production threshold.
+Ground-truth and prediction boxes must be visually distinguishable, and captions must state the confidence, class detection floor, stronger-evidence threshold, and assigned advisory band.
 
 ## Export package
 
@@ -191,7 +197,7 @@ Sections:
 8. Build combined 100-image evaluation YAML
 9. Run standard Ultralytics validation
 10. Run production inference and save raw predictions
-11. Apply class-specific thresholds
+11. Apply class-specific detection floors and stronger-evidence bands
 12. Calculate coarse IoU 0.30 metrics
 13. Calculate image-level operational metrics
 14. Generate charts and qualitative examples
@@ -203,7 +209,7 @@ The notebook must fail clearly with actionable messages when the API key is inva
 ## Out of scope
 
 - Retraining or fine-tuning the model
-- Changing the production thresholds
+- Changing either tier of the locked production operating profile
 - Selecting a different checkpoint based on these results
 - Editing Roboflow annotations
 - Treating Google Drive folder categories as authoritative labels
@@ -212,4 +218,4 @@ The notebook must fail clearly with actionable messages when the API key is inva
 
 ## Success criteria
 
-The design is complete when one notebook can be opened in Colab or Kaggle, run from top to bottom with a hidden Roboflow API key and a manually uploaded `.pt` file, evaluate all 100 Version 1 images, reproduce production threshold behavior, report the three locked evaluation layers, and produce the complete ZIP package without leaking secrets.
+The design is complete when one notebook can be opened in Colab or Kaggle, run from top to bottom with a hidden Roboflow API key and the required `.pt` file, evaluate all 100 Version 1 images, reproduce the locked two-tier production behavior without tuning it, report the three evaluation layers, and produce the complete ZIP package without leaking secrets.

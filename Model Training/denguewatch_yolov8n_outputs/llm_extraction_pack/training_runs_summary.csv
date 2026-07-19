@@ -1,2 +1,0 @@
-candidate,model_name,run_dir,best_pt,last_pt,weights_for_eval,model_size_mb,epoch_limit,patience,img_size,batch,save_period,status
-yolov8n,yolov8n.pt,/kaggle/working/denguewatch_yolov8n_workspace/runs/yolov8n,/kaggle/working/denguewatch_yolov8n_workspace/runs/yolov8n/weights/best.pt,/kaggle/working/denguewatch_yolov8n_workspace/runs/yolov8n/weights/last.pt,/kaggle/working/denguewatch_yolov8n_workspace/runs/yolov8n/weights/best.pt,5.942,100,10,640,16,5,trained_or_existing_weights_found

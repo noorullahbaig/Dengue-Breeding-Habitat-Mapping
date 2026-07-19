@@ -2,19 +2,40 @@
   "model_name": "denguewatch_yolov8s_best",
   "architecture": "YOLOv8s",
   "deployment_role": "default",
-  "source_artifact": "Model Training/denguewatch_yolov8s_outputs/final_yolov8s_model/denguewatch_yolov8s_best.pt",
-  "eval_split": "test",
-  "precision": 0.858852,
-  "recall": 0.783834,
-  "map50": 0.828141,
-  "map50_95": 0.632445,
-  "inference_ms": 8.436129,
-  "size_mb": 21.457,
-  "sha256": "6d6a5b75ea3913ebd6cf358faccd0ed75b0e38a57eb72edeaa5a2983e01afdc5",
+  "source_artifact": "new train kaggle/denguewatch_yolov8s_clean_outputs/final_yolov8s_model/denguewatch_yolov8s_best.pt",
+  "dataset_fingerprint": "438a3bed43a94d2ffa0da59e1969a5c130f2851cdf781193a081f6ad6547e215",
+  "best_epoch": 44,
+  "eval_split": "clean_test",
+  "precision": 0.822557,
+  "recall": 0.768583,
+  "map50": 0.813267,
+  "map50_95": 0.581901,
+  "inference_ms": 8.710503,
+  "size_mb": 21.467081,
+  "sha256": "af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92",
+  "inference_profile": {
+    "image_size": 640,
+    "global_prediction_confidence": 0.08,
+    "nms_iou": 0.7,
+    "augment": false
+  },
+  "operating_profile": {
+    "artifact": "denguewatch_yolov8s_operating_profile.json",
+    "detection_floors": {
+      "artificial_container": 0.316,
+      "drain_inlet": 0.08,
+      "tire": 0.448
+    },
+    "stronger_evidence_thresholds": {
+      "artificial_container": 0.674,
+      "drain_inlet": 0.553,
+      "tire": 0.712
+    }
+  },
   "classes": [
     "Artificial Container",
     "Drain Inlet",
     "Tire"
   ],
-  "selected_on": "2026-07-09"
+  "selected_on": "2026-07-19"
 }

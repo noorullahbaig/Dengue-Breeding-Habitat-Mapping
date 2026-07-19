@@ -20,11 +20,11 @@ export const seededReports: SubmittedReport[] = [
     prediction: {
       label: 'drain_inlet',
       confidence: 0.62,
-      confidenceBand: 'low',
+      confidenceBand: 'high',
       topRawLabel: 'Drain-Inlet',
       detections: [{ rawLabel: 'Drain-Inlet', confidence: 0.62, bbox: [36, 30, 280, 210] }],
       advisoryText:
-        'The image is ambiguous; human verification is required.',
+        'The model produced stronger evidence for this habitat class, but final verification is still required.',
     },
     neighborhood: 'Cheras',
     statusMessage: 'Report received and available for tracking.',
@@ -52,7 +52,7 @@ export const seededReports: SubmittedReport[] = [
       topRawLabel: 'Tire',
       detections: [{ rawLabel: 'Tire', confidence: 0.88, bbox: [54, 42, 300, 238] }],
       advisoryText:
-        'The model is highly confident in this detection, but final verification is still required.',
+        'The model produced stronger evidence for this habitat class, but final verification is still required.',
     },
     neighborhood: 'Bukit Jalil',
     statusMessage: 'Flagged for faster follow-up because the area aligns with active hotspot context.',
@@ -77,11 +77,11 @@ export const seededReports: SubmittedReport[] = [
     prediction: {
       label: 'artificial_container',
       confidence: 0.67,
-      confidenceBand: 'high',
+      confidenceBand: 'low',
       topRawLabel: 'Bottle',
       detections: [{ rawLabel: 'Bottle', confidence: 0.67, bbox: [70, 52, 250, 230] }],
       advisoryText:
-        'The model is highly confident in this detection, but final verification is still required.',
+        'The model produced uncertain evidence; human verification is required.',
     },
     neighborhood: 'Kepong',
     statusMessage: 'Report received and available for tracking.',

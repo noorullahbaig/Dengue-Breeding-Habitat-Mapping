@@ -1,0 +1,74 @@
+{
+  "profile_name": "denguewatch_yolov8s_two_tier_validation_profile",
+  "selected_on": "2026-07-19",
+  "selection_split": "clean_validation",
+  "checkpoint_sha256": "af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92",
+  "dataset_fingerprint": "438a3bed43a94d2ffa0da59e1969a5c130f2851cdf781193a081f6ad6547e215",
+  "source_curve": {
+    "filename": "validation_f1_curves.csv",
+    "sha256": "1a0274d4742979c248a3f5bce62eb49d17e698710ae75142d722427ee8108510",
+    "confidence_grid_points_per_class": 1000
+  },
+  "inference": {
+    "image_size": 640,
+    "global_prediction_confidence": 0.08,
+    "nms_iou": 0.7,
+    "augment": false
+  },
+  "detection_floor_objective": {
+    "metric": "F2",
+    "beta": 2.0,
+    "purpose": "Favor recall for evidence that remains subject to human verification."
+  },
+  "stronger_evidence_objective": {
+    "metric": "F0.5",
+    "beta": 0.5,
+    "purpose": "Favor precision before presenting the stronger-evidence advisory band."
+  },
+  "detection_floors": {
+    "artificial_container": {
+      "threshold_raw": 0.3163163163163163,
+      "deployed_threshold": 0.316,
+      "precision": 0.6934896281800443,
+      "recall": 0.8129251700680272,
+      "f_beta": 0.7858565035630732
+    },
+    "drain_inlet": {
+      "threshold_raw": 0.08008008008008008,
+      "deployed_threshold": 0.08,
+      "precision": 0.8020555662996544,
+      "recall": 0.8849042738371732,
+      "f_beta": 0.8669929840974948
+    },
+    "tire": {
+      "threshold_raw": 0.44844844844844844,
+      "deployed_threshold": 0.448,
+      "precision": 0.8863632978462205,
+      "recall": 0.7647033414810434,
+      "f_beta": 0.7862881202350133
+    }
+  },
+  "stronger_evidence_thresholds": {
+    "artificial_container": {
+      "threshold_raw": 0.6736736736736737,
+      "deployed_threshold": 0.674,
+      "precision": 0.8689717093440362,
+      "recall": 0.6767291256542878,
+      "f_beta": 0.8222551017054618
+    },
+    "drain_inlet": {
+      "threshold_raw": 0.5525525525525525,
+      "deployed_threshold": 0.553,
+      "precision": 0.9599896676174954,
+      "recall": 0.8273664953145577,
+      "f_beta": 0.9301692676489417
+    },
+    "tire": {
+      "threshold_raw": 0.7117117117117117,
+      "deployed_threshold": 0.712,
+      "precision": 0.9350557070281174,
+      "recall": 0.7057764657422412,
+      "f_beta": 0.8780094999733202
+    }
+  }
+}

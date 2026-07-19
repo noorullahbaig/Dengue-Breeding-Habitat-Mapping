@@ -1,9 +1,0 @@
-path: /kaggle/working/denguewatch_yolov8m_workspace/clean_yolo_detection_dataset
-train: train/images
-val: valid/images
-nc: 3
-names:
-- Artificial Container
-- Drain Inlet
-- Tire
-test: test/images
