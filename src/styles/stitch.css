@@ -432,6 +432,7 @@ img {
 }
 
 .button {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1521,6 +1522,7 @@ img {
 }
 
 .reference-copy-pill {
+  box-sizing: border-box;
   width: 100%;
   display: grid;
   gap: 0.7rem;
