@@ -18,7 +18,7 @@ import {
 	formatHabitatLabel,
 	formatTimestamp,
 } from "@/lib/formatters";
-import { seededReports } from "@/mocks/data";
+
 import type { ReportStatus } from "@/types/report";
 import { Surface, Button, EmptyState, LoadingState } from "@/components/ui";
 import { API_BASE_URL } from "@/config";
@@ -54,7 +54,6 @@ export function StatusPage() {
 	const [searchInput, setSearchInput] = useState("");
 
 	const reference = searchParams.get("ref") ?? "";
-	const demoReference = seededReports[0]?.reference ?? "";
 
 	useEffect(() => {
 		setSearchInput(reference);
@@ -115,20 +114,6 @@ export function StatusPage() {
 					<EmptyState
 						title="Track Your Report"
 						icon={<ShieldAlert size={48} strokeWidth={1.5} />}
-						actions={
-							<div className="status-hero-demo">
-								<span className="caption-text">
-									Don't have one? Try the demo code:{" "}
-								</span>
-								<button
-									type="button"
-									onClick={() => setSearchParams({ ref: demoReference })}
-									className="demo-link-btn"
-								>
-									{demoReference}
-								</button>
-							</div>
-						}
 					>
 						<p className="status-hero-subtitle">
 							Enter your secure reference code to check triage updates and
