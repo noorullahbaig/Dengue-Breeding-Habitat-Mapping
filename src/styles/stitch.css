@@ -1481,12 +1481,15 @@ img {
 }
 
 .report-success-page {
-  padding-bottom: calc(1.25rem + var(--safe-area-bottom));
+  padding-top: max(2rem, env(safe-area-inset-top));
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
 }
 
 .report-success-page__content {
+  box-sizing: border-box;
   width: min(100%, 40rem);
   margin: 0 auto;
+  padding-inline: 1.25rem;
   display: grid;
   gap: 1rem;
 }
