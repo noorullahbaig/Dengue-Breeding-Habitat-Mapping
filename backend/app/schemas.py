@@ -14,6 +14,7 @@ class LocationPoint(BaseModel):
 
 
 class DetectionOut(BaseModel):
+    label: Literal["artificial_container", "drain_inlet", "tire"] | None = None
     rawLabel: str
     confidence: float
     bbox: list[float]

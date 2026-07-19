@@ -1,4 +1,5 @@
 export type HabitatClass = 'tire' | 'drain_inlet' | 'artificial_container' | 'unclassified'
+export type TargetHabitatClass = Exclude<HabitatClass, 'unclassified'>
 
 export type SubmissionStatus =
   | 'submitted'
@@ -63,6 +64,7 @@ export interface HotspotPriority {
 }
 
 export interface DetectionSummary {
+  label?: TargetHabitatClass | null
   rawLabel: string
   confidence: number
   bbox: number[]

@@ -3,7 +3,7 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from app.models import Report
-from app.inference import PredictionSummary
+from app.inference import PredictionSummary, public_label_for_raw
 from app.schemas import (
     DetectionOut,
     HotspotPriorityOut,
@@ -55,6 +55,7 @@ def _hotspot_priority(report: Report) -> HotspotPriorityOut:
 
 def _detection_from_mapping(item: dict) -> DetectionOut:
     return DetectionOut(
+        label=public_label_for_raw(item["rawLabel"]),
         rawLabel=item["rawLabel"],
         confidence=item["confidence"],
         bbox=item["bbox"],
@@ -83,6 +84,7 @@ def prediction_summary_out(prediction: PredictionSummary) -> PredictionSummaryOu
         topRawLabel=prediction.top_raw_label,
         detections=[
             DetectionOut(
+                label=public_label_for_raw(detection.raw_label),
                 rawLabel=detection.raw_label,
                 confidence=detection.confidence,
                 bbox=detection.bbox,

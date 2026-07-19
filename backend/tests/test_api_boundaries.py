@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 from inspect import signature
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.inference import Detection, PredictionSummary
 from app.main import _precheck_report, app
 from app.models import Report
 from app.serializers import (
     owner_report_detail_out,
+    prediction_summary_out,
     public_report_detail_out,
     public_report_out,
     status_report_out,
@@ -78,7 +81,11 @@ def test_status_response_hides_private_fields_but_exposes_public_model_evidence(
         prediction_confidence_band="high",
         prediction_top_raw_label="Tire",
         prediction_advisory_text="Advisory only.",
-        detections=[{"rawLabel": "Tire", "confidence": 0.91, "bbox": [1, 2, 3, 4]}],
+        detections=[
+            {"rawLabel": "Tire", "confidence": 0.91, "bbox": [1, 2, 3, 4]},
+            {"rawLabel": "Bottle", "confidence": 0.72, "bbox": [5, 6, 7, 8]},
+            {"rawLabel": "Coconut-Exocarp", "confidence": 0.88, "bbox": [9, 10, 11, 12]},
+        ],
     )
 
     response = status_report_out(report).model_dump()
@@ -91,14 +98,61 @@ def test_status_response_hides_private_fields_but_exposes_public_model_evidence(
     assert response["prediction"]["topRawLabel"] == "Tire"
     assert response["prediction"]["detections"] == [
         {
+            "label": "tire",
             "rawLabel": "Tire",
             "confidence": 0.91,
             "bbox": [1.0, 2.0, 3.0, 4.0],
             "bboxNormalized": None,
             "imageWidth": None,
             "imageHeight": None,
-        }
+        },
+        {
+            "label": "artificial_container",
+            "rawLabel": "Bottle",
+            "confidence": 0.72,
+            "bbox": [5.0, 6.0, 7.0, 8.0],
+            "bboxNormalized": None,
+            "imageWidth": None,
+            "imageHeight": None,
+        },
+        {
+            "label": None,
+            "rawLabel": "Coconut-Exocarp",
+            "confidence": 0.88,
+            "bbox": [9.0, 10.0, 11.0, 12.0],
+            "bboxNormalized": None,
+            "imageWidth": None,
+            "imageHeight": None,
+        },
     ]
+
+
+@pytest.mark.parametrize(
+    ("raw_label", "expected_label"),
+    [
+        ("Artificial Container", "artificial_container"),
+        ("Drain Inlet", "drain_inlet"),
+        ("Tire", "tire"),
+        ("Vase", "artificial_container"),
+        ("Drain-Inlet", "drain_inlet"),
+        ("Coconut-Exocarp", None),
+    ],
+)
+def test_live_prediction_serializes_canonical_detection_labels(
+    raw_label: str,
+    expected_label: str | None,
+):
+    prediction = PredictionSummary(
+        label=expected_label or "unclassified",
+        confidence=0.81 if expected_label else None,
+        confidence_band="high" if expected_label else "low",
+        top_raw_label=raw_label,
+        detections=[Detection(raw_label=raw_label, confidence=0.81, bbox=[1, 2, 3, 4])],
+    )
+
+    response = prediction_summary_out(prediction).model_dump()
+
+    assert response["detections"][0]["label"] == expected_label
 
 
 def test_owner_detail_includes_private_note_and_linkable_public_cluster():

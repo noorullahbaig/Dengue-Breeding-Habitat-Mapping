@@ -1,10 +1,21 @@
-import type { ConfidenceBand, HabitatClass, SubmissionStatus } from '@/types/report'
+import type {
+  ConfidenceBand,
+  HabitatClass,
+  SubmissionStatus,
+  TargetHabitatClass,
+} from '@/types/report'
 
 const habitatLabels: Record<HabitatClass, string> = {
   tire: 'Tire',
   drain_inlet: 'Drain / Drain Inlet',
   artificial_container: 'Artificial Container',
   unclassified: 'Unclassified',
+}
+
+const habitatPluralLabels: Record<TargetHabitatClass, string> = {
+  tire: 'Tires',
+  drain_inlet: 'Drain / drain inlets',
+  artificial_container: 'Artificial containers',
 }
 
 const statusLabels: Record<SubmissionStatus, string> = {
@@ -26,17 +37,34 @@ export function formatHabitatLabel(habitatClass: string) {
 }
 
 export function formatDetectionLabel(rawLabel: string) {
-  const normalized = rawLabel.trim().toLowerCase()
-  if (normalized === 'bottle' || normalized === 'vase' || normalized === 'artificial container') {
-    return habitatLabels.artificial_container
-  }
-  if (normalized === 'drain-inlet' || normalized === 'drain inlet') {
-    return habitatLabels.drain_inlet
-  }
-  if (normalized === 'tire') {
-    return habitatLabels.tire
-  }
+  const habitatClass = detectionHabitatClass(rawLabel)
+  if (habitatClass) return habitatLabels[habitatClass]
   return formatHabitatLabel(rawLabel)
+}
+
+export function detectionHabitatClass(rawLabel: string): TargetHabitatClass | null {
+  const normalized = rawLabel.trim().toLowerCase()
+  if (
+    normalized === 'bottle' ||
+    normalized === 'vase' ||
+    normalized === 'artificial container' ||
+    normalized === 'artificial_container'
+  ) {
+    return 'artificial_container'
+  }
+  if (
+    normalized === 'drain-inlet' ||
+    normalized === 'drain inlet' ||
+    normalized === 'drain_inlet'
+  ) {
+    return 'drain_inlet'
+  }
+  if (normalized === 'tire') return 'tire'
+  return null
+}
+
+export function formatHabitatPluralLabel(habitatClass: TargetHabitatClass) {
+  return habitatPluralLabels[habitatClass]
 }
 
 export function formatStatusLabel(status: SubmissionStatus) {

@@ -16,6 +16,10 @@ RAW_TO_PUBLIC_LABEL = {
     "tire": "tire",
 }
 
+
+def public_label_for_raw(raw_label: str) -> str | None:
+    return RAW_TO_PUBLIC_LABEL.get(raw_label)
+
 CLASS_DETECTION_FLOORS = {
     "artificial_container": 0.316,
     "drain_inlet": 0.080,

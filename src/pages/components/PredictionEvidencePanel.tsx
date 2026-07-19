@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
-import { formatDetectionLabel, formatHabitatLabel } from "@/lib/formatters";
-import type { DetectionSummary, PredictionSummary } from "@/types/report";
+import {
+	detectionHabitatClass,
+	formatHabitatLabel,
+	formatHabitatPluralLabel,
+} from "@/lib/formatters";
+import type {
+	DetectionSummary,
+	PredictionSummary,
+	TargetHabitatClass,
+} from "@/types/report";
 
 interface PredictionEvidencePanelProps {
 	prediction: PredictionSummary;
@@ -53,6 +61,66 @@ function detectionKey(detection: DetectionSummary) {
 	}`;
 }
 
+interface RecognizedDetection {
+	detection: DetectionSummary;
+	label: TargetHabitatClass;
+}
+
+interface DetectionGroup {
+	label: TargetHabitatClass;
+	count: number;
+	strongestConfidence: number;
+}
+
+function recognizedDetection(detection: DetectionSummary): RecognizedDetection | null {
+	const label = detection.label ?? detectionHabitatClass(detection.rawLabel);
+	return label ? { detection, label } : null;
+}
+
+function groupDetections(
+	detections: RecognizedDetection[],
+	primaryLabel: PredictionSummary["label"],
+) {
+	const groups = new Map<TargetHabitatClass, DetectionGroup>();
+
+	for (const { detection, label } of detections) {
+		const current = groups.get(label);
+		groups.set(label, {
+			label,
+			count: (current?.count ?? 0) + 1,
+			strongestConfidence: Math.max(
+				current?.strongestConfidence ?? Number.NEGATIVE_INFINITY,
+				detection.confidence,
+			),
+		});
+	}
+
+	return [...groups.values()].sort((left, right) => {
+		if (left.label === primaryLabel) return -1;
+		if (right.label === primaryLabel) return 1;
+		return (
+			right.strongestConfidence - left.strongestConfidence ||
+			left.label.localeCompare(right.label)
+		);
+	});
+}
+
+function primaryOutcomeHeading(
+	label: TargetHabitatClass,
+	count: number | undefined,
+	isStrongerEvidence: boolean,
+) {
+	const singularLabel = formatHabitatLabel(label).toLowerCase();
+	const evidenceQualifier = isStrongerEvidence ? "potential" : "possible";
+	const subject =
+		count && count > 1
+			? `${count} ${evidenceQualifier} ${formatHabitatPluralLabel(label).toLowerCase()}`
+			: `${evidenceQualifier} ${singularLabel}`;
+	const heading = `${subject.charAt(0).toUpperCase()}${subject.slice(1)} detected.`;
+
+	return isStrongerEvidence ? heading : `${heading} Review needed.`;
+}
+
 export function PredictionEvidencePanel({
 	prediction,
 	decision,
@@ -75,14 +143,24 @@ export function PredictionEvidencePanel({
 	}, [imageUrl]);
 
 	const detections = prediction.detections ?? [];
-	const validDetections = detections.filter(
-		(detection) =>
+	const recognizedDetections = detections
+		.map(recognizedDetection)
+		.filter((detection): detection is RecognizedDetection => detection !== null);
+	const primaryLabel =
+		prediction.label === "unclassified" ? null : prediction.label;
+	const hasTargetDetection = primaryLabel !== null;
+	const visibleDetections = hasTargetDetection ? recognizedDetections : [];
+	const validDetections = visibleDetections.filter(
+		({ detection }) =>
 			detection.bboxNormalized?.length === 4 || detection.bbox.length >= 4,
 	);
-	const hasInvalidDetections = validDetections.length !== detections.length;
-	const resultLabel = formatHabitatLabel(prediction.label);
-	const hasTargetDetection =
-		prediction.label !== "unclassified" && validDetections.length > 0;
+	const hasInvalidDetections = validDetections.length !== visibleDetections.length;
+	const detectionGroups = hasTargetDetection
+		? groupDetections(recognizedDetections, primaryLabel)
+		: [];
+	const primaryGroup = detectionGroups.find(
+		(group) => group.label === primaryLabel,
+	);
 	const outcome = !hasTargetDetection
 		? "not-detected"
 		: prediction.confidenceBand === "high"
@@ -94,12 +172,13 @@ export function PredictionEvidencePanel({
 			: outcome === "review"
 				? "Review needed"
 				: "Not detected";
-	const outcomeHeading =
-		outcome === "detected"
-			? `Potential ${resultLabel.toLowerCase()} detected.`
-			: outcome === "review"
-				? `Possible ${resultLabel.toLowerCase()}. Review needed.`
-				: "No target habitat detected.";
+	const outcomeHeading = hasTargetDetection
+		? primaryOutcomeHeading(
+				primaryLabel,
+				primaryGroup?.count,
+				outcome === "detected",
+			)
+		: "No target habitat detected.";
 
 	return (
 		<section
@@ -146,16 +225,16 @@ export function PredictionEvidencePanel({
 							</div>
 						) : null}
 						{showDetections && imageSize && !imageFailed && !isAnalyzing
-							? validDetections.map((detection) => (
+							? validDetections.map(({ detection, label }) => (
 									<span
 										key={detectionKey(detection)}
 										className="prediction-evidence__box"
 										style={{
 											...boxStyle(detection, imageSize),
 										}}
-										title={formatDetectionLabel(detection.rawLabel)}
+										title={formatHabitatLabel(label)}
 									>
-										<span>{formatDetectionLabel(detection.rawLabel)}</span>
+										<span>{formatHabitatLabel(label)}</span>
 									</span>
 								))
 							: null}
@@ -226,6 +305,25 @@ export function PredictionEvidencePanel({
 							? "The result is uncertain. Please review the photo before taking action."
 							: "No target habitat was identified in this photo."}
 				</p>
+				{detectionGroups.length > 0 ? (
+					<section
+						className="prediction-evidence__detection-summary"
+						aria-label="Detection summary"
+					>
+						<div className="prediction-evidence__detection-summary-header">
+							<span className="eyebrow">Detection summary</span>
+							<span>{recognizedDetections.length} total</span>
+						</div>
+						<ul>
+							{detectionGroups.map((group) => (
+								<li key={group.label}>
+									<span>{formatHabitatPluralLabel(group.label)}</span>
+									<strong>{group.count}</strong>
+								</li>
+							))}
+						</ul>
+					</section>
+				) : null}
 				{hasInvalidDetections ? (
 					<p className="prediction-evidence__warning" role="status">
 						Some detections could not be displayed because their bounding boxes

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PredictionEvidencePanel } from "@/pages/components/PredictionEvidencePanel";
 import type { PredictionSummary } from "@/types/report";
 
@@ -17,6 +17,154 @@ const prediction: PredictionSummary = {
 };
 
 describe("PredictionEvidencePanel", () => {
+	it("counts repeated primary detections in the headline and grouped summary", () => {
+		const repeatedTires = {
+			label: "tire",
+			confidence: 0.6,
+			confidenceBand: "low",
+			advisoryText: "Human verification is required.",
+			detections: [
+				{ label: "tire", rawLabel: "Tire", confidence: 0.6, bbox: [0, 0, 20, 20] },
+				{ label: "tire", rawLabel: "Tire", confidence: 0.58, bbox: [30, 0, 50, 20] },
+				{ label: "tire", rawLabel: "Tire", confidence: 0.55, bbox: [60, 0, 80, 20] },
+			],
+		} as PredictionSummary;
+
+		render(
+			<PredictionEvidencePanel
+				prediction={repeatedTires}
+				imageUrl="blob:three-tires"
+				showDetections
+			/>,
+		);
+
+		const image = screen.getByRole("img", {
+			name: "Evidence image with computer-vision detections",
+		});
+		Object.defineProperty(image, "naturalWidth", { configurable: true, value: 100 });
+		Object.defineProperty(image, "naturalHeight", { configurable: true, value: 100 });
+		fireEvent.load(image);
+
+		expect(
+			screen.getByRole("heading", {
+				name: "3 possible tires detected. Review needed.",
+			}),
+		).toBeInTheDocument();
+		const summary = screen.getByRole("region", { name: "Detection summary" });
+		expect(within(summary).getByText("Tires")).toBeInTheDocument();
+		expect(within(summary).getByText("3")).toBeInTheDocument();
+		expect(document.querySelectorAll(".prediction-evidence__box")).toHaveLength(3);
+	});
+
+	it("keeps the strongest class primary while summarizing every mixed detection", () => {
+		const mixedPrediction = {
+			label: "tire",
+			confidence: 0.92,
+			confidenceBand: "high",
+			advisoryText: "Final verification is still required.",
+			detections: [
+				{ label: "tire", rawLabel: "Tire", confidence: 0.92, bbox: [0, 0, 20, 20] },
+				{ label: "artificial_container", rawLabel: "Artificial Container", confidence: 0.84, bbox: [25, 0, 45, 20] },
+				{ label: "tire", rawLabel: "Tire", confidence: 0.81, bbox: [50, 0, 70, 20] },
+			],
+		} as PredictionSummary;
+
+		render(
+			<PredictionEvidencePanel
+				prediction={mixedPrediction}
+				imageUrl="blob:mixed-evidence"
+				showDetections
+			/>,
+		);
+
+		const image = screen.getByRole("img", {
+			name: "Evidence image with computer-vision detections",
+		});
+		Object.defineProperty(image, "naturalWidth", { configurable: true, value: 100 });
+		Object.defineProperty(image, "naturalHeight", { configurable: true, value: 100 });
+		fireEvent.load(image);
+
+		expect(
+			screen.getByRole("heading", { name: "2 potential tires detected." }),
+		).toBeInTheDocument();
+		const summary = screen.getByRole("region", { name: "Detection summary" });
+		expect(within(summary).getByText("Tires")).toBeInTheDocument();
+		expect(within(summary).getByText("Artificial containers")).toBeInTheDocument();
+		expect(within(summary).getByText("2")).toBeInTheDocument();
+		expect(within(summary).getByText("1")).toBeInTheDocument();
+		expect(document.querySelectorAll(".prediction-evidence__box")).toHaveLength(3);
+	});
+
+	it("keeps a single strongest primary object ahead of a larger secondary group", () => {
+		const unevenPrediction = {
+			label: "tire",
+			confidence: 0.95,
+			confidenceBand: "high",
+			advisoryText: "Final verification is still required.",
+			detections: [
+				{ label: "tire", rawLabel: "Tire", confidence: 0.95, bbox: [0, 0, 20, 20] },
+				{ label: "artificial_container", rawLabel: "Artificial Container", confidence: 0.8, bbox: [25, 0, 45, 20] },
+				{ label: "artificial_container", rawLabel: "Artificial Container", confidence: 0.78, bbox: [50, 0, 70, 20] },
+				{ label: "artificial_container", rawLabel: "Artificial Container", confidence: 0.75, bbox: [75, 0, 95, 20] },
+			],
+		} as PredictionSummary;
+
+		render(<PredictionEvidencePanel prediction={unevenPrediction} />);
+
+		expect(
+			screen.getByRole("heading", { name: "Potential tire detected." }),
+		).toBeInTheDocument();
+		const summary = screen.getByRole("region", { name: "Detection summary" });
+		const groups = within(summary).getAllByRole("listitem");
+		expect(groups[0]).toHaveTextContent(/Tires\s*1/);
+		expect(groups[1]).toHaveTextContent(/Artificial containers\s*3/);
+	});
+
+	it("uses raw-label aliases when canonical detection labels are absent", () => {
+		render(
+			<PredictionEvidencePanel
+				prediction={{
+					label: "artificial_container",
+					confidence: 0.82,
+					confidenceBand: "high",
+					advisoryText: "Final verification is still required.",
+					detections: [
+						{ rawLabel: "Bottle", confidence: 0.82, bbox: [0, 0, 20, 20] },
+						{ rawLabel: "Vase", confidence: 0.75, bbox: [30, 0, 50, 20] },
+					],
+				}}
+			/>,
+		);
+
+		expect(
+			screen.getByRole("heading", {
+				name: "2 potential artificial containers detected.",
+			}),
+		).toBeInTheDocument();
+		const summary = screen.getByRole("region", { name: "Detection summary" });
+		expect(within(summary).getByText("Artificial containers")).toBeInTheDocument();
+		expect(within(summary).getByText("2")).toBeInTheDocument();
+	});
+
+	it("keeps a stored primary classification when detection records are absent", () => {
+		render(
+			<PredictionEvidencePanel
+				prediction={{
+					label: "tire",
+					confidence: 0.9,
+					confidenceBand: "high",
+					advisoryText: "Stored model result.",
+					detections: [],
+				}}
+			/>,
+		);
+
+		expect(
+			screen.getByRole("heading", { name: "Potential tire detected." }),
+		).toBeInTheDocument();
+		expect(screen.queryByText("No target habitat detected.")).not.toBeInTheDocument();
+		expect(screen.queryByRole("region", { name: "Detection summary" })).not.toBeInTheDocument();
+	});
 	it("renders a nearby decision inside the existing inference result body", () => {
 		render(
 			<PredictionEvidencePanel
@@ -185,12 +333,14 @@ describe("PredictionEvidencePanel", () => {
 		).toBeInTheDocument();
 	});
 
-	it("reports malformed detections without rendering a misleading box", () => {
+	it("counts malformed detections without rendering a misleading box", () => {
 		render(
 			<PredictionEvidencePanel
 				prediction={{
-					...prediction,
+					label: "tire",
+					confidence: 0.6,
 					confidenceBand: "low",
+					advisoryText: "Human verification is required.",
 					detections: [{ rawLabel: "Tire", confidence: 0.2, bbox: [] }],
 				}}
 				imageUrl="blob:invalid-preview"
@@ -201,6 +351,45 @@ describe("PredictionEvidencePanel", () => {
 		expect(
 			screen.getByText(/Some detections could not be displayed/i),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Possible tire detected. Review needed." }),
+		).toBeInTheDocument();
+		const summary = screen.getByRole("region", { name: "Detection summary" });
+		expect(within(summary).getByText("Tires")).toBeInTheDocument();
+		expect(within(summary).getByText("1")).toBeInTheDocument();
+		expect(document.querySelector(".prediction-evidence__box")).toBeNull();
+	});
+
+	it("excludes unsupported legacy detections from target summaries and boxes", () => {
+		const unsupportedPrediction = {
+			label: "unclassified",
+			confidence: null,
+			confidenceBand: "low",
+			advisoryText: "No retained target evidence.",
+			detections: [
+				{ label: null, rawLabel: "Coconut-Exocarp", confidence: 0.9, bbox: [0, 0, 20, 20] },
+			],
+		} as PredictionSummary;
+
+		render(
+			<PredictionEvidencePanel
+				prediction={unsupportedPrediction}
+				imageUrl="blob:unsupported"
+				showDetections
+			/>,
+		);
+
+		const image = screen.getByRole("img", {
+			name: "Evidence image with computer-vision detections",
+		});
+		Object.defineProperty(image, "naturalWidth", { configurable: true, value: 100 });
+		Object.defineProperty(image, "naturalHeight", { configurable: true, value: 100 });
+		fireEvent.load(image);
+
+		expect(
+			screen.getByRole("heading", { name: "No target habitat detected." }),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("region", { name: "Detection summary" })).not.toBeInTheDocument();
 		expect(document.querySelector(".prediction-evidence__box")).toBeNull();
 	});
 
