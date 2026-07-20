@@ -199,6 +199,46 @@ describe('ReportPage mobile photo review', () => {
     expect(screen.queryByRole('dialog', { name: 'Our AI couldn\'t confirm a habitat' })).not.toBeInTheDocument()
   })
 
+  it('allows an unclassified result to continue through Submit anyway', async () => {
+    const user = userEvent.setup()
+    draft.wizardStep = 3
+    draft.hasConfirmedPin = true
+    draft.hasPublicConsent = true
+    precheckReport.mockResolvedValue({
+      prediction: {
+        label: 'unclassified',
+        confidence: null,
+        confidenceBand: 'low',
+        detections: [],
+        advisoryText: 'No target habitat was identified.',
+      },
+      candidates: [],
+      imageUrl: null,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage />
+      </MemoryRouter>,
+    )
+
+    const continueButton = await screen.findByRole('button', {
+      name: 'Continue to submit',
+    })
+    await waitFor(() => expect(continueButton).toBeEnabled())
+    await user.click(continueButton)
+
+    const warning = await screen.findByRole('dialog', {
+      name: 'Our AI couldn\'t confirm a habitat',
+    })
+    await user.click(
+      within(warning).getByRole('button', { name: 'Submit anyway' }),
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Final confirmation' })).toBeVisible()
+    expect(resetDraft).not.toHaveBeenCalled()
+  })
+
   it('resolves a nearby match as separate when the phone review is closed', async () => {
     const user = userEvent.setup()
     draft.wizardStep = 3

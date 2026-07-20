@@ -15,15 +15,15 @@
   "sha256": "af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92",
   "inference_profile": {
     "image_size": 640,
-    "global_prediction_confidence": 0.08,
+    "global_prediction_confidence": 0.448,
     "nms_iou": 0.7,
     "augment": false
   },
   "operating_profile": {
     "artifact": "denguewatch_yolov8s_operating_profile.json",
-    "detection_floors": {
-      "artificial_container": 0.316,
-      "drain_inlet": 0.08,
+    "review_floors": {
+      "artificial_container": 0.547,
+      "drain_inlet": 0.486,
       "tire": 0.448
     },
     "stronger_evidence_thresholds": {
@@ -37,5 +37,5 @@
     "Drain Inlet",
     "Tire"
   ],
-  "selected_on": "2026-07-19"
+  "selected_on": "2026-07-20"
 }

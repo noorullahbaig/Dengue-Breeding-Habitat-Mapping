@@ -4,7 +4,7 @@
 
 This document defines the application operating profile for the retrained DengueWatch YOLOv8s checkpoint selected at epoch 44. It supersedes every threshold associated with the retired training run.
 
-The application profile is selected exclusively from the clean validation confidence curves belonging to the following immutable model and dataset identities:
+Both threshold tiers are selected exclusively from the clean validation confidence curves belonging to the following immutable model and dataset identities.
 
 - Checkpoint SHA-256: `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`
 - Dataset fingerprint: `438a3bed43a94d2ffa0da59e1969a5c130f2851cdf781193a081f6ad6547e215`
@@ -21,16 +21,16 @@ The future independent real-world evaluation is confirmatory and subservient to 
 
 The previous `0.48`, `0.66`, and `0.62` class thresholds were selected for a checkpoint produced by an invalidated training process. Detector confidence distributions are model-specific. Once that checkpoint and its dataset construction were superseded, its thresholds lost their evidential basis even if the application code still functioned technically.
 
-The commonly used Ultralytics prediction default of `0.25` was also not selected from this model's evaluation. Retaining it merely because it was a library default would be an inherited implementation choice, not a result justified by the supplied validation evidence.
+The commonly used Ultralytics prediction default of `0.25` is not retained as an application threshold because it is not an optimum selected from this checkpoint's validation evidence. At `0.25`, validation precision was 0.647 for Artificial Container, 0.880 for Drain Inlet, and 0.769 for Tire. The selected F1 review floors increase those values to 0.815, 0.948, and 0.886 respectively, while validation recall changes from 0.820, 0.839, and 0.775 to 0.751, 0.839, and 0.765.
 
-## Why the application needs two thresholds per class
+## Why the application uses two class-specific thresholds
 
 DengueWatch makes two different decisions from a model score:
 
-1. **Detection/review decision:** Is the evidence sufficient to return as a possible habitat for human verification?
+1. **Detection/review decision:** Does the detector score reach its class-specific F1 floor so that the class label is retained for review?
 2. **Stronger-evidence decision:** Is the evidence sufficiently precise to place in the stronger user-facing advisory band?
 
-These decisions have different error costs. A single maximum-F1 threshold treats false positives and false negatives symmetrically and therefore cannot optimally represent both roles.
+These decisions have different error costs. Maximum F1 balances false classifications and missed classifications before a class label is retained. Maximum F0.5 places greater weight on precision before the result is presented without the dismissible low-confidence warning. Submission continuity does not depend on retaining a class label: classified low-band and unclassified results both allow the resident to retake the image or submit anyway.
 
 For precision \(P\), recall \(R\), and a chosen weighting parameter \(\beta\), the selection metric is:
 
@@ -38,8 +38,8 @@ For precision \(P\), recall \(R\), and a chosen weighting parameter \(\beta\), t
 F_\beta = (1 + \beta^2) \frac{P R}{\beta^2 P + R}
 \]
 
-- **F2 for detection floors:** \(\beta=2\) gives recall four times the weight of precision. This is appropriate for evidence that remains explicitly uncertain and is sent for human verification.
-- **F0.5 for stronger evidence:** \(\beta=0.5\) gives precision four times the weight of recall. This is appropriate before presenting a stronger-evidence statement to a resident.
+- **F1 for review floors:** \(\beta=1\) weights precision and recall equally. This is appropriate before retaining a predicted class in the advisory response.
+- **F0.5 for stronger evidence:** \(\beta=0.5\) gives precision four times the weight of recall. This is appropriate before presenting a stronger-evidence statement without the warning.
 
 This objective selection follows the application semantics. It is not based on which values happened to look favorable on the independent evaluation, which has not been used.
 
@@ -47,13 +47,13 @@ This objective selection follows the application semantics. It is not based on w
 
 The exact grid maximum is retained for provenance. Runtime values are rounded to three decimal places, avoiding both unwieldy repeating grid fractions and the larger displacement caused by two-decimal rounding.
 
-### Detection/review floors: maximum F2
+### Detection/review floors: maximum F1
 
-| Public class | Exact threshold | Deployed threshold | Precision | Recall | F2 |
+| Public class | Exact threshold | Deployed threshold | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
-| Artificial Container | 0.316316 | **0.316** | 0.693490 | 0.812925 | 0.785857 |
-| Drain Inlet | 0.080080 | **0.080** | 0.802056 | 0.884904 | 0.866993 |
-| Tire | 0.448448 | **0.448** | 0.886363 | 0.764703 | 0.786288 |
+| Artificial Container | 0.546547 | **0.547** | 0.815431 | 0.751365 | 0.782088 |
+| Drain Inlet | 0.486486 | **0.486** | 0.948047 | 0.839002 | 0.890198 |
+| Tire | 0.448448 | **0.448** | 0.886363 | 0.764703 | 0.821051 |
 
 ### Stronger-evidence thresholds: maximum F0.5
 
@@ -63,21 +63,21 @@ The exact grid maximum is retained for provenance. Runtime values are rounded to
 | Drain Inlet | 0.552553 | **0.553** | 0.959990 | 0.827366 | 0.930169 |
 | Tire | 0.711712 | **0.712** | 0.935056 | 0.705776 | 0.878009 |
 
-For transparency, the calibration notebook's original maximum-F1 values were approximately `0.547`, `0.486`, and `0.448`. They remain valid descriptions of symmetric validation F1 optima, but they were not adopted as the final application policy because the application has distinct recall-oriented and precision-oriented decisions.
+Among correctly detected validation objects retained at the F1 floor, the recall difference to the F0.5 point implies that approximately 9.9% of Artificial Container, 1.4% of Drain Inlet, and 7.7% of Tire detections occupy the uncertain band. These object-level estimates are not direct predictions of resident-facing warning frequency, which must be measured through UAT or deployment telemetry.
 
 ## Runtime decision process
 
-Ultralytics inference runs with a global confidence argument of `0.08`. This is not a universal acceptance threshold; it is the minimum of the three class-specific detection floors and ensures that potentially valid Drain Inlet predictions reach application post-processing.
+Ultralytics inference runs with a global confidence argument of `0.448`, the lowest deployed class floor. This value is an inference envelope rather than a universal acceptance threshold; class-specific post-filtering makes the actual review decision.
 
 The application then applies this sequence:
 
-1. Run inference with `imgsz=640`, `conf=0.08`, `iou=0.70`, and `augment=False`.
+1. Run inference with `imgsz=640`, `conf=0.448`, `iou=0.70`, and `augment=False`.
 2. Map raw model labels to the three public habitat classes.
-3. Remove each detection that falls below its predicted class's F2 detection floor.
+3. Remove each detection that falls below its predicted class's F1 review floor.
 4. If no detection remains, return `unclassified`.
 5. Otherwise, use the highest-confidence retained detection as the report summary.
 6. Assign the stronger band only when that detection reaches its class's F0.5 threshold; otherwise assign the uncertain band.
-7. Return all detection-floor-qualified detections. The stronger threshold changes advisory interpretation, not whether the evidence is returned.
+7. Return all review-floor-qualified detections. A classified uncertain result or an unclassified result opens the same non-blocking warning, so the review floor changes retained categorisation rather than submission eligibility.
 
 The public API continues to use `high` and `low` as stable internal band identifiers. User-facing language is deliberately evidence-oriented rather than probability-like:
 
@@ -97,13 +97,14 @@ The selected values are consequently authoritative for the current validation-de
 - the exported curves do not provide bootstrap confidence intervals;
 - the curve precision and recall values use the detector evaluation's object-matching definition;
 - deployment images may differ from the curated dataset;
-- external evaluation may reveal generalization limitations, but it cannot be used to tune this already-locked evaluation profile.
+- external evaluation may reveal generalization limitations, but it cannot be used to tune this already-locked evaluation profile;
+- the existing July 17 independent-evaluation artifacts used checkpoint SHA-256 `6d6a5b75ea3913ebd6cf358faccd0ed75b0e38a57eb72edeaa5a2983e01afdc5`, the retired thresholds, and default prediction settings, so they do not evaluate this checkpoint or operating profile.
 
 If thresholds are reconsidered in the future, the change must use a newly declared calibration protocol and a new versioned operating-profile artifact. The independent test or real-world evaluation set must not be repeatedly inspected and used as a tuning set.
 
 ## Reproducibility records
 
-The machine-readable profile is stored at `backend/models/denguewatch_yolov8s_operating_profile.json`. It records exact thresholds, deployed thresholds, precision, recall, F-beta results, inference settings, and immutable identities.
+The machine-readable profile is stored at `backend/models/denguewatch_yolov8s_operating_profile.json`. It records exact and deployed F1 review floors, F0.5 stronger-evidence thresholds, validation precision and recall, inference settings, and immutable identities.
 
 The authoritative source curve from the supplied `threshold_calibration` package is versioned at `backend/models/validation_f1_curves.csv`, making the deployed selection reproducible without relying on an external desktop folder:
 
@@ -118,13 +119,13 @@ python backend/scripts/derive_operating_profile.py \
   /tmp/denguewatch_yolov8s_operating_profile.json \
   --checkpoint-sha256 af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92 \
   --dataset-fingerprint 438a3bed43a94d2ffa0da59e1969a5c130f2851cdf781193a081f6ad6547e215 \
-  --selected-on 2026-07-19
+  --selected-on 2026-07-20
 ```
 
-Selection is deterministic if multiple curve rows have the same F-beta score. For the recall-oriented F2 floor, ties are resolved by higher recall, then higher precision, then the lower confidence threshold. For the precision-oriented F0.5 advisory point, ties are resolved by higher precision, then higher recall, then the higher confidence threshold. The supplied curves do not require these final tie-break steps at the selected maxima, but recording the rule prevents row ordering from changing future derivations.
+Selection is deterministic if multiple curve rows have the same objective score. F1 ties prefer higher recall, then higher precision, then the lower threshold. F0.5 ties prefer higher precision, then higher recall, then the higher threshold. The supplied curves have unique selected maxima, but recording the rule prevents row ordering from changing future derivations.
 
 Tests additionally verify that the derived profile, runtime constants, model metadata, dataset fingerprint, and deployed checkpoint hash remain consistent.
 
 ## Report-ready justification
 
-The retrained YOLOv8s model uses a two-tier, class-specific operating policy derived exclusively from its clean validation confidence curves. Recall-weighted F2 maxima were selected as minimum detection floors because retained detections remain subject to human verification, whereas precision-weighted F0.5 maxima were selected for the stronger-evidence advisory band to reduce overstatement in resident-facing output. This produced detection floors of 0.316, 0.080, and 0.448 and stronger-evidence thresholds of 0.674, 0.553, and 0.712 for Artificial Container, Drain Inlet, and Tire respectively. A global inference confidence of 0.08 is used only to expose candidates for subsequent class-specific filtering. The thresholds were fixed using clean validation evidence before independent real-world evaluation and are not interpreted as calibrated probabilities.
+The retrained YOLOv8s model uses a validation-derived two-tier operating policy. Class-specific maximum-F1 review floors of 0.547, 0.486, and 0.448 balance false and missed classifications for Artificial Container, Drain Inlet, and Tire. Maximum-F0.5 thresholds of 0.674, 0.553, and 0.712 define the stronger-evidence band to reduce overstatement. Inference uses 0.448 only as the global envelope required to expose candidates for class-specific filtering. Results below a review floor are unclassified, while results between the two class thresholds retain their label in the uncertain band; both outcomes remain submittable through the dismissible warning. The profile was fixed using clean validation only, and the detector scores are not interpreted as calibrated probabilities.

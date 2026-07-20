@@ -1,3 +1,4 @@
+import math
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -5,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from app.inference import (
+    CLASS_REVIEW_FLOORS,
+    INFERENCE_CONFIDENCE_FLOOR,
     Detection,
     ModelInference,
     confidence_band,
@@ -56,35 +59,76 @@ def test_accepts_new_retained_three_class_model_labels():
 
 def test_confidence_bands_use_precision_weighted_stronger_evidence_thresholds():
     assert confidence_band("artificial_container", 0.674) == "high"
+    assert confidence_band("artificial_container", 0.675) == "high"
     assert confidence_band("artificial_container", 0.673) == "low"
     assert confidence_band("drain_inlet", 0.553) == "high"
+    assert confidence_band("drain_inlet", 0.554) == "high"
     assert confidence_band("drain_inlet", 0.552) == "low"
     assert confidence_band("tire", 0.712) == "high"
+    assert confidence_band("tire", 0.713) == "high"
     assert confidence_band("tire", 0.711) == "low"
 
 
 @pytest.mark.parametrize(
-    ("raw_label", "floor", "below_floor"),
+    ("raw_label", "threshold"),
     [
-        ("artificial_container", 0.316, 0.315),
-        ("drain_inlet", 0.080, 0.079),
-        ("tire", 0.448, 0.447),
+        ("artificial_container", 0.674),
+        ("drain_inlet", 0.553),
+        ("tire", 0.712),
     ],
 )
-def test_detection_floors_keep_review_evidence_and_exclude_weaker_detections(
+def test_stronger_evidence_threshold_boundaries(
+    raw_label: str,
+    threshold: float,
+):
+    assert confidence_band(raw_label, math.nextafter(threshold, 0.0)) == "low"
+    assert confidence_band(raw_label, threshold) == "high"
+    assert confidence_band(raw_label, math.nextafter(threshold, 1.0)) == "high"
+
+
+@pytest.mark.parametrize(
+    ("raw_label", "floor"),
+    [
+        ("artificial_container", 0.547),
+        ("drain_inlet", 0.486),
+        ("tire", 0.448),
+    ],
+)
+def test_class_review_floors_keep_boundary_evidence_and_exclude_weaker_detections(
     raw_label: str,
     floor: float,
-    below_floor: float,
 ):
     retained = summarize_detections(
-        [Detection(raw_label=raw_label, confidence=floor, bbox=[0, 0, 10, 10])]
+        [
+            Detection(
+                raw_label=raw_label,
+                confidence=floor,
+                bbox=[0, 0, 10, 10],
+            )
+        ]
     )
     excluded = summarize_detections(
-        [Detection(raw_label=raw_label, confidence=below_floor, bbox=[0, 0, 10, 10])]
+        [
+            Detection(
+                raw_label=raw_label,
+                confidence=math.nextafter(floor, 0.0),
+                bbox=[0, 0, 10, 10],
+            )
+        ]
+    )
+    above = summarize_detections(
+        [
+            Detection(
+                raw_label=raw_label,
+                confidence=math.nextafter(floor, 1.0),
+                bbox=[0, 0, 10, 10],
+            )
+        ]
     )
 
     assert retained.label == raw_label
     assert retained.confidence_band == "low"
+    assert CLASS_REVIEW_FLOORS[raw_label] == floor
     assert retained.detections[0].confidence == floor
     assert retained.advisory_text == (
         "The model produced uncertain evidence; human verification is required."
@@ -92,6 +136,7 @@ def test_detection_floors_keep_review_evidence_and_exclude_weaker_detections(
     assert excluded.label == "unclassified"
     assert excluded.confidence is None
     assert excluded.detections == []
+    assert above.label == raw_label
 
 
 def test_confidence_bands_keep_unknown_and_missing_predictions_low():
@@ -201,7 +246,8 @@ def test_model_inference_uses_lowest_class_floor_and_locked_validation_settings(
     assert model.kwargs == {
         "verbose": False,
         "imgsz": 640,
-        "conf": 0.08,
+        "conf": INFERENCE_CONFIDENCE_FLOOR,
         "iou": 0.70,
         "augment": False,
     }
+    assert INFERENCE_CONFIDENCE_FLOOR == 0.448

@@ -110,7 +110,7 @@ Model path policy:
 - The default deployment checkpoint is the clean YOLOv8s epoch-44 model identified by the hash below. This repository does not use the retired training run as comparative evidence.
 - Runtime metadata for the promoted checkpoint lives in `backend/models/denguewatch_yolov8s_metadata.json`.
 - Current promoted checkpoint SHA-256 (2026-07-19): `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`
-- The retrained checkpoint uses class-specific F2 detection floors (`0.316`, `0.080`, `0.448`) and F0.5 stronger-evidence thresholds (`0.674`, `0.553`, `0.712`) for Artificial Container, Drain Inlet, and Tire respectively.
+- The retrained checkpoint uses validation-derived F1 review floors (`0.547`, `0.486`, `0.448`) and F0.5 stronger-evidence thresholds (`0.674`, `0.553`, `0.712`) for Artificial Container, Drain Inlet, and Tire respectively. Inference uses `conf=0.448` only as the envelope needed to expose every class candidate for post-filtering.
 - The complete selection rationale, validation evidence, limitations, and reproduction command are documented in `docs/academic/model-operating-profile.md`.
 
 Recommended local setup:

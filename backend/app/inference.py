@@ -20,11 +20,12 @@ RAW_TO_PUBLIC_LABEL = {
 def public_label_for_raw(raw_label: str) -> str | None:
     return RAW_TO_PUBLIC_LABEL.get(raw_label)
 
-CLASS_DETECTION_FLOORS = {
-    "artificial_container": 0.316,
-    "drain_inlet": 0.080,
+CLASS_REVIEW_FLOORS = {
+    "artificial_container": 0.547,
+    "drain_inlet": 0.486,
     "tire": 0.448,
 }
+INFERENCE_CONFIDENCE_FLOOR = min(CLASS_REVIEW_FLOORS.values())
 CLASS_STRONG_EVIDENCE_THRESHOLDS = {
     "artificial_container": 0.674,
     "drain_inlet": 0.553,
@@ -98,9 +99,8 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
     retained = [
         detection
         for detection in detections
-        if detection.raw_label in RAW_TO_PUBLIC_LABEL
-        and detection.confidence
-        >= CLASS_DETECTION_FLOORS[RAW_TO_PUBLIC_LABEL[detection.raw_label]]
+        if (public_label := RAW_TO_PUBLIC_LABEL.get(detection.raw_label)) is not None
+        and detection.confidence >= CLASS_REVIEW_FLOORS[public_label]
     ]
     top_retained = max(retained, key=lambda item: item.confidence, default=None)
 
@@ -164,7 +164,7 @@ class ModelInference:
                 str(image_path),
                 verbose=False,
                 imgsz=640,
-                conf=0.08,
+                conf=INFERENCE_CONFIDENCE_FLOOR,
                 iou=0.70,
                 augment=False,
             )

@@ -24,9 +24,26 @@ class DetectionOut(BaseModel):
 
 
 class PredictionSummaryOut(BaseModel):
-    label: str
-    confidence: float | None = None
-    confidenceBand: str
+    label: str = Field(
+        description=(
+            "Public habitat class retained at its class-specific F1 review floor, "
+            "or unclassified when no detection reaches its floor."
+        )
+    )
+    confidence: float | None = Field(
+        default=None,
+        description=(
+            "Raw detector score for the highest retained detection; this is not a "
+            "calibrated probability."
+        ),
+    )
+    confidenceBand: str = Field(
+        description=(
+            "Internal advisory band: high at the class-specific F0.5 "
+            "stronger-evidence threshold; low otherwise. Low and unclassified "
+            "results open a non-blocking warning and remain submittable."
+        )
+    )
     topRawLabel: str | None = None
     detections: list[DetectionOut] = Field(default_factory=list)
     advisoryText: str

@@ -40,17 +40,17 @@ The notebook must reproduce the deployed prototype behavior rather than inventin
 Raw inference uses the locked application settings:
 
 ```python
-model.predict(source, verbose=False, imgsz=640, conf=0.08, iou=0.70, augment=False)
+model.predict(source, verbose=False, imgsz=640, conf=0.448, iou=0.70, augment=False)
 ```
 
-The global `0.08` confidence argument is the minimum class-specific detection floor. Predictions are subsequently filtered by predicted class.
+The global `0.448` confidence argument is the lowest deployed class-specific review floor and serves only as the inference envelope. Predictions are subsequently filtered by predicted class.
 
-Production class-specific detection floors and stronger-evidence thresholds are:
+Production class-specific review floors and stronger-evidence thresholds are:
 
 ```python
-DETECTION_FLOORS = {
-    "Artificial Container": 0.316,
-    "Drain Inlet": 0.080,
+REVIEW_FLOORS = {
+    "Artificial Container": 0.547,
+    "Drain Inlet": 0.486,
     "Tire": 0.448,
 }
 STRONGER_EVIDENCE_THRESHOLDS = {
@@ -60,7 +60,7 @@ STRONGER_EVIDENCE_THRESHOLDS = {
 }
 ```
 
-A prediction is returned only when it reaches its class's detection floor. A returned prediction receives the stronger-evidence band only when it also reaches its class's stronger-evidence threshold; otherwise it remains uncertain evidence. These values are locked before independent evaluation and cannot be tuned from its results.
+A prediction is classified only when it reaches its class's review floor. A retained prediction receives the stronger-evidence band only when it also reaches its class's stronger-evidence threshold; otherwise it remains uncertain evidence. An image with no retained prediction is unclassified. Classified-low and unclassified results remain submittable through the warning. These values are locked before independent evaluation and cannot be tuned from its results.
 
 ## Dataset ingestion and audit
 
@@ -92,7 +92,7 @@ The standard benchmark remains the academically comparable localization result.
 
 ### 2. Coarse-localization analysis
 
-Run custom class-aware matching at IoU >= 0.30 using detection-floor-filtered predictions.
+Run custom class-aware matching at IoU >= 0.30 using review-floor-filtered predictions.
 
 Use one-to-one greedy matching within each image and class, ordered by prediction confidence. Report object-level TP, FP, FN, precision, recall, and F1 overall and per class.
 
@@ -105,18 +105,18 @@ The application only needs to determine whether a target habitat class is presen
 For each target class independently:
 
 - Ground-truth positive: at least one annotation of that class exists in the image.
-- Predicted positive: at least one prediction of that class passes its class-specific detection floor.
+- Predicted positive: at least one prediction of that class passes its class-specific review floor.
 - Calculate TP, FP, TN, FN, sensitivity/recall, specificity, precision, negative predictive value, F1, balanced accuracy, and accuracy.
 
-Also report exact image-level class-set match, any-habitat detection sensitivity, background rejection specificity, false alert rate on zero-annotation background images, image-level multilabel confusion data, and a single-label prototype-style outcome based on the highest-confidence detection-floor-qualified prediction, with `background/unclassified` when no prediction passes. Stratify retained predictions by uncertain and stronger-evidence advisory band without changing the locked thresholds.
+Also report exact image-level class-set match, any-habitat sensitivity and precision, background rejection specificity, false-alert rate on zero-annotation background images, high/low/unclassified image rates, image-level multilabel confusion data, and a single-label prototype-style outcome based on the highest-confidence review-floor-qualified prediction, with `background/unclassified` when no prediction passes. Report 95% confidence intervals for image-level proportions. Stratify retained predictions by uncertain and stronger-evidence advisory band without changing the locked thresholds.
 
 For multi-class ground-truth images, the multilabel metrics are authoritative. The prototype-style single-label summary is a secondary operational description.
 
 ## Prediction and matching records
 
-The notebook must save every raw model prediction emitted at the global `0.08` inference setting and every prediction retained after class-specific detection-floor filtering.
+The notebook must save every raw model prediction emitted at the global `0.448` inference setting and every prediction retained after class-specific review-floor filtering.
 
-Each prediction record must include image ID and filename, Roboflow split, predicted class ID and name, confidence, class-specific detection floor, stronger-evidence threshold, floor pass/fail, advisory band, normalized and absolute bounding box, matched ground-truth record when applicable, IoU when matched, and outcome category such as TP, FP, duplicate prediction, class error, or unmatched.
+Each prediction record must include image ID and filename, Roboflow split, predicted class ID and name, confidence, class-specific review floor, stronger-evidence threshold, floor pass/fail, advisory band, normalized and absolute bounding box, matched ground-truth record when applicable, IoU when matched, and outcome category such as TP, FP, duplicate prediction, class error, or unmatched.
 
 Ground-truth records must include equivalent image, class, and bounding-box fields.
 
@@ -139,7 +139,7 @@ Create readable PNG outputs without requiring an HTML report:
 - confidence distributions by class and outcome
 - example annotated images for true positives, false positives, false negatives, class errors, and background false alerts
 
-Ground-truth and prediction boxes must be visually distinguishable, and captions must state the confidence, class detection floor, stronger-evidence threshold, and assigned advisory band.
+Ground-truth and prediction boxes must be visually distinguishable, and captions must state the confidence, class review floor, stronger-evidence threshold, and assigned advisory band.
 
 ## Export package
 

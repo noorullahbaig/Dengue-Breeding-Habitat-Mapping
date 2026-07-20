@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 
 from app.inference import (
-    CLASS_DETECTION_FLOORS,
+    CLASS_REVIEW_FLOORS,
     CLASS_STRONG_EVIDENCE_THRESHOLDS,
+    INFERENCE_CONFIDENCE_FLOOR,
 )
 from scripts.derive_operating_profile import derive_profile
 
@@ -35,33 +36,53 @@ def test_operating_profile_identity_matches_promoted_model_and_metadata():
     assert metadata["dataset_fingerprint"] == profile["dataset_fingerprint"]
     assert metadata["operating_profile"] == {
         "artifact": PROFILE_PATH.name,
-        "detection_floors": CLASS_DETECTION_FLOORS,
+        "review_floors": CLASS_REVIEW_FLOORS,
         "stronger_evidence_thresholds": CLASS_STRONG_EVIDENCE_THRESHOLDS,
     }
+    assert metadata["inference_profile"]["global_prediction_confidence"] == (
+        INFERENCE_CONFIDENCE_FLOOR
+    )
 
 
-@pytest.mark.parametrize(
-    ("section", "beta", "runtime_values"),
-    [
-        ("detection_floors", 2.0, CLASS_DETECTION_FLOORS),
-        ("stronger_evidence_thresholds", 0.5, CLASS_STRONG_EVIDENCE_THRESHOLDS),
-    ],
-)
-def test_operating_points_record_reproducible_f_beta_values(
-    section: str,
-    beta: float,
-    runtime_values: dict[str, float],
-):
+def test_review_floor_points_record_reproducible_maximum_f1_values():
     profile = json.loads(PROFILE_PATH.read_text())
-    operating_points = profile[section]
 
-    for class_name, expected_threshold in runtime_values.items():
+    for class_name, expected_threshold in CLASS_REVIEW_FLOORS.items():
+        point = profile["review_floors"][class_name]
+        assert point["deployed_threshold"] == expected_threshold
+        assert point["deployed_threshold"] == round(point["threshold_raw"], 3)
+        assert point["f_beta"] == pytest.approx(
+            f_beta(point["precision"], point["recall"], 1.0), abs=1e-12
+        )
+
+
+def test_stronger_evidence_points_record_reproducible_f_half_values():
+    profile = json.loads(PROFILE_PATH.read_text())
+    operating_points = profile["stronger_evidence_thresholds"]
+
+    for class_name, expected_threshold in CLASS_STRONG_EVIDENCE_THRESHOLDS.items():
         point = operating_points[class_name]
         assert point["deployed_threshold"] == expected_threshold
         assert point["deployed_threshold"] == round(point["threshold_raw"], 3)
         assert point["f_beta"] == pytest.approx(
-            f_beta(point["precision"], point["recall"], beta), abs=1e-12
+            f_beta(point["precision"], point["recall"], 0.5), abs=1e-12
         )
+
+
+def test_operating_profile_records_the_f1_review_floor_objective_and_envelope():
+    profile = json.loads(PROFILE_PATH.read_text())
+
+    assert profile["inference"]["global_prediction_confidence"] == (
+        INFERENCE_CONFIDENCE_FLOOR
+    )
+    assert profile["review_floor_objective"] == {
+        "metric": "F1",
+        "beta": 1.0,
+        "purpose": (
+            "Balance false classifications and missed classifications before "
+            "retaining a class label for review."
+        ),
+    }
 
 
 def test_operating_profile_records_the_authoritative_curve_artifact():

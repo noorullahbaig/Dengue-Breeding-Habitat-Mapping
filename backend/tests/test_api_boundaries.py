@@ -54,6 +54,15 @@ def test_precheck_helper_accepts_concrete_values_not_fastapi_param_defaults():
         assert parameter.default is parameter.empty
 
 
+def test_prediction_openapi_describes_review_floors_and_advisory_bands():
+    prediction_schema = app.openapi()["components"]["schemas"]["PredictionSummaryOut"]
+
+    assert "class-specific F1 review floor" in prediction_schema["properties"]["label"]["description"]
+    assert "detector score" in prediction_schema["properties"]["confidence"]["description"]
+    assert "F0.5" in prediction_schema["properties"]["confidenceBand"]["description"]
+    assert "warning" in prediction_schema["properties"]["confidenceBand"]["description"]
+
+
 def test_status_response_hides_private_fields_but_exposes_public_model_evidence():
     report = Report(
         id="report-1",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Derive DengueWatch's two-tier operating thresholds from validation curves."""
+"""Derive DengueWatch's review floor and advisory thresholds."""
 
 from __future__ import annotations
 
@@ -44,9 +44,9 @@ def choose_operating_point(rows: list[dict[str, str]], beta: float) -> dict[str,
     if not candidates:
         raise ValueError("At least one validation-curve row is required.")
 
-    if beta > 1:
-        # Recall-oriented floors prefer recall, then precision, then the lower
-        # threshold if the exported curve contains otherwise identical maxima.
+    if beta >= 1:
+        # Balanced or recall-oriented points prefer recall, then precision,
+        # then the lower threshold when exported maxima are otherwise equal.
         tie_breaker = lambda point: (
             point["f_beta"],
             point["recall"],
@@ -55,7 +55,7 @@ def choose_operating_point(rows: list[dict[str, str]], beta: float) -> dict[str,
         )
     else:
         # Precision-oriented advisory points prefer precision, then recall,
-        # then the higher threshold. This also defines deterministic F1 ties.
+        # then the higher threshold.
         tie_breaker = lambda point: (
             point["f_beta"],
             point["precision"],
@@ -91,8 +91,8 @@ def derive_profile(
     if any(len(rows) != 1000 for rows in grouped.values()):
         raise ValueError("Expected exactly 1,000 curve points for every class.")
 
-    detection_floors = {
-        CLASS_KEYS[class_name]: choose_operating_point(grouped[class_name], beta=2.0)
+    review_floors = {
+        CLASS_KEYS[class_name]: choose_operating_point(grouped[class_name], beta=1.0)
         for class_name in CLASS_KEYS
     }
     stronger_thresholds = {
@@ -114,22 +114,25 @@ def derive_profile(
         "inference": {
             "image_size": 640,
             "global_prediction_confidence": min(
-                point["deployed_threshold"] for point in detection_floors.values()
+                point["deployed_threshold"] for point in review_floors.values()
             ),
             "nms_iou": 0.7,
             "augment": False,
         },
-        "detection_floor_objective": {
-            "metric": "F2",
-            "beta": 2.0,
-            "purpose": "Favor recall for evidence that remains subject to human verification.",
+        "review_floor_objective": {
+            "metric": "F1",
+            "beta": 1.0,
+            "purpose": (
+                "Balance false classifications and missed classifications before "
+                "retaining a class label for review."
+            ),
         },
         "stronger_evidence_objective": {
             "metric": "F0.5",
             "beta": 0.5,
             "purpose": "Favor precision before presenting the stronger-evidence advisory band.",
         },
-        "detection_floors": detection_floors,
+        "review_floors": review_floors,
         "stronger_evidence_thresholds": stronger_thresholds,
     }
 
