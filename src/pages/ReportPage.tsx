@@ -594,6 +594,8 @@ export function ReportPage({
 			if (submitted.claimToken) {
 				storePendingReportClaim(submitted.reference, submitted.claimToken);
 			}
+			setCurrentStep(0);
+			resetDraft();
 			navigate(`/report/success?ref=${submitted.reference}`);
 		} catch (error) {
 			if (error instanceof AppApiError && error.kind === "stale_file") {
@@ -1168,9 +1170,10 @@ export function ReportPage({
 					<div className="report-slide">
 						{currentStep === 3 && (
 							<div
-								className="report-slide__content"
+								className="report-slide__content report-ai-slide__content"
 								data-inference-state={inferenceViewState}
 							>
+								<div className="report-ai-results">
 								{precheckError ? (
 									<div
 										className="precheck-recovery u-static-1a5debf7"
@@ -1245,6 +1248,7 @@ export function ReportPage({
 										isAnalyzing={isPrecheckLoading}
 									/>
 								) : null}
+								</div>
 
 								<div className="stack-sm report-ai-actions">
 									<Button

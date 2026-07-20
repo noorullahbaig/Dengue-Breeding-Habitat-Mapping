@@ -210,6 +210,125 @@
    SIGNED-IN STATE
    ============================================================ */
 
+.activity-tabs {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	flex: 0 0 auto;
+	gap: 0.25rem;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	border: 1px solid rgba(0, 70, 79, 0.1);
+	border-radius: 14px;
+	background: #f1f7f8;
+}
+
+.activity-tabs [role="tab"] {
+	min-height: 44px;
+	padding: 0.55rem 0.75rem;
+	border: 0;
+	border-radius: 10px;
+	background: transparent;
+	color: var(--color-ink-soft);
+	font-family: var(--font-label);
+	font-size: 0.875rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition:
+		background 150ms,
+		box-shadow 150ms,
+		color 150ms;
+}
+
+.activity-tabs [role="tab"][aria-selected="true"] {
+	background: #fff;
+	color: #00464f;
+	box-shadow: 0 2px 8px rgba(0, 70, 79, 0.12);
+}
+
+.activity-tabs [role="tab"]:focus-visible {
+	outline: 3px solid rgba(0, 95, 107, 0.28);
+	outline-offset: 2px;
+}
+
+.activity-tab-panel {
+	flex: 1;
+	min-height: 0;
+}
+
+.activity-tab-panel--reports {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.activity-tab-panel--search {
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-gutter: stable;
+}
+
+.activity-tab-panel--search::-webkit-scrollbar {
+	width: 3px;
+}
+
+.activity-tab-panel--search::-webkit-scrollbar-thumb {
+	border-radius: 99px;
+	background: rgba(0, 70, 79, 0.2);
+}
+
+.report-status-lookup--activity {
+	width: 100%;
+	min-height: 100%;
+}
+
+.report-status-lookup--activity .status-hero-container,
+.report-status-lookup--activity .status-report-card {
+	border: 0;
+	box-shadow: none;
+}
+
+.report-status-lookup--activity .status-hero-container {
+	padding: 1.25rem 0.25rem;
+	background: transparent;
+}
+
+.report-status-lookup--activity .status-dashboard-header {
+	top: 0;
+	height: auto;
+	min-height: 60px;
+	padding: 0.5rem 0;
+	gap: 0.5rem;
+}
+
+.report-status-lookup--activity .status-dashboard-main {
+	padding: 0.75rem 0 1.5rem;
+}
+
+.report-status-lookup--activity .status-report-header,
+.report-status-lookup--activity .status-report-info,
+.report-status-lookup--activity .status-report-evidence {
+	padding: 1rem;
+}
+
+.report-status-lookup--activity .status-report-header {
+	align-items: flex-start;
+}
+
+.report-status-lookup--activity .status-report-id {
+	overflow-wrap: anywhere;
+	font-size: 1.2rem;
+}
+
+.report-status-lookup--activity .status-stepper-premium {
+	padding: 1.5rem 0.75rem;
+}
+
+.report-status-lookup--activity .status-detail-grid {
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+
 /* ---------- Top strip: greeting + report count ---------- */
 .activity-topstrip {
   display: flex;

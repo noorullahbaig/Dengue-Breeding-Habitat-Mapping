@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
 	Clock3,
 	LogIn,
@@ -9,9 +9,11 @@ import {
 	ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/app/useAuth";
+import { useMobileViewport } from "@/app/useMobileViewport";
 import { useServices } from "@/app/useServices";
 import { StatusBadge } from "@/features/shared/StatusBadge";
 import { formatTimestamp } from "@/lib/formatters";
+import { ReportStatusLookup } from "@/pages/components/ReportStatusLookup";
 import type { OwnerReport } from "@/types/report";
 import "@/styles/activity.css";
 
@@ -22,13 +24,36 @@ interface ActivityItem {
 
 export function ActivityPage() {
 	const location = useLocation();
-	const { isAuthenticated, isAuthLoading, sessionMode, trackedReferences, untrackReport } = useAuth();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const isMobile = useMobileViewport();
+	const {
+		isAuthenticated,
+		isAuthLoading,
+		sessionMode,
+		trackedReferences,
+		untrackReport,
+	} = useAuth();
 	const { reportsService } = useServices();
 	const [items, setItems] = useState<ActivityItem[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [loadError, setLoadError] = useState("");
 	const [mounted, setMounted] = useState(false);
 	const feedback = (location.state as { feedback?: string } | null)?.feedback;
+	const isSearchTab =
+		isAuthenticated && isMobile && searchParams.get("tab") === "search";
+	const lookupReference = isSearchTab ? (searchParams.get("ref") ?? "") : "";
+
+	function showMyReports() {
+		setSearchParams({});
+	}
+
+	function showSearchReports() {
+		setSearchParams({ tab: "search" });
+	}
+
+	function searchByReference(reference: string) {
+		setSearchParams({ tab: "search", ref: reference });
+	}
 
 	useEffect(() => {
 		setMounted(true);
@@ -43,13 +68,13 @@ export function ActivityPage() {
 				return;
 			}
 
-				setIsLoading(true);
-				setLoadError("");
+			setIsLoading(true);
+			setLoadError("");
 
 			try {
 				// Fetch user's reports from backend API
 				const userReports = await reportsService.getMyReports();
-				
+
 				if (isMounted) {
 					setItems(
 						userReports.map((report) => ({
@@ -60,9 +85,13 @@ export function ActivityPage() {
 				}
 			} catch (err) {
 				console.error("Failed to load user reports from API:", err);
-				
+
 				// Fallback to localStorage-tracked reports if API fails
-					if (isMounted && sessionMode === "local" && trackedReferences.length > 0) {
+				if (
+					isMounted &&
+					sessionMode === "local" &&
+					trackedReferences.length > 0
+				) {
 					console.log("Falling back to localStorage-tracked reports");
 					const reports = await Promise.all(
 						trackedReferences.map(async (reference) => ({
@@ -71,11 +100,11 @@ export function ActivityPage() {
 						})),
 					);
 					setItems(reports);
-					} else {
-						setItems([]);
-						if (isMounted) {
-							setLoadError("Your reports could not be loaded. Please try again.");
-						}
+				} else {
+					setItems([]);
+					if (isMounted) {
+						setLoadError("Your reports could not be loaded. Please try again.");
+					}
 				}
 			} finally {
 				if (isMounted) {
@@ -89,12 +118,10 @@ export function ActivityPage() {
 		return () => {
 			isMounted = false;
 		};
-		}, [isAuthenticated, sessionMode, trackedReferences, reportsService]);
+	}, [isAuthenticated, sessionMode, trackedReferences, reportsService]);
 
 	return (
-		<div
-			className={`activity-page ${mounted ? "activity-page--mounted" : ""}`}
-		>
+		<div className={`activity-page ${mounted ? "activity-page--mounted" : ""}`}>
 			{/* Decorative background */}
 			<div className="activity-bg" aria-hidden="true">
 				<div className="activity-bg__orb activity-bg__orb--1" />
@@ -104,15 +131,14 @@ export function ActivityPage() {
 			</div>
 
 			<div className="activity-scroll">
-
-					{isAuthLoading ? (
-						<main className="activity-card">
-							<div className="activity-loading" role="status">
-								<div className="activity-loading__spinner" aria-hidden="true" />
-								<span>Restoring your account…</span>
-							</div>
-						</main>
-					) : !isAuthenticated ? (
+				{isAuthLoading ? (
+					<main className="activity-card">
+						<div className="activity-loading" role="status">
+							<div className="activity-loading__spinner" aria-hidden="true" />
+							<span>Restoring your account…</span>
+						</div>
+					</main>
+				) : !isAuthenticated ? (
 					/* ── GATE: NOT SIGNED IN ── */
 					<main className="activity-card">
 						{/* Top centred content */}
@@ -125,8 +151,8 @@ export function ActivityPage() {
 
 							<h1 className="activity-gate-title">Your Report Activity</h1>
 							<p className="activity-gate-sub">
-								Sign in to see status updates on every report you've
-								submitted — your private feed, all in one place.
+								Sign in to see status updates on every report you've submitted —
+								your private feed, all in one place.
 							</p>
 						</div>
 
@@ -151,125 +177,182 @@ export function ActivityPage() {
 				) : (
 					/* ── SIGNED IN ── */
 					<main className="activity-card">
-						{/* Top strip */}
-						<div className="activity-topstrip">
-							<div>
-								<p className="activity-topstrip__label">Resident activity</p>
-								<h1 className="activity-topstrip__title">Your Reports</h1>
+						{isMobile && (
+							<div
+								className="activity-tabs"
+								role="tablist"
+								aria-label="Activity views"
+							>
+								<button
+									type="button"
+									id="activity-tab-my-reports"
+									role="tab"
+									aria-selected={!isSearchTab}
+									aria-controls="activity-panel-my-reports"
+									onClick={showMyReports}
+								>
+									My Reports
+								</button>
+								<button
+									type="button"
+									id="activity-tab-search-report"
+									role="tab"
+									aria-selected={isSearchTab}
+									aria-controls="activity-panel-search-report"
+									onClick={showSearchReports}
+								>
+									Search Report
+								</button>
 							</div>
-						</div>
-
-						{/* Feedback banner */}
-							{feedback && (
-								<div className="activity-feedback" role="status">
-									{feedback}
-								</div>
-							)}
-							{loadError && (
-								<div className="activity-feedback" role="alert">
-									{loadError}
-								</div>
-							)}
-
-						{isLoading ? (
-							/* Loading */
-							<div className="activity-loading">
-								<div className="activity-loading__spinner" aria-hidden="true" />
-								<span>Loading your reports…</span>
-							</div>
-						) : items.length === 0 ? (
-							/* Empty */
-							<>
-								<div className="activity-empty-icon">
-									<div className="activity-empty-icon__wrap">
-										<ClipboardList size={26} />
-									</div>
-								</div>
-								<p className="activity-empty-title">No reports saved yet</p>
-								<p className="activity-empty-sub">
-									Submit a report then tap "Save to my activity" from the
-									confirmation screen.
-								</p>
-							</>
-						) : (
-							/* Report list — inner scroll, card doesn't scroll */
-							<ul className="activity-inner-list">
-								{items.map(({ reference, report }) => (
-									<li
-										key={reference}
-										className={`activity-item${!report ? " activity-item--missing" : ""}`}
-									>
-										<div className="activity-item__row">
-											<div>
-												<p className="activity-item__ref-label">Reference</p>
-												<p className="activity-item__ref">{reference}</p>
-											</div>
-											{report ? (
-												<StatusBadge status={report.status} />
-											) : (
-												<span
-													style={{
-														fontSize: "0.75rem",
-														color: "var(--color-ink-soft)",
-														fontFamily: "var(--font-label)",
-													}}
-												>
-													Unavailable
-												</span>
-											)}
-										</div>
-
-										{report && (
-											<div className="activity-item__meta">
-												<span>{report.neighborhood}</span>
-												<span className="activity-item__meta-dot" />
-												<span>{formatTimestamp(report.createdAt)}</span>
-											</div>
-										)}
-
-										{report?.notes ? (
-											<p className="activity-item__resident-note">
-												<strong>Your note:</strong> {report.notes}
-											</p>
-										) : null}
-
-										{!report && (
-											<p className="activity-item__missing-note">
-												This reference could not be loaded from the current
-												report store.
-											</p>
-										)}
-
-										<div className="activity-item__actions">
-											<Link
-												to={`/my-reports/${reference}`}
-												className="activity-item__view-btn"
-											>
-												View report details
-												<ChevronRight size={14} />
-											</Link>
-												{sessionMode === "local" && <button
-												type="button"
-												className="activity-item__remove-btn"
-												onClick={() => untrackReport(reference)}
-												aria-label={`Remove ${reference}`}
-											>
-												<Trash2 size={14} />
-												</button>}
-										</div>
-									</li>
-								))}
-							</ul>
 						)}
 
-						{/* Bottom actions — always visible */}
-						{items.length === 0 && (
-							<div className="activity-bottom-actions">
-								<Link to="/status" className="activity-ghost-btn">
-									<Search size={16} />
-									Track by Reference Code
-								</Link>
-							</div>
+						{isSearchTab ? (
+							<section
+								id="activity-panel-search-report"
+								className="activity-tab-panel activity-tab-panel--search"
+								role="tabpanel"
+								aria-labelledby="activity-tab-search-report"
+							>
+								<ReportStatusLookup
+									reference={lookupReference}
+									onSearch={searchByReference}
+									onBack={showSearchReports}
+									variant="activity"
+								/>
+							</section>
+						) : (
+							<section
+								id={isMobile ? "activity-panel-my-reports" : undefined}
+								className="activity-tab-panel activity-tab-panel--reports"
+								role={isMobile ? "tabpanel" : undefined}
+								aria-labelledby={
+									isMobile ? "activity-tab-my-reports" : undefined
+								}
+							>
+								<div className="activity-topstrip">
+									<div>
+										<p className="activity-topstrip__label">
+											Resident activity
+										</p>
+										<h1 className="activity-topstrip__title">My Reports</h1>
+									</div>
+								</div>
+
+								{feedback && (
+									<div className="activity-feedback" role="status">
+										{feedback}
+									</div>
+								)}
+								{loadError && (
+									<div className="activity-feedback" role="alert">
+										{loadError}
+									</div>
+								)}
+
+								{isLoading ? (
+									<div className="activity-loading">
+										<div
+											className="activity-loading__spinner"
+											aria-hidden="true"
+										/>
+										<span>Loading your reports…</span>
+									</div>
+								) : items.length === 0 ? (
+									<>
+										<div className="activity-empty-icon">
+											<div className="activity-empty-icon__wrap">
+												<ClipboardList size={26} />
+											</div>
+										</div>
+										<p className="activity-empty-title">No reports saved yet</p>
+										<p className="activity-empty-sub">
+											Submit a report then tap "Save to my activity" from the
+											confirmation screen.
+										</p>
+									</>
+								) : (
+									<ul className="activity-inner-list">
+										{items.map(({ reference, report }) => (
+											<li
+												key={reference}
+												className={`activity-item${!report ? " activity-item--missing" : ""}`}
+											>
+												<div className="activity-item__row">
+													<div>
+														<p className="activity-item__ref-label">
+															Reference
+														</p>
+														<p className="activity-item__ref">{reference}</p>
+													</div>
+													{report ? (
+														<StatusBadge status={report.status} />
+													) : (
+														<span
+															style={{
+																fontSize: "0.75rem",
+																color: "var(--color-ink-soft)",
+																fontFamily: "var(--font-label)",
+															}}
+														>
+															Unavailable
+														</span>
+													)}
+												</div>
+
+												{report && (
+													<div className="activity-item__meta">
+														<span>{report.neighborhood}</span>
+														<span className="activity-item__meta-dot" />
+														<span>{formatTimestamp(report.createdAt)}</span>
+													</div>
+												)}
+
+												{report?.notes ? (
+													<p className="activity-item__resident-note">
+														<strong>Your note:</strong> {report.notes}
+													</p>
+												) : null}
+
+												{!report && (
+													<p className="activity-item__missing-note">
+														This reference could not be loaded from the current
+														report store.
+													</p>
+												)}
+
+												<div className="activity-item__actions">
+													<Link
+														to={`/my-reports/${reference}`}
+														className="activity-item__view-btn"
+													>
+														View report details
+														<ChevronRight size={14} />
+													</Link>
+													{sessionMode === "local" && (
+														<button
+															type="button"
+															className="activity-item__remove-btn"
+															onClick={() => untrackReport(reference)}
+															aria-label={`Remove ${reference}`}
+														>
+															<Trash2 size={14} />
+														</button>
+													)}
+												</div>
+											</li>
+										))}
+									</ul>
+								)}
+
+								{items.length === 0 && !isMobile && (
+									<div className="activity-bottom-actions">
+										<Link to="/status" className="activity-ghost-btn">
+											<Search size={16} />
+											Track by Reference Code
+										</Link>
+									</div>
+								)}
+							</section>
 						)}
 					</main>
 				)}

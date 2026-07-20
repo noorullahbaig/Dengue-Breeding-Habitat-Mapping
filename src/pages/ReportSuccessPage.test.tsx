@@ -58,14 +58,14 @@ describe('ReportSuccessPage Identity & Tracking', () => {
     })
   })
 
-  it('resets draft on mount, displays the anonymous tracking caption, and uses the shared success illustration', async () => {
+  it('displays the anonymous tracking caption and uses the shared success illustration', async () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/report/success']}>
         <ReportSuccessPage />
       </MemoryRouter>,
     )
 
-    expect(resetDraft).toHaveBeenCalled()
+
     await waitFor(() => {
       expect(screen.getByText('Your anonymous Tracking ID')).toBeInTheDocument()
       expect(screen.getByText('Tap to copy')).toBeInTheDocument()

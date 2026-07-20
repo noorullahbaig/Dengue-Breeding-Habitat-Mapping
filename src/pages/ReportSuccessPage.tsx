@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AlertCircle, Check, Copy } from "lucide-react";
 import { useAuth } from "@/app/useAuth";
@@ -192,13 +192,12 @@ function AccountPanel({
 
 export function ReportSuccessPage() {
 	const { reportsService } = useServices();
-	const { lastSubmittedReference, resetDraft } = useReportDraft();
+	const { lastSubmittedReference } = useReportDraft();
 	const { isAuthenticated, sessionMode, trackReport, trackedReferences } =
 		useAuth();
 	const [searchParams] = useSearchParams();
 	const [report, setReport] = useState<ReportStatus | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const hasResetDraft = useRef(false);
 	const [copied, setCopied] = useState(false);
 	const [savedToActivity, setSavedToActivity] = useState(false);
 
@@ -212,13 +211,6 @@ export function ReportSuccessPage() {
 			setSavedToActivity(true);
 		}
 	}, [alreadySaved, isAuthenticated, reference, savedToActivity, trackReport, sessionMode]);
-
-	useEffect(() => {
-		if (!hasResetDraft.current) {
-			resetDraft();
-			hasResetDraft.current = true;
-		}
-	}, [resetDraft]);
 
 	useEffect(() => {
 		let isMounted = true;
