@@ -165,7 +165,10 @@ describe("PublicMapExperience report stack sheet", () => {
 
 		const legend = await screen.findByRole("region", { name: "Map legend" });
 		expect(legend.parentElement).toHaveClass("map-page-controls");
-		expect(screen.getByRole("button", { name: "Center map on my location" }).parentElement).toHaveClass("map-page-controls");
+		expect(
+			screen.getByRole("button", { name: "Center map on my location" })
+				.parentElement,
+		).toHaveClass("map-action-stack");
 	});
 
 	it("centers the map after the resident shares their current location", async () => {

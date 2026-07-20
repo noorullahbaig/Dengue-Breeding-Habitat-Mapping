@@ -7,7 +7,6 @@ import {
 	Tooltip,
 	useMap,
 	useMapEvents,
-	ZoomControl,
 } from "react-leaflet";
 import { DEFAULT_MAP_ZOOM, KL_CENTER } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
@@ -25,6 +24,7 @@ interface PublicReportsMapProps {
 	centerOverride?: [number, number];
 	onSelectHotspot?: (hotspot: PublicHotspot) => void;
 	onSelectReportGroup?: (group: PublicReportGroupSelection) => void;
+	mapRef?: React.RefCallback<L.Map>;
 }
 
 type TileStatus = "loading" | "ready" | "fallback";
@@ -336,6 +336,7 @@ export function PublicReportsMap({
 	centerOverride,
 	onSelectHotspot,
 	onSelectReportGroup,
+	mapRef,
 }: PublicReportsMapProps) {
 	const [tileStatus, setTileStatus] = useState<TileStatus>("loading");
 	const hadTileErrorRef = useRef(false);
@@ -379,6 +380,7 @@ export function PublicReportsMap({
 			) : null}
 
 			<MapContainer
+				ref={mapRef}
 				center={mapCenter}
 				zoom={DEFAULT_MAP_ZOOM}
 				minZoom={PUBLIC_MAP_MIN_ZOOM}
@@ -393,7 +395,6 @@ export function PublicReportsMap({
 				className="map-frame__canvas"
 			>
 				<MapCenterSync centerOverride={centerOverride} />
-				<ZoomControl position="bottomright" />
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

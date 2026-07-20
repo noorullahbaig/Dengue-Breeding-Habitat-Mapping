@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, Plus, Minus } from "lucide-react";
 import { useServices } from "@/app/useServices";
 import { Notice } from "@/components/ui";
 import { formatHabitatLabel } from "@/lib/formatters";
@@ -50,6 +50,7 @@ export function PublicMapExperience() {
 	const [selectedReport, setSelectedReport] = useState<
 		PublicMapReport | undefined
 	>(undefined);
+	const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 
 	const mapSignature =
 		[
@@ -233,6 +234,7 @@ export function PublicMapExperience() {
 						centerOverride={centerOverride}
 						onSelectHotspot={handleHotspotClick}
 						onSelectReportGroup={handleReportGroupClick}
+						mapRef={setMapInstance}
 					/>
 				) : (
 					<div className="loading-state map-fullscreen-loading">
@@ -257,16 +259,34 @@ export function PublicMapExperience() {
 							<span>Hotspot</span>
 						</div>
 					</section>
-					<button
-						type="button"
-						className={`map-locate-control${isLocating ? " map-locate-control--loading" : ""}`}
-						onClick={handleLocateMe}
-						disabled={isLocating}
-						aria-busy={isLocating}
-						aria-label={isLocating ? "Finding current location" : "Center map on my location"}
-					>
-						<LocateFixed size={21} aria-hidden="true" />
-					</button>
+					<div className="map-action-stack">
+						<button
+							type="button"
+							className="map-action-btn"
+							onClick={() => mapInstance?.zoomIn()}
+							aria-label="Zoom in"
+						>
+							<Plus size={21} aria-hidden="true" />
+						</button>
+						<button
+							type="button"
+							className="map-action-btn"
+							onClick={() => mapInstance?.zoomOut()}
+							aria-label="Zoom out"
+						>
+							<Minus size={21} aria-hidden="true" />
+						</button>
+						<button
+							type="button"
+							className={`map-action-btn${isLocating ? " map-action-btn--loading" : ""}`}
+							onClick={handleLocateMe}
+							disabled={isLocating}
+							aria-busy={isLocating}
+							aria-label={isLocating ? "Finding current location" : "Center map on my location"}
+						>
+							<LocateFixed size={21} aria-hidden="true" />
+						</button>
+					</div>
 				</div>
 			) : null}
 

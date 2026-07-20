@@ -2480,14 +2480,20 @@
 
 .map-page-controls > * { pointer-events: auto; }
 
-.map-locate-control--loading svg {
-	animation: report-location-spin 1s linear infinite;
-}
-
-.map-locate-control {
+.map-action-stack {
 	position: absolute;
 	right: 0;
 	bottom: calc(100% + 10px);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.map-action-btn--loading svg {
+	animation: report-location-spin 1s linear infinite;
+}
+
+.map-action-btn {
 	display: grid;
 	place-items: center;
 	width: 44px;
@@ -2497,6 +2503,13 @@
 	background: rgba(243, 250, 255, 0.96);
 	box-shadow: 0 5px 14px rgba(2, 31, 41, 0.16);
 	color: var(--color-accent);
+	cursor: pointer;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.map-action-btn:active {
+	background: #e2ebf0;
+	transform: scale(0.96);
 }
 
 .map-location-error {
