@@ -304,7 +304,6 @@ export function ReportSuccessPage() {
 						) : null}
 					</Surface>
 
-					<ReceiptActions reference={report.reference} />
 					{reference ? (
 						<AccountPanel
 							isAuthenticated={isAuthenticated}
@@ -313,6 +312,7 @@ export function ReportSuccessPage() {
 							pendingClaim={pendingClaim}
 						/>
 					) : null}
+					<ReceiptActions reference={report.reference} />
 				</div>
 			) : reference ? (
 				<div className="report-success-page__content">
@@ -340,13 +340,13 @@ export function ReportSuccessPage() {
 						</div>
 					</Surface>
 
-					<ReceiptActions reference={reference} />
 					<AccountPanel
 						isAuthenticated={isAuthenticated}
 						reference={reference}
 						sessionMode={sessionMode}
 						pendingClaim={pendingClaim}
 					/>
+					<ReceiptActions reference={reference} />
 				</div>
 			) : (
 				<div className="empty-state stack-md report-success-page__empty">
