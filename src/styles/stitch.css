@@ -4245,5 +4245,6 @@ img {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
+    scroll-padding-bottom: calc(var(--app-mobile-bottom-clearance) + var(--app-mobile-scroll-extra));
   }
 }

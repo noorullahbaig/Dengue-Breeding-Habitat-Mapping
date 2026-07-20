@@ -95,6 +95,18 @@ test.describe('Learn page problem-to-action guide', () => {
 		const finalAction = finalSection.getByRole('link', { name: 'Start report' })
 		await finalAction.scrollIntoViewIfNeeded()
 		await expect(finalAction).toBeVisible()
+		const mainScrollSafety = await page.locator('.app-main').evaluate((element) => {
+			const styles = getComputedStyle(element)
+			const clearance = Number.parseFloat(
+				getComputedStyle(document.documentElement).getPropertyValue('--app-mobile-bottom-clearance'),
+			)
+			return {
+				scrollPaddingBottom: Number.parseFloat(styles.scrollPaddingBottom),
+				clearance,
+			}
+		})
+		expect(mainScrollSafety.scrollPaddingBottom).toBeGreaterThanOrEqual(mainScrollSafety.clearance + 24)
+		await finalAction.evaluate((element) => element.scrollIntoView({ block: 'end', behavior: 'auto' }))
 		const canvasScrollSafety = await page.locator('.app-canvas').evaluate((element) => {
 			const styles = getComputedStyle(element)
 			const clearance = Number.parseFloat(

@@ -198,6 +198,28 @@ test.describe('mobile shell regressions', () => {
     expect(Math.abs((topbarBefore?.y ?? 0) - (topbarAfter?.y ?? 0))).toBeLessThanOrEqual(1)
     expect(Math.abs((bottomNavBefore?.y ?? 0) - (bottomNavAfter?.y ?? 0))).toBeLessThanOrEqual(1)
 
+    const homeScrollSafety = await page.locator('.app-main').evaluate((element) => {
+      const styles = getComputedStyle(element)
+      const clearance = Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--app-mobile-bottom-clearance'),
+      )
+      return {
+        scrollPaddingBottom: Number.parseFloat(styles.scrollPaddingBottom),
+        clearance,
+      }
+    })
+    expect(homeScrollSafety.scrollPaddingBottom).toBeGreaterThanOrEqual(homeScrollSafety.clearance + 24)
+
+    const homeFinalContent = page.locator('.home-activity')
+    await homeFinalContent.evaluate((element) => element.scrollIntoView({ block: 'end', behavior: 'auto' }))
+    const [homeFinalBox, homeNavigationBox] = await Promise.all([
+      homeFinalContent.boundingBox(),
+      bottomNav.boundingBox(),
+    ])
+    expect(homeFinalBox).not.toBeNull()
+    expect(homeNavigationBox).not.toBeNull()
+    expect(homeFinalBox!.y + homeFinalBox!.height).toBeLessThanOrEqual(homeNavigationBox!.y)
+
     await page.goto('/report')
 
     const reportDialog = page.getByRole('dialog', { name: 'Report a breeding habitat' })
