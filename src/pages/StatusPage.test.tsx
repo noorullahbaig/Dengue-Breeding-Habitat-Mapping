@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { StatusPage } from "@/pages/StatusPage";
 
+vi.mock("@/app/useMobileViewport", () => ({
+	useMobileViewport: () => true,
+}));
+
 vi.mock("@/pages/components/ReportStatusLookup", () => ({
 	ReportStatusLookup: ({
 		reference,
@@ -38,10 +42,10 @@ function LocationProbe() {
 }
 
 describe("StatusPage", () => {
-	it("wraps the shared lookup and keeps public reference navigation on /status", async () => {
+	it("opens mobile reference searches in public report details", async () => {
 		const user = userEvent.setup();
 		render(
-			<MemoryRouter initialEntries={["/status?ref=KL-EXISTING-0001"]}>
+			<MemoryRouter initialEntries={["/status"]}>
 				<StatusPage />
 				<LocationProbe />
 			</MemoryRouter>,
@@ -49,7 +53,7 @@ describe("StatusPage", () => {
 
 		expect(screen.getByTestId("status-lookup")).toHaveAttribute(
 			"data-reference",
-			"KL-EXISTING-0001",
+			"",
 		);
 		expect(screen.getByTestId("status-lookup")).toHaveAttribute(
 			"data-variant",
@@ -58,10 +62,8 @@ describe("StatusPage", () => {
 
 		await user.click(screen.getByRole("button", { name: "Search next" }));
 		expect(screen.getByTestId("location")).toHaveTextContent(
-			"/status?ref=KL-NEXT-0001",
+			"/map/reports/KL-NEXT-0001",
 		);
 
-		await user.click(screen.getByRole("button", { name: "Back" }));
-		expect(screen.getByTestId("location")).toHaveTextContent("/status");
 	});
 });

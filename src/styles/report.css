@@ -830,6 +830,16 @@
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
+@media (max-width: 760px) {
+  .permission-blocker-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (min-width: 761px) {
   .permission-priming,
   .permission-blocker {

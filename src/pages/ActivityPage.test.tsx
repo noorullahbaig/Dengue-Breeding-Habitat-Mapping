@@ -132,7 +132,7 @@ describe("ActivityPage guest state", () => {
 		await waitFor(() => expect(reportsService.getMyReports).toHaveBeenCalled());
 	});
 
-	it("stores tab and lookup navigation in the Activity query string", async () => {
+	it("opens mobile reference searches in public report details", async () => {
 		const user = userEvent.setup();
 		guestAuthState.isAuthenticated = true;
 		guestAuthState.sessionMode = "cognito";
@@ -149,30 +149,20 @@ describe("ActivityPage guest state", () => {
 
 		await user.click(screen.getByRole("button", { name: "Run lookup" }));
 		expect(screen.getByTestId("location")).toHaveTextContent(
-			"/activity?tab=search&ref=KL-SEARCH-0001",
+			"/map/reports/KL-SEARCH-0001",
 		);
 
-		await user.click(screen.getByRole("button", { name: "Back from result" }));
-		expect(screen.getByTestId("location")).toHaveTextContent(
-			"/activity?tab=search",
-		);
-
-		await user.click(screen.getByRole("tab", { name: "My Reports" }));
-		expect(screen.getByTestId("location")).toHaveTextContent("/activity");
 	});
 
-	it("restores a direct Search Report result URL", async () => {
+	it("redirects a direct mobile Search Report reference to public details", async () => {
 		guestAuthState.isAuthenticated = true;
 		guestAuthState.sessionMode = "cognito";
 		renderActivity("/activity?tab=search&ref=KL-DIRECT-0001");
 
-		expect(screen.getByTestId("activity-status-lookup")).toHaveAttribute(
-			"data-reference",
-			"KL-DIRECT-0001",
-		);
-		expect(screen.getByRole("tab", { name: "Search Report" })).toHaveAttribute(
-			"aria-selected",
-			"true",
+		await waitFor(() =>
+			expect(screen.getByTestId("location")).toHaveTextContent(
+				"/map/reports/KL-DIRECT-0001",
+			),
 		);
 		await waitFor(() => expect(reportsService.getMyReports).toHaveBeenCalled());
 	});

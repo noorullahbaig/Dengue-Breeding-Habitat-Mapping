@@ -87,7 +87,11 @@ export function LocationPermissionGate({
   }, [onLocationObtained])
 
   if (phase === 'blocked') {
-    return <PermissionBlocker permission="location" onRetry={requestLocation} />
+    return (
+      <div className="permission-blocker-scroll">
+        <PermissionBlocker permission="location" onRetry={requestLocation} />
+      </div>
+    )
   }
 
   if (phase === 'ready') {

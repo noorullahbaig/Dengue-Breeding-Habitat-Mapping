@@ -8,7 +8,7 @@ const evidenceImage = readFileSync(
 
 const reference = "KL-LONG-0001";
 
-test("keeps Activity tabs fixed while a long status result scrolls", async ({
+test("opens mobile Activity reference searches in the shared public detail", async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 390, height: 667 });
@@ -31,15 +31,23 @@ test("keeps Activity tabs fixed while a long status result scrolls", async ({
 			body: "[]",
 		});
 	});
-	await page.route(`**/api/reports/status/${reference}`, async (route) => {
+	await page.route(`**/api/public/reports/${reference}`, async (route) => {
 		await route.fulfill({
 			status: 200,
 			contentType: "application/json",
 			body: JSON.stringify({
 				id: "report-long",
 				reference,
-				createdAt: "2026-07-12T12:00:00.000Z",
+				reportedAt: "2026-07-12T12:00:00.000Z",
+				latestReportedAt: "2026-07-12T12:00:00.000Z",
 				status: "submitted",
+				habitatClass: "drain_inlet",
+				publicLocation: { latitude: 3.139, longitude: 101.6869, source: "public" },
+				reportCount: 1,
+				thumbnailUrl: `/api/public/reports/${reference}/image`,
+				imageUrl: `/api/public/reports/${reference}/image`,
+				observations: [],
+				privacyNote: "Public by consent.",
 				prediction: {
 					label: "drain_inlet",
 					confidence: 0.82,
@@ -58,8 +66,6 @@ test("keeps Activity tabs fixed while a long status result scrolls", async ({
 					],
 				},
 				neighborhood: "Bukit Jalil",
-				statusMessage:
-					"The report was received and is awaiting review by the responsible team.",
 			}),
 		});
 	});
@@ -74,56 +80,70 @@ test("keeps Activity tabs fixed while a long status result scrolls", async ({
 		},
 	);
 
-	await page.goto(`/activity?tab=search&ref=${reference}`);
+	await page.goto("/activity?tab=search");
 
 	const tablist = page.getByRole("tablist", { name: "Activity views" });
 	const searchTab = page.getByRole("tab", { name: "Search Report" });
-	const resultPanel = page.getByRole("tabpanel", { name: "Search Report" });
-	const activityNav = page.getByRole("link", { name: "Activity" });
 
 	await expect(tablist).toBeVisible();
 	await expect(searchTab).toHaveAttribute("aria-selected", "true");
-	await expect(page.getByRole("heading", { name: reference })).toBeVisible();
-	await expect(activityNav).toHaveClass(/app-bottom-nav__link--active/);
-	await page.locator(".activity-card").evaluate((element) => {
-		for (const animation of element.getAnimations({ subtree: true })) {
-			animation.finish();
-		}
-	});
-
-	const before = await resultPanel.evaluate((element) => ({
-		clientHeight: element.clientHeight,
-		scrollHeight: element.scrollHeight,
-		scrollTop: element.scrollTop,
-		paddingBottom: Number.parseFloat(getComputedStyle(element).paddingBottom),
-		scrollPaddingBottom: Number.parseFloat(getComputedStyle(element).scrollPaddingBottom),
-	}));
-	const tablistBefore = await tablist.boundingBox();
-
-	expect(before.scrollHeight).toBeGreaterThan(before.clientHeight);
-	expect(before.scrollTop).toBe(0);
-	expect(before.paddingBottom).toBeGreaterThanOrEqual(24);
-	expect(before.scrollPaddingBottom).toBeGreaterThanOrEqual(24);
-
-	await resultPanel.evaluate((element) => {
-		element.scrollTop = element.scrollHeight;
-	});
-	await expect
-		.poll(() => resultPanel.evaluate((element) => element.scrollTop))
-		.toBeGreaterThan(0);
-
-	await expect(
-		page.getByRole("region", { name: "Evidence Analyzed" }),
-	).toBeVisible();
-	await expect(tablist).toBeVisible();
+	await page.getByPlaceholder("e.g. KL-ABCD-1234").fill(reference);
+	await page.getByRole("button", { name: "Track Status" }).click();
+	await expect(page).toHaveURL(new RegExp(`/map/reports/${reference}$`));
+	await expect(page.getByRole("heading", { name: "Bukit Jalil" })).toBeVisible();
+	await expect(page.getByText(reference).first()).toBeVisible();
+	await expect(page.getByRole("link", { name: "Back to search" })).toHaveAttribute(
+		"href",
+		"/activity?tab=search",
+	);
+	await page.getByRole("link", { name: "Back to search" }).click();
+	await expect(page).toHaveURL(/\/activity\?tab=search$/);
 	await expect(
 		page.getByRole("navigation", { name: "Primary mobile navigation" }),
 	).toBeVisible();
+});
 
-	const tablistAfter = await tablist.boundingBox();
-	expect(tablistBefore).not.toBeNull();
-	expect(tablistAfter).not.toBeNull();
-	expect(
-		Math.abs((tablistBefore?.y ?? 0) - (tablistAfter?.y ?? 0)),
-	).toBeLessThanOrEqual(1);
+test("opens mobile standalone status searches in the shared public detail", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	const reference = "KL-STATUS-0001";
+	await page.route(`**/api/public/reports/${reference}`, async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				id: "status-report",
+				reference,
+				reportedAt: "2026-07-12T12:00:00.000Z",
+				latestReportedAt: "2026-07-12T12:00:00.000Z",
+				status: "submitted",
+				habitatClass: "tire",
+				publicLocation: { latitude: 3.139, longitude: 101.6869, source: "public" },
+				reportCount: 1,
+				thumbnailUrl: `/api/public/reports/${reference}/image`,
+				imageUrl: `/api/public/reports/${reference}/image`,
+				observations: [],
+				prediction: {
+					label: "tire",
+					confidence: 0.9,
+					confidenceBand: "high",
+					advisoryText: "Advisory only.",
+					detections: [],
+				},
+				neighborhood: "Bukit Jalil",
+			}),
+		});
+	});
+	await page.route(`**/api/public/reports/${reference}/image`, async (route) => {
+		await route.fulfill({ status: 200, contentType: "image/webp", body: evidenceImage });
+	});
+
+	await page.goto("/status");
+	await page.getByPlaceholder("e.g. KL-ABCD-1234").fill(reference);
+	await page.getByRole("button", { name: "Track Status" }).click();
+	await expect(page).toHaveURL(new RegExp(`/map/reports/${reference}$`));
+	await expect(page.getByRole("heading", { name: "Bukit Jalil" })).toBeVisible();
+	await expect(page.getByRole("link", { name: "Back to search" })).toHaveAttribute(
+		"href",
+		"/status",
+	);
 });

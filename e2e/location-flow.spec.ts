@@ -71,7 +71,7 @@ test('report location denial removes the stale share button and supports retry',
   context,
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+  await page.setViewportSize({ width: 390, height: 667 })
   await context.clearPermissions()
 
   await page.goto('/report')
@@ -83,10 +83,26 @@ test('report location denial removes the stale share button and supports retry',
   await page.getByRole('button', { name: 'Use photo & continue' }).click()
   await page.getByRole('button', { name: 'Share My Location' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Location Access Blocked' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Share My Location' })).toHaveCount(0)
+	await expect(page.getByRole('heading', { name: 'Location Access Blocked' })).toBeVisible()
+	await expect(page.getByRole('button', { name: 'Share My Location' })).toHaveCount(0)
 
-  await context.grantPermissions(['geolocation'])
+	const permissionGuide = page.locator('.permission-blocker-scroll')
+	const guideGeometry = await permissionGuide.evaluate((element) => ({
+		clientHeight: element.clientHeight,
+		scrollHeight: element.scrollHeight,
+		overflowY: getComputedStyle(element).overflowY,
+	}))
+	expect(guideGeometry.scrollHeight).toBeGreaterThan(guideGeometry.clientHeight)
+	expect(guideGeometry.overflowY).toBe('auto')
+	await permissionGuide.evaluate((element) => {
+		element.scrollTop = element.scrollHeight
+	})
+	await expect
+		.poll(() => permissionGuide.evaluate((element) => element.scrollTop))
+		.toBeGreaterThan(0)
+	await expect(page.getByRole('button', { name: "I've updated settings — Try Again" })).toBeVisible()
+
+	await context.grantPermissions(['geolocation'])
   await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
   await page.getByRole('button', { name: "I've updated settings — Try Again" }).click()
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
 	Clock3,
 	LogIn,
@@ -24,6 +24,7 @@ interface ActivityItem {
 
 export function ActivityPage() {
 	const location = useLocation();
+	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isMobile = useMobileViewport();
 	const {
@@ -51,9 +52,20 @@ export function ActivityPage() {
 		setSearchParams({ tab: "search" });
 	}
 
-	function searchByReference(reference: string) {
-		setSearchParams({ tab: "search", ref: reference });
-	}
+	const searchByReference = useCallback((reference: string) => {
+		navigate(`/map/reports/${encodeURIComponent(reference)}`, {
+			state: {
+				backTo: "/activity?tab=search",
+				backLabel: "Back to search",
+			},
+		});
+	}, [navigate]);
+
+	useEffect(() => {
+		if (isSearchTab && lookupReference) {
+			searchByReference(lookupReference);
+		}
+	}, [isSearchTab, lookupReference, searchByReference]);
 
 	useEffect(() => {
 		setMounted(true);

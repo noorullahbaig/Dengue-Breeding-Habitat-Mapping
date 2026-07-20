@@ -99,4 +99,44 @@ describe('PublicReportDetailPage presentation', () => {
     expect(screen.getByText('This location has 1 stacked citizen submission')).toBeInTheDocument()
     expect(screen.getByText('1 report')).toBeInTheDocument()
   })
+
+  it('uses the originating mobile search route for back navigation', async () => {
+    getPublicReport.mockResolvedValue({
+      id: 'search-1',
+      reference: 'KL-SEARCH-0001',
+      publicLocation: { latitude: 3.1, longitude: 101.7, source: 'public' },
+      habitatClass: 'tire',
+      prediction: {
+        label: 'tire',
+        confidence: 0.9,
+        confidenceBand: 'high',
+        advisoryText: 'Advisory only.',
+        detections: [],
+      },
+      status: 'submitted',
+      neighborhood: 'Bukit Jalil',
+      reportedAt: '2026-07-12T10:00:00.000Z',
+      latestReportedAt: '2026-07-12T12:00:00.000Z',
+      reportCount: 1,
+      thumbnailUrl: '/thumbnail.jpg',
+      imageUrl: '/image.jpg',
+      observations: [],
+    })
+
+    render(
+      <MemoryRouter initialEntries={[{
+        pathname: '/map/reports/KL-SEARCH-0001',
+        state: { backTo: '/activity?tab=search', backLabel: 'Back to search' },
+      }]}>
+        <Routes>
+          <Route path="/map/reports/:reference" element={<PublicReportDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'Back to search' })).toHaveAttribute(
+      'href',
+      '/activity?tab=search',
+    )
+  })
 })

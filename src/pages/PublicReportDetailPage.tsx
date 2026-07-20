@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { useServices } from '@/app/useServices'
 import { formatCalendarDate, formatHabitatLabel, formatTimestamp } from '@/lib/formatters'
 import { toPublicReportErrorMessage } from '@/lib/userFacingErrors'
@@ -42,7 +42,11 @@ function countLabel(count: number, singular: string, plural = `${singular}s`) {
 
 export function PublicReportDetailPage() {
   const { reference = '' } = useParams()
+  const location = useLocation()
   const { reportsService } = useServices()
+  const navigationState = location.state as { backTo?: string; backLabel?: string } | null
+  const backTo = navigationState?.backTo ?? '/map'
+  const backLabel = navigationState?.backLabel ?? 'Back to map'
   const [report, setReport] = useState<PublicReportDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -77,8 +81,8 @@ export function PublicReportDetailPage() {
   if (isLoading) {
     return (
       <ReportDetailState
-        backTo="/map"
-        backLabel="Back to map"
+        backTo={backTo}
+        backLabel={backLabel}
         isLoading
         loadingLabel="Loading public report details..."
       />
@@ -88,8 +92,8 @@ export function PublicReportDetailPage() {
   if (error) {
     return (
       <ReportDetailState
-        backTo="/map"
-        backLabel="Back to map"
+        backTo={backTo}
+        backLabel={backLabel}
         title="Report unavailable."
         message={error}
         tone="warning"
@@ -100,8 +104,8 @@ export function PublicReportDetailPage() {
   if (!report) {
     return (
       <ReportDetailState
-        backTo="/map"
-        backLabel="Back to map"
+        backTo={backTo}
+        backLabel={backLabel}
         message={<p>No public report found matching this reference code.</p>}
       />
     )
@@ -112,8 +116,8 @@ export function PublicReportDetailPage() {
   const hotspotContext = getPublicHotspotContext(report.hotspotPriority)
   const model: ReportDetailViewModel = {
     mode: 'public',
-    backTo: '/map',
-    backLabel: 'Back to map',
+    backTo,
+    backLabel,
     reference: report.reference,
     status: report.status,
     neighborhood: report.neighborhood,
