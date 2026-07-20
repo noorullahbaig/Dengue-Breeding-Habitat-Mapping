@@ -13,6 +13,41 @@ test('public map centers from an explicitly granted browser location', async ({ 
   await page.getByRole('button', { name: 'Center map on my location' }).click()
 
   await expect(page.getByRole('status')).toHaveCount(0)
+  await expect(page.locator('.map-user-location-marker')).toBeVisible()
+  await expect(page.locator('.map-user-location-accuracy')).toBeVisible()
+})
+
+test('public map restores its viewport, report sheet, and location after report details', async ({
+  context,
+  page,
+}) => {
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 3.139, longitude: 101.6869, accuracy: 20 })
+  await page.goto('/map')
+
+  await expect(page.locator('.map-user-location-marker')).toBeVisible()
+  await page.getByRole('button', { name: 'Zoom in' }).click()
+  await page.waitForTimeout(600)
+  await page.getByRole('button', { name: /Report\. Open report/ }).first().click()
+
+  const detailLink = page.getByRole('link', { name: 'View report details' })
+  await expect(detailLink).toBeVisible()
+  await page.waitForTimeout(600)
+  const viewportTransform = await page.locator('.leaflet-proxy').getAttribute('style')
+
+  await detailLink.click()
+  await expect(page).toHaveURL(/\/map\/reports\//)
+  await page.getByRole('link', { name: 'Back to map' }).click()
+
+  await expect(page).toHaveURL(/\/map$/)
+  await expect(page.getByRole('heading', { name: 'Report' })).toBeVisible()
+  await expect(page.locator('.map-user-location-marker')).toBeVisible()
+  await expect(page.locator('.leaflet-proxy')).toHaveAttribute('style', viewportTransform ?? '')
+
+  await page.getByRole('link', { name: 'View report details' }).click()
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: 'Report' })).toBeVisible()
+  await expect(page.locator('.leaflet-proxy')).toHaveAttribute('style', viewportTransform ?? '')
 })
 
 test('public map exposes a stable recovery message when browser location is denied', async ({

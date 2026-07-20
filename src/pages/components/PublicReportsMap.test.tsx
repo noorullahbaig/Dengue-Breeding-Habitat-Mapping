@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { PointExpression } from "leaflet";
+import type { UserLocationFix } from "@/app/PublicMapSessionContext";
 import {
 	buildPublicReportMarkerGroups,
 	getPublicPriorityState,
@@ -11,7 +12,10 @@ import type { LocationPoint, PublicMapReport } from "@/types/report";
 
 const leafletHarness = vi.hoisted(() => ({
 	zoom: 13,
+	center: { lat: 3.13902, lng: 101.68692 },
 	maxZoom: 19,
+	containerCenter: undefined as [number, number] | undefined,
+	containerZoom: undefined as number | undefined,
 	flyTo: vi.fn(),
 	latestHandlers: undefined as
 		| {
@@ -37,6 +41,7 @@ function projectPoint(
 vi.mock("react-leaflet", () => {
 	const mockMap = {
 		getZoom: () => leafletHarness.zoom,
+		getCenter: () => leafletHarness.center,
 		getMaxZoom: () => leafletHarness.maxZoom,
 		project: (
 			latLng: { lat: number; lng: number },
@@ -47,16 +52,25 @@ vi.mock("react-leaflet", () => {
 	};
 
 	return {
+		Circle: ({ radius }: { radius: number }) => (
+			<div data-testid="user-location-accuracy" data-radius={radius} />
+		),
 		MapContainer: ({
 			children,
 			maxZoom,
+			center,
+			zoom,
 		}: {
 			children: React.ReactNode;
 			maxZoom?: number;
+			center?: [number, number];
+			zoom?: number;
 		}) => {
 			if (maxZoom) {
 				leafletHarness.maxZoom = maxZoom;
 			}
+			leafletHarness.containerCenter = center;
+			leafletHarness.containerZoom = zoom;
 			return <div data-testid="public-map">{children}</div>;
 		},
 		Marker: ({
@@ -127,7 +141,10 @@ function report(
 describe("PublicReportsMap marker grouping", () => {
 	beforeEach(() => {
 		leafletHarness.zoom = 13;
+		leafletHarness.center = { lat: 3.13902, lng: 101.68692 };
 		leafletHarness.maxZoom = 19;
+		leafletHarness.containerCenter = undefined;
+		leafletHarness.containerZoom = undefined;
 		leafletHarness.flyTo.mockClear();
 		leafletHarness.latestHandlers = undefined;
 	});
@@ -150,6 +167,62 @@ describe("PublicReportsMap marker grouping", () => {
 			totalReportCount: 3,
 		});
 		expect(groups[0]?.reports.map((item) => item.id)).toEqual(["2", "1"]);
+	});
+
+	it("initializes from a saved viewport and reports settled viewport changes once", () => {
+		const handleViewportChange = vi.fn();
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[]}
+				showHotspots={false}
+				initialViewport={{ center: [3.18, 101.72], zoom: 16 }}
+				onViewportChange={handleViewportChange}
+			/>,
+		);
+
+		expect(leafletHarness.containerCenter).toEqual([3.18, 101.72]);
+		expect(leafletHarness.containerZoom).toBe(16);
+
+		leafletHarness.center = { lat: 3.2, lng: 101.74 };
+		leafletHarness.zoom = 17;
+		act(() => {
+			leafletHarness.latestHandlers?.moveend?.();
+			leafletHarness.latestHandlers?.zoomend?.();
+		});
+
+		expect(handleViewportChange).toHaveBeenCalledOnce();
+		expect(handleViewportChange).toHaveBeenCalledWith({
+			center: [3.2, 101.74],
+			zoom: 17,
+		});
+	});
+
+	it("renders a blue user-location marker and an accuracy halo when accuracy is available", () => {
+		const userLocationFix: UserLocationFix = {
+			location: {
+				latitude: 3.139,
+				longitude: 101.6869,
+				accuracyMeters: 20,
+				source: "browser",
+			},
+			obtainedAt: Date.now(),
+		};
+
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[]}
+				showHotspots={false}
+				userLocationFix={userLocationFix}
+			/>,
+		);
+
+		expect(screen.getByRole("button", { name: "Your current location" })).toHaveAttribute(
+			"data-icon-class",
+			expect.stringContaining("map-user-location-marker"),
+		);
+		expect(screen.getByTestId("user-location-accuracy")).toHaveAttribute("data-radius", "20");
 	});
 
 	it("collapses core and warning into the same prioritized public state", () => {

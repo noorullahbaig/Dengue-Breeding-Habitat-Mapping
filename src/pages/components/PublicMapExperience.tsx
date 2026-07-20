@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LocateFixed, Plus, Minus } from "lucide-react";
+import { usePublicMapSession } from "@/app/PublicMapSessionContext";
 import { useServices } from "@/app/useServices";
 import { Notice } from "@/components/ui";
 import { formatHabitatLabel } from "@/lib/formatters";
-import {
-	getLocationFailureMessage,
-	requestCurrentLocation,
-} from "@/lib/geolocation";
 import { toLeafletPosition } from "@/lib/map";
 import {
 	MapHotspotSheet,
@@ -16,63 +13,74 @@ import {
 	PublicReportsMap,
 	type PublicReportGroupSelection,
 } from "@/pages/components/PublicReportsMap";
-import type {
-	HabitatClass,
-	PublicHotspot,
-	PublicMapReport,
-} from "@/types/report";
-
-type HabitatFilter = HabitatClass | "all";
+import { usePublicMapLocation } from "@/pages/components/usePublicMapLocation";
+import type { PublicHotspot, PublicMapReport } from "@/types/report";
 
 export function PublicMapExperience() {
 	const { mapService } = useServices();
+	const { session, patchSession } = usePublicMapSession();
 	const [reports, setReports] = useState<PublicMapReport[]>([]);
 	const [hotspots, setHotspots] = useState<PublicHotspot[]>([]);
-	const [habitatFilter, setHabitatFilter] = useState<HabitatFilter>("all");
 	const [isReportsLoading, setIsReportsLoading] = useState(true);
+	const [hasLoadedReports, setHasLoadedReports] = useState(false);
+	const [hasLoadedHotspots, setHasLoadedHotspots] = useState(false);
 	const [hotspotError, setHotspotError] = useState("");
-	const [locationError, setLocationError] = useState("");
-	const [isLocating, setIsLocating] = useState(false);
 	const [showHotspots, _setShowHotspots] = useState(true);
-	const isMountedRef = useRef(false);
-	const locationRequestSequenceRef = useRef(0);
-	const activeLocationRequestRef = useRef<number | null>(null);
 
 	const [centerOverride, setCenterOverride] = useState<
 		[number, number] | undefined
 	>(undefined);
-	const [selectedHotspotId, setSelectedHotspotId] = useState<
-		string | undefined
-	>(undefined);
-	const [selectedReportGroup, setSelectedReportGroup] = useState<
-		PublicReportGroupSelection | undefined
-	>(undefined);
-	const [selectedReport, setSelectedReport] = useState<
-		PublicMapReport | undefined
-	>(undefined);
 	const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+	const habitatFilter = session.habitatFilter;
+	const selectedHotspotId =
+		session.selection?.kind === "hotspot"
+			? session.selection.hotspotId
+			: undefined;
+	const selectedReportGroup = useMemo<PublicReportGroupSelection | undefined>(() => {
+		if (session.selection?.kind !== "report") return undefined;
 
-	const mapSignature =
-		[
-			reports.map((report) => report.id).join(":"),
-			hotspots.map((hotspot) => hotspot.id).join(":"),
-			hotspotError,
-		]
-			.filter(Boolean)
-			.join("|") || `${habitatFilter}:empty`;
+		const reportsByReference = new Map(reports.map((report) => [report.reference, report]));
+		const selectedReports = session.selection.reportReferences
+			.map((reference) => reportsByReference.get(reference))
+			.filter((report): report is PublicMapReport => Boolean(report));
+
+		if (!selectedReports.length) return undefined;
+
+		return {
+			reports: selectedReports,
+			center: session.selection.center,
+			isExactStack: session.selection.isExactStack,
+			totalReportCount: session.selection.totalReportCount,
+		};
+	}, [reports, session.selection]);
+	const selectedReport = useMemo(() => {
+		if (session.selection?.kind !== "report") return undefined;
+		const selectedReportReference = session.selection.selectedReportReference;
+		return selectedReportGroup?.reports.find(
+			(report) => report.reference === selectedReportReference,
+		);
+	}, [selectedReportGroup, session.selection]);
 
 	const clearSelectedReportGroup = useCallback(() => {
-		setSelectedReportGroup(undefined);
-		setSelectedReport(undefined);
-	}, []);
-
-	useEffect(() => {
-		isMountedRef.current = true;
-		return () => {
-			isMountedRef.current = false;
-			activeLocationRequestRef.current = null;
-		};
-	}, []);
+		patchSession({ selection: undefined });
+	}, [patchSession]);
+	const handleLocationFixChange = useCallback(
+		(userLocationFix: typeof session.userLocationFix) => patchSession({ userLocationFix }),
+		[patchSession],
+	);
+	const handleLocationRecenter = useCallback(
+		(center: [number, number]) => setCenterOverride(center),
+		[],
+	);
+	const {
+		error: locationError,
+		isLocating,
+		locate,
+	} = usePublicMapLocation({
+		currentFix: session.userLocationFix,
+		onFixChange: handleLocationFixChange,
+		onRecenter: handleLocationRecenter,
+	});
 
 	useEffect(() => {
 		let isMounted = true;
@@ -94,6 +102,7 @@ export function PublicMapExperience() {
 			.finally(() => {
 				if (isMounted) {
 					setIsReportsLoading(false);
+					setHasLoadedReports(true);
 				}
 			});
 
@@ -118,12 +127,32 @@ export function PublicMapExperience() {
 					setHotspots([]);
 					setHotspotError("Hotspot context is temporarily unavailable.");
 				}
+			})
+			.finally(() => {
+				if (isMounted) setHasLoadedHotspots(true);
 			});
 
 		return () => {
 			isMounted = false;
 		};
 	}, [mapService]);
+
+	useEffect(() => {
+		if (!hasLoadedReports || session.selection?.kind !== "report") return;
+
+		const availableReferences = new Set(reports.map((report) => report.reference));
+		if (!session.selection.reportReferences.some((reference) => availableReferences.has(reference))) {
+			patchSession({ selection: undefined });
+		}
+	}, [hasLoadedReports, patchSession, reports, session.selection]);
+
+	useEffect(() => {
+		if (!hasLoadedHotspots || session.selection?.kind !== "hotspot") return;
+		const hotspotId = session.selection.hotspotId;
+		if (!hotspots.some((hotspot) => hotspot.id === hotspotId)) {
+			patchSession({ selection: undefined });
+		}
+	}, [hasLoadedHotspots, hotspots, patchSession, session.selection]);
 
 	useEffect(() => {
 		if (!selectedHotspotId && !selectedReportGroup) {
@@ -135,8 +164,7 @@ export function PublicMapExperience() {
 				return;
 			}
 
-			setSelectedHotspotId(undefined);
-			clearSelectedReportGroup();
+			patchSession({ selection: undefined });
 		}
 
 		window.addEventListener("keydown", handleKeyDown);
@@ -144,94 +172,69 @@ export function PublicMapExperience() {
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [selectedHotspotId, selectedReportGroup, clearSelectedReportGroup]);
+	}, [selectedHotspotId, selectedReportGroup, patchSession]);
 
-	function handleHabitatFilterChange(nextHabitat: HabitatFilter) {
+	function handleHabitatFilterChange(nextHabitat: typeof habitatFilter) {
 		if (habitatFilter === nextHabitat) return;
 		setIsReportsLoading(true);
-		setHabitatFilter(nextHabitat);
+		patchSession({ habitatFilter: nextHabitat, selection: undefined });
 		setCenterOverride(undefined);
-		setSelectedHotspotId(undefined);
-		clearSelectedReportGroup();
 	}
 
 	function handleHotspotClick(hotspot: PublicHotspot) {
 		const coords = toLeafletPosition(hotspot.center);
 		setCenterOverride(coords);
-		setSelectedHotspotId(hotspot.id);
-		clearSelectedReportGroup();
+		patchSession({ selection: { kind: "hotspot", hotspotId: hotspot.id } });
 	}
 
 	function handleReportGroupClick(group: PublicReportGroupSelection) {
 		setCenterOverride(group.center);
-		setSelectedReportGroup(group);
-		setSelectedReport(group.reports.length <= 1 ? group.reports[0] : undefined);
-		setSelectedHotspotId(undefined);
+		patchSession({
+			selection: {
+				kind: "report",
+				reportReferences: group.reports.map((report) => report.reference),
+				center: group.center,
+				isExactStack: group.isExactStack,
+				totalReportCount: group.totalReportCount,
+				selectedReportReference:
+					group.reports.length <= 1 ? group.reports[0]?.reference : undefined,
+			},
+		});
 	}
 
-	function handleLocateMe() {
-		if (activeLocationRequestRef.current !== null) return;
+	function handleSelectReport(report: PublicMapReport) {
+		if (session.selection?.kind !== "report") return;
+		patchSession({
+			selection: {
+				...session.selection,
+				selectedReportReference: report.reference,
+			},
+		});
+	}
 
-		const requestId = ++locationRequestSequenceRef.current;
-		activeLocationRequestRef.current = requestId;
-		setLocationError("");
-		setIsLocating(true);
-
-		const handleUnexpectedFailure = () => {
-			if (
-				!isMountedRef.current ||
-				activeLocationRequestRef.current !== requestId
-			) {
-				return;
-			}
-
-			activeLocationRequestRef.current = null;
-			setIsLocating(false);
-			setLocationError(getLocationFailureMessage("unavailable", "map-centering"));
-		};
-
-		let locationRequest: ReturnType<typeof requestCurrentLocation>;
-		try {
-			locationRequest = requestCurrentLocation({ mode: "map-centering" });
-		} catch {
-			handleUnexpectedFailure();
-			return;
-		}
-
-		void locationRequest.then((result) => {
-			if (
-				!isMountedRef.current ||
-				activeLocationRequestRef.current !== requestId
-			) {
-				return;
-			}
-
-			activeLocationRequestRef.current = null;
-			setIsLocating(false);
-
-			if (result.ok === true) {
-				setCenterOverride([
-					result.location.latitude,
-					result.location.longitude,
-				]);
-				return;
-			}
-
-			setLocationError(getLocationFailureMessage(result.reason, "map-centering"));
-		}).catch(handleUnexpectedFailure);
+	function handleBackToReportList() {
+		if (session.selection?.kind !== "report") return;
+		patchSession({
+			selection: {
+				...session.selection,
+				selectedReportReference: undefined,
+			},
+		});
 	}
 
 	return (
 		<div className="page page--map-fullscreen">
 			{/* Background Interactive Map */}
 			<div className="map-fullscreen-container">
-				{!isReportsLoading ? (
+				{hasLoadedReports ? (
 					<PublicReportsMap
-						key={mapSignature}
 						reports={reports}
 						hotspots={hotspots}
 						showHotspots={showHotspots}
 						centerOverride={centerOverride}
+						initialViewport={session.viewport}
+						userLocationFix={session.userLocationFix}
+						onViewportChange={(viewport) => patchSession({ viewport })}
 						onSelectHotspot={handleHotspotClick}
 						onSelectReportGroup={handleReportGroupClick}
 						mapRef={setMapInstance}
@@ -241,6 +244,11 @@ export function PublicMapExperience() {
 						Updating report markers...
 					</div>
 				)}
+				{hasLoadedReports && isReportsLoading ? (
+					<div className="loading-state map-fullscreen-loading map-fullscreen-loading--overlay">
+						Updating report markers...
+					</div>
+				) : null}
 			</div>
 
 			{!selectedHotspotId && !selectedReportGroup ? (
@@ -279,7 +287,7 @@ export function PublicMapExperience() {
 						<button
 							type="button"
 							className={`map-action-btn${isLocating ? " map-action-btn--loading" : ""}`}
-							onClick={handleLocateMe}
+							onClick={() => void locate()}
 							disabled={isLocating}
 							aria-busy={isLocating}
 							aria-label={isLocating ? "Finding current location" : "Center map on my location"}
@@ -311,7 +319,7 @@ export function PublicMapExperience() {
 								"drain_inlet",
 								"artificial_container",
 								"unclassified",
-							] as HabitatFilter[]
+							] as Array<typeof habitatFilter>
 						).map((habitat) => (
 							<button
 								key={habitat}
@@ -343,7 +351,7 @@ export function PublicMapExperience() {
 						return hotspot ? (
 							<MapHotspotSheet
 								hotspot={hotspot}
-								onClose={() => setSelectedHotspotId(undefined)}
+								onClose={() => patchSession({ selection: undefined })}
 							/>
 						) : null;
 					})()
@@ -353,8 +361,8 @@ export function PublicMapExperience() {
 				<MapReportSheet
 					group={selectedReportGroup}
 					selectedReport={selectedReport}
-					onSelectReport={setSelectedReport}
-					onBack={() => setSelectedReport(undefined)}
+					onSelectReport={handleSelectReport}
+					onBack={handleBackToReportList}
 					onClose={clearSelectedReportGroup}
 				/>
 			) : null}

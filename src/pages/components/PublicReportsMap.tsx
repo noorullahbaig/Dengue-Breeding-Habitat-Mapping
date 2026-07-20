@@ -1,6 +1,7 @@
 import L from "leaflet";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+	Circle,
 	MapContainer,
 	Marker,
 	TileLayer,
@@ -8,6 +9,10 @@ import {
 	useMap,
 	useMapEvents,
 } from "react-leaflet";
+import type {
+	MapViewport,
+	UserLocationFix,
+} from "@/app/PublicMapSessionContext";
 import { DEFAULT_MAP_ZOOM, KL_CENTER } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
 import type {
@@ -22,6 +27,9 @@ interface PublicReportsMapProps {
 	showHotspots: boolean;
 	hotspotError?: string;
 	centerOverride?: [number, number];
+	initialViewport?: MapViewport;
+	onViewportChange?: (viewport: MapViewport) => void;
+	userLocationFix?: UserLocationFix;
 	onSelectHotspot?: (hotspot: PublicHotspot) => void;
 	onSelectReportGroup?: (group: PublicReportGroupSelection) => void;
 	mapRef?: React.RefCallback<L.Map>;
@@ -121,6 +129,13 @@ function buildPublicStackIcon(
 		popupAnchor: [0, -18],
 	});
 }
+
+const userLocationIcon = L.divIcon({
+	className: "map-user-location-marker",
+	html: '<span class="map-user-location-marker__dot"></span>',
+	iconSize: [22, 22],
+	iconAnchor: [11, 11],
+});
 
 function exactLocationKey(report: PublicMapReport) {
 	return [
@@ -257,6 +272,41 @@ function MapCenterSync({
 	return null;
 }
 
+function MapViewportObserver({
+	initialViewport,
+	onViewportChange,
+}: {
+	initialViewport?: MapViewport;
+	onViewportChange?: (viewport: MapViewport) => void;
+}) {
+	const lastViewportRef = useRef<MapViewport | undefined>(initialViewport);
+	const map = useMapEvents({
+		moveend: publishViewport,
+		zoomend: publishViewport,
+	});
+
+	function publishViewport() {
+		const center = map.getCenter();
+		const nextViewport: MapViewport = {
+			center: [center.lat, center.lng],
+			zoom: map.getZoom(),
+		};
+		const previousViewport = lastViewportRef.current;
+		if (
+			previousViewport?.zoom === nextViewport.zoom &&
+			previousViewport.center[0] === nextViewport.center[0] &&
+			previousViewport.center[1] === nextViewport.center[1]
+		) {
+			return;
+		}
+
+		lastViewportRef.current = nextViewport;
+		onViewportChange?.(nextViewport);
+	}
+
+	return null;
+}
+
 function ReportMarkersLayer({
 	reports,
 	onSelectReportGroup,
@@ -328,12 +378,49 @@ function ReportMarkersLayer({
 	);
 }
 
+function UserLocationLayer({ fix }: { fix: UserLocationFix }) {
+	const position = toLeafletPosition(fix.location);
+	const accuracy = fix.location.accuracyMeters;
+
+	return (
+		<>
+			{typeof accuracy === "number" && accuracy > 0 ? (
+				<Circle
+					center={position}
+					radius={accuracy}
+					interactive={false}
+					pathOptions={{
+						className: "map-user-location-accuracy",
+						color: "#1a73e8",
+						fillColor: "#1a73e8",
+						fillOpacity: 0.14,
+						opacity: 0.28,
+						weight: 1,
+					}}
+				/>
+			) : null}
+			<Marker
+				position={position}
+				icon={userLocationIcon}
+				interactive={false}
+				keyboard={false}
+				zIndexOffset={1000}
+				title="Your current location"
+				alt="Your current location"
+			/>
+		</>
+	);
+}
+
 export function PublicReportsMap({
 	reports,
 	hotspots,
 	showHotspots,
 	hotspotError,
 	centerOverride,
+	initialViewport,
+	onViewportChange,
+	userLocationFix,
 	onSelectHotspot,
 	onSelectReportGroup,
 	mapRef,
@@ -349,6 +436,8 @@ export function PublicReportsMap({
 			: fallbackHotspot
 				? toLeafletPosition(fallbackHotspot.center)
 				: ([KL_CENTER.latitude, KL_CENTER.longitude] as [number, number]));
+	const initialCenter = initialViewport?.center ?? mapCenter;
+	const initialZoom = initialViewport?.zoom ?? DEFAULT_MAP_ZOOM;
 
 	return (
 		<div className={`map-frame map-frame--public map-frame--${tileStatus}`}>
@@ -381,8 +470,8 @@ export function PublicReportsMap({
 
 			<MapContainer
 				ref={mapRef}
-				center={mapCenter}
-				zoom={DEFAULT_MAP_ZOOM}
+				center={initialCenter}
+				zoom={initialZoom}
 				minZoom={PUBLIC_MAP_MIN_ZOOM}
 				maxZoom={PUBLIC_MAP_MAX_ZOOM}
 				scrollWheelZoom
@@ -440,6 +529,11 @@ export function PublicReportsMap({
 				<ReportMarkersLayer
 					reports={reports}
 					onSelectReportGroup={onSelectReportGroup}
+				/>
+				{userLocationFix ? <UserLocationLayer fix={userLocationFix} /> : null}
+				<MapViewportObserver
+					initialViewport={initialViewport}
+					onViewportChange={onViewportChange}
 				/>
 			</MapContainer>
 		</div>

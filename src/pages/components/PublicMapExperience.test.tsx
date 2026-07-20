@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
+import { PublicMapSessionProvider } from "@/app/PublicMapSessionContext";
 import { PublicMapExperience } from "@/pages/components/PublicMapExperience";
 import type { LocationRequestResult } from "@/lib/geolocation";
 import type { PublicHotspot, PublicMapReport } from "@/types/report";
@@ -18,8 +20,34 @@ const experienceHarness = vi.hoisted(() => ({
 	listPublicReports: vi.fn(),
 	listHotspots: vi.fn(),
 	centerOverride: undefined as [number, number] | undefined,
+	mapMountCount: 0,
 	requestCurrentLocation: vi.fn<() => Promise<LocationRequestResult>>(),
 }));
+
+function renderExperience() {
+	return render(
+		<MemoryRouter>
+			<PublicMapSessionProvider>
+				<PublicMapExperience />
+			</PublicMapSessionProvider>
+		</MemoryRouter>,
+	);
+}
+
+function RemountableExperience() {
+	const [visible, setVisible] = useState(true);
+
+	return (
+		<MemoryRouter>
+			<PublicMapSessionProvider>
+				<button type="button" onClick={() => setVisible((current) => !current)}>
+					Toggle map route
+				</button>
+				{visible ? <PublicMapExperience /> : null}
+			</PublicMapSessionProvider>
+		</MemoryRouter>
+	);
+}
 
 vi.mock("@/lib/geolocation", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@/lib/geolocation")>();
@@ -38,12 +66,16 @@ vi.mock("@/app/useServices", () => ({
 	}),
 }));
 
-vi.mock("@/pages/components/PublicReportsMap", () => ({
-	PublicReportsMap: ({
+vi.mock("@/pages/components/PublicReportsMap", async () => {
+	const { useState } = await import("react");
+
+	return { PublicReportsMap: ({
 		onSelectReportGroup,
 		onSelectHotspot,
 		showLegend,
 		centerOverride,
+		initialViewport,
+		onViewportChange,
 	}: {
 		onSelectReportGroup?: (
 			group: NonNullable<typeof experienceHarness.group>,
@@ -53,9 +85,18 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 		) => void;
 		showLegend?: boolean;
 		centerOverride?: [number, number];
-	}) => (
+		initialViewport?: { center: [number, number]; zoom: number };
+		onViewportChange?: (viewport: { center: [number, number]; zoom: number }) => void;
+	}) => {
+		const [mountId] = useState(() => ++experienceHarness.mapMountCount);
+
+		return (
 		<>
+			<div data-testid="map-mount-id">{mountId}</div>
 			<div data-testid="map-center">{centerOverride?.join(',') ?? 'default center'}</div>
+			<div data-testid="map-initial-viewport">
+				{initialViewport ? `${initialViewport.center.join(',')}@${initialViewport.zoom}` : 'no viewport'}
+			</div>
 			<div data-testid="legend-state">
 				{showLegend === false ? "legend hidden" : "legend visible"}
 			</div>
@@ -79,9 +120,16 @@ vi.mock("@/pages/components/PublicReportsMap", () => ({
 			>
 				Select hotspot
 			</button>
+			<button
+				type="button"
+				onClick={() => onViewportChange?.({ center: [3.18, 101.72], zoom: 16 })}
+			>
+				Move map
+			</button>
 		</>
-	),
-}));
+		);
+	}, };
+});
 
 function report(
 	id: string,
@@ -130,6 +178,7 @@ const reports = [
 
 describe("PublicMapExperience report stack sheet", () => {
 	beforeEach(() => {
+		experienceHarness.mapMountCount = 0;
 		experienceHarness.centerOverride = undefined;
 		experienceHarness.group = {
 			reports,
@@ -157,11 +206,7 @@ describe("PublicMapExperience report stack sheet", () => {
 	});
 
 	it("keeps the legend and location control in the map UI layer", async () => {
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		const legend = await screen.findByRole("region", { name: "Map legend" });
 		expect(legend.parentElement).toHaveClass("map-page-controls");
@@ -183,16 +228,65 @@ describe("PublicMapExperience report stack sheet", () => {
 		});
 
 		const user = userEvent.setup();
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(await screen.findByRole("button", { name: "Center map on my location" }));
 
 		expect(experienceHarness.requestCurrentLocation).toHaveBeenCalledOnce();
 		expect(screen.getByTestId("map-center")).toHaveTextContent("3.139,101.6869");
+	});
+
+	it("restores the viewport and selected report after the map route remounts", async () => {
+		const user = userEvent.setup();
+		const selectedReport = report("3", { neighborhood: "Bukit Jalil" });
+		experienceHarness.group = {
+			reports: [selectedReport],
+			center: [3.13902, 101.68692],
+			isExactStack: false,
+			totalReportCount: 1,
+		};
+		experienceHarness.listPublicReports.mockResolvedValue([selectedReport]);
+		render(<RemountableExperience />);
+
+		await user.click(await screen.findByRole("button", { name: "Move map" }));
+		await user.click(screen.getByRole("button", { name: "Select grouped marker" }));
+		expect(screen.getByRole("heading", { name: "Report" })).toBeInTheDocument();
+
+		await user.click(screen.getByRole("button", { name: "Toggle map route" }));
+		await user.click(screen.getByRole("button", { name: "Toggle map route" }));
+
+		expect(await screen.findByTestId("map-initial-viewport")).toHaveTextContent(
+			"3.18,101.72@16",
+		);
+		expect(screen.getByRole("heading", { name: "Report" })).toBeInTheDocument();
+		expect(screen.getByText("Bukit Jalil")).toBeInTheDocument();
+	});
+
+	it("keeps the Leaflet map mounted while a filter refresh is pending", async () => {
+		const user = userEvent.setup();
+		let resolveFilteredReports: (reports: PublicMapReport[]) => void = () => {};
+		experienceHarness.listPublicReports.mockImplementation((_bounds, filters) => {
+			if (filters?.habitatClass === "tire") {
+				return new Promise((resolve) => {
+					resolveFilteredReports = resolve;
+				});
+			}
+			return Promise.resolve(reports);
+		});
+		renderExperience();
+
+		const initialMountId = await screen.findByTestId("map-mount-id");
+		const mountId = initialMountId.textContent;
+		await user.click(screen.getByRole("button", { name: "Tire" }));
+
+		expect(screen.getByTestId("map-mount-id")).toHaveTextContent(mountId ?? "");
+		expect(screen.getByText("Updating report markers...")).toBeInTheDocument();
+
+		resolveFilteredReports(reports);
+		await waitFor(() => {
+			expect(screen.queryByText("Updating report markers...")).not.toBeInTheDocument();
+		});
+		expect(screen.getByTestId("map-mount-id")).toHaveTextContent(mountId ?? "");
 	});
 
 	it("shows progress and ignores duplicate location taps", async () => {
@@ -202,11 +296,7 @@ describe("PublicMapExperience report stack sheet", () => {
 				resolveRequest = resolve;
 			}),
 		);
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		const button = await screen.findByRole("button", {
 			name: "Center map on my location",
@@ -231,11 +321,7 @@ describe("PublicMapExperience report stack sheet", () => {
 			reason: "denied",
 			browserCode: 1,
 		});
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		fireEvent.click(
 			await screen.findByRole("button", { name: "Center map on my location" }),
@@ -250,11 +336,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		experienceHarness.requestCurrentLocation.mockRejectedValueOnce(
 			new Error("browser request failed"),
 		);
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		fireEvent.click(
 			await screen.findByRole("button", { name: "Center map on my location" }),
@@ -276,11 +358,7 @@ describe("PublicMapExperience report stack sheet", () => {
 	it("opens a report cluster as a compact list and drills into a report", async () => {
 		const user = userEvent.setup();
 
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(
 			await screen.findByRole("button", { name: "Select grouped marker" }),
@@ -334,11 +412,7 @@ describe("PublicMapExperience report stack sheet", () => {
 	it("clears the selected report stack when filters change", async () => {
 		const user = userEvent.setup();
 
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(
 			await screen.findByRole("button", { name: "Select grouped marker" }),
@@ -367,11 +441,7 @@ describe("PublicMapExperience report stack sheet", () => {
 	it("opens hotspot details in the shared mobile sheet above the bottom navigation", async () => {
 		const user = userEvent.setup();
 
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(
 			await screen.findByRole("button", { name: "Select hotspot" }),
@@ -406,18 +476,16 @@ describe("PublicMapExperience report stack sheet", () => {
 
 	it("opens a single report directly without cluster copy and closes on Escape", async () => {
 		const user = userEvent.setup();
+		const selectedReport = report("3", { reportCount: 1, neighborhood: "Bukit Jalil" });
 		experienceHarness.group = {
-			reports: [report("3", { reportCount: 1, neighborhood: "Bukit Jalil" })],
+			reports: [selectedReport],
 			center: [3.13902, 101.68692],
 			isExactStack: true,
 			totalReportCount: 1,
 		};
+		experienceHarness.listPublicReports.mockResolvedValue([selectedReport]);
 
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(
 			await screen.findByRole("button", { name: "Select grouped marker" }),
@@ -449,24 +517,20 @@ describe("PublicMapExperience report stack sheet", () => {
 
 	it("keeps the details action usable when evidence is unavailable", async () => {
 		const user = userEvent.setup();
+		const selectedReport = report("4", {
+			reportCount: 3,
+			thumbnailUrl: undefined,
+			imageUrl: undefined,
+		});
 		experienceHarness.group = {
-			reports: [
-				report("4", {
-					reportCount: 3,
-					thumbnailUrl: undefined,
-					imageUrl: undefined,
-				}),
-			],
+			reports: [selectedReport],
 			center: [3.13902, 101.68692],
 			isExactStack: true,
 			totalReportCount: 3,
 		};
+		experienceHarness.listPublicReports.mockResolvedValue([selectedReport]);
 
-		render(
-			<MemoryRouter>
-				<PublicMapExperience />
-			</MemoryRouter>,
-		);
+		renderExperience();
 
 		await user.click(
 			await screen.findByRole("button", { name: "Select grouped marker" }),

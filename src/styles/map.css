@@ -361,6 +361,23 @@
   font-weight: 600;
 }
 
+.map-fullscreen-loading--overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  width: max-content;
+  height: auto;
+  max-width: calc(100% - 32px);
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(2, 31, 41, 0.1);
+  border-radius: 999px;
+  background: rgba(243, 250, 255, 0.94);
+  box-shadow: 0 5px 14px rgba(2, 31, 41, 0.16);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
 .floating-header-chip__title-row {
   display: flex;
   align-items: center;
@@ -2510,6 +2527,27 @@
 .map-action-btn:active {
 	background: #e2ebf0;
 	transform: scale(0.96);
+}
+
+.map-user-location-marker {
+	display: grid;
+	place-items: center;
+	background: transparent;
+	border: 0;
+}
+
+.map-user-location-marker__dot {
+	display: block;
+	width: 16px;
+	height: 16px;
+	border: 3px solid #ffffff;
+	border-radius: 999px;
+	background: #1a73e8;
+	box-shadow: 0 1px 4px rgba(2, 31, 41, 0.42);
+}
+
+.map-user-location-accuracy {
+	pointer-events: none;
 }
 
 .map-location-error {
