@@ -714,6 +714,19 @@
     padding: 0 1.5rem 2.5rem;
   }
 }
+
+@media (max-width: 767px) {
+  .activity-card {
+    overflow-y: auto;
+    scroll-padding-bottom: var(--app-mobile-scroll-extra);
+  }
+
+  .activity-tab-panel--search,
+  .activity-inner-list {
+    padding-bottom: var(--app-mobile-scroll-extra);
+    scroll-padding-bottom: var(--app-mobile-scroll-extra);
+  }
+}
 .activity-item__resident-note {
   margin: 0;
   padding: 0.65rem 0.75rem;

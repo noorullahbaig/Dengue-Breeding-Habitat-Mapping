@@ -95,11 +95,15 @@ test("keeps Activity tabs fixed while a long status result scrolls", async ({
 		clientHeight: element.clientHeight,
 		scrollHeight: element.scrollHeight,
 		scrollTop: element.scrollTop,
+		paddingBottom: Number.parseFloat(getComputedStyle(element).paddingBottom),
+		scrollPaddingBottom: Number.parseFloat(getComputedStyle(element).scrollPaddingBottom),
 	}));
 	const tablistBefore = await tablist.boundingBox();
 
 	expect(before.scrollHeight).toBeGreaterThan(before.clientHeight);
 	expect(before.scrollTop).toBe(0);
+	expect(before.paddingBottom).toBeGreaterThanOrEqual(24);
+	expect(before.scrollPaddingBottom).toBeGreaterThanOrEqual(24);
 
 	await resultPanel.evaluate((element) => {
 		element.scrollTop = element.scrollHeight;

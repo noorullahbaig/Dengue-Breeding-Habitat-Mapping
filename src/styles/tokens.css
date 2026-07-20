@@ -94,6 +94,7 @@
   --app-bottom-nav-occupied-height: 104px;
   --visual-viewport-bottom-offset: 0px;
   --app-mobile-bottom-clearance: var(--app-bottom-nav-occupied-height);
+  --app-mobile-scroll-extra: 1.5rem;
   --app-mobile-viewport-height: 100vh;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 

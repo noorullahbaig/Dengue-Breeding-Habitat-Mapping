@@ -238,6 +238,20 @@ test.describe('mobile shell regressions', () => {
     expect(activityCtaBox).not.toBeNull()
     expect((activityCtaBox?.y ?? 0) + (activityCtaBox?.height ?? 0)).toBeLessThanOrEqual(844)
     await expect(page.getByText(/local build keeps saved activity/i)).toHaveCount(0)
+
+    await page.goto('/profile')
+    await expect(page.locator('.profile-card')).toBeVisible()
+    const profileScrollSafety = await page.locator('.profile-card').evaluate((element) => {
+      const styles = getComputedStyle(element)
+      return {
+        overflowY: styles.overflowY,
+        paddingBottom: Number.parseFloat(styles.paddingBottom),
+        scrollPaddingBottom: Number.parseFloat(styles.scrollPaddingBottom),
+      }
+    })
+    expect(profileScrollSafety.overflowY).toBe('auto')
+    expect(profileScrollSafety.paddingBottom).toBeGreaterThanOrEqual(48)
+    expect(profileScrollSafety.scrollPaddingBottom).toBeGreaterThanOrEqual(24)
   })
 })
 

@@ -540,3 +540,11 @@
     padding: 0 1.5rem 2.5rem;
   }
 }
+
+@media (max-width: 767px) {
+  .profile-card {
+    overflow-y: auto;
+    padding-bottom: calc(2.25rem + var(--app-mobile-scroll-extra));
+    scroll-padding-bottom: var(--app-mobile-scroll-extra);
+  }
+}

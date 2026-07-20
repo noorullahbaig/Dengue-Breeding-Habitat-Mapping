@@ -157,7 +157,7 @@ img {
 .app-canvas {
   width: min(1180px, calc(100vw - 1.75rem));
   margin: 0 auto;
-  padding: 0.5rem 0 calc(var(--app-mobile-bottom-clearance) + 1.5rem);
+  padding: 0.5rem 0 calc(var(--app-mobile-bottom-clearance) + var(--app-mobile-scroll-extra) + 1.5rem);
 }
 
 .app-footer {
