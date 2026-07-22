@@ -56,6 +56,7 @@ output/
 .playwright-cli/
 .kiro/
 .deploy/
+.superpowers/
 
 # AWS Keys and Credentials
 *.pem
@@ -66,3 +67,29 @@ docs/*.cjs
 docs/report.txt
 docs/fyp_erd_render.html
 docs/superpowers/
+
+# Stale analysis docs (removed from tracking — kept locally only)
+AUTHENTICATION_AND_REPORT_OWNERSHIP.md
+CONNECT_TO_EC2.md
+DATA_FLOW_ANALYSIS.md
+DATA_STORAGE_REFERENCE.md
+DEPLOYMENT_FIXES_SUMMARY.md
+DEPLOYMENT_STATUS.md
+DESIGN.md
+DESIGN_CHOICES.md
+DESIGN_SYSTEM_ASSESSMENT.md
+IMPLEMENTATION_SUMMARY.md
+OFFICER_API_EXPLAINED.md
+OPTIMIZATIONS_IMPLEMENTED.md
+PRODUCT.md
+PRODUCTION_DEPLOYMENT.md
+SAVED_REPORTS_ANALYSIS.md
+
+# One-off debug scripts
+check_docx.py
+check_docx2.py
+check_docx3.py
+check_docx4.py
+check_docx5.py
+check_docx6.py
+test_login.cjs

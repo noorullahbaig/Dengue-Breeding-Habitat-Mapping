@@ -6,6 +6,8 @@ A civic web application that lets Kuala Lumpur residents submit photo evidence o
 
 **Live deployment:** CloudFront CDN → EC2 origin (Docker Compose) → RDS PostgreSQL/PostGIS + S3.
 
+**[Live demo → https://d2yol17g6mes38.cloudfront.net](https://d2yol17g6mes38.cloudfront.net)**
+
 ---
 
 ## Table of Contents
@@ -138,16 +140,9 @@ curl http://localhost:8000/api/health
 # Expected: { "ok": true, "database": true, "model": true, "postgis": true }
 ```
 
-### Hotspot Sync (local)
+### Hotspot Sync
 
-The public map reads iDengue hotspot data from PostgreSQL. The backend syncs automatically from the iDengue ArcGIS layer on startup and periodically in the background. To trigger a manual sync during development:
-
-```bash
-curl -X POST http://localhost:8000/api/officer/hotspots/sync \
-  -H "Authorization: Bearer local-officer-demo-token"
-```
-
-This endpoint is a development/operational utility. It is not part of the assessed resident-facing implementation.
+The backend syncs iDengue hotspot data from the public ArcGIS layer automatically on startup and periodically in the background. No manual action is required for the resident-facing features to work.
 
 ---
 
@@ -390,8 +385,7 @@ Many-to-many join between `users` and `reports` for the claim flow.
 - Post-filter applies per-class F1 review floors: `0.547` (container), `0.486` (drain), `0.448` (tire).
 - Stronger-evidence (F0.5) thresholds: `0.674`, `0.553`, `0.712` respectively.
 
-**Operating profile:** `backend/models/denguewatch_yolov8s_operating_profile.json`
-Full derivation rationale in `docs/academic/model-operating-profile.md`.
+**Operating profile:** `backend/models/denguewatch_yolov8s_operating_profile.json` — contains per-class F1 review floors and F0.5 stronger-evidence thresholds used at inference time.
 
 AI output is always framed as advisory — never final proof. Low-confidence submissions are still accepted with a warning shown to the user.
 
