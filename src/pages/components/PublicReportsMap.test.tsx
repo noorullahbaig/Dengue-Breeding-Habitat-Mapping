@@ -4,7 +4,7 @@ import type { PointExpression } from "leaflet";
 import type { UserLocationFix } from "@/app/PublicMapSessionContext";
 import {
 	buildPublicReportMarkerGroups,
-	getVisibleMapVerticalOffset,
+	getMobileSelectionTargetY,
 	getPublicPriorityState,
 	PublicReportsMap,
 	type PublicReportGroupSelection,
@@ -90,6 +90,8 @@ vi.mock("react-leaflet", () => {
 				className?: string;
 				dashArray?: string;
 				fillOpacity?: number;
+				color?: string;
+				fillColor?: string;
 				opacity?: number;
 				weight?: number;
 			};
@@ -104,6 +106,8 @@ vi.mock("react-leaflet", () => {
 				data-interactive={String(interactive)}
 				data-dash-array={pathOptions?.dashArray}
 				data-fill-opacity={pathOptions?.fillOpacity}
+				data-color={pathOptions?.color}
+				data-fill-color={pathOptions?.fillColor}
 				data-opacity={pathOptions?.opacity}
 				data-weight={pathOptions?.weight}
 			/>
@@ -255,25 +259,48 @@ describe("PublicReportsMap marker grouping", () => {
 		leafletHarness.latestHandlers = undefined;
 	});
 
-	it("calculates the vertical shift needed to center a marker above a sheet", () => {
+	it("places the marker 120 px above the sheet and clamps it between controls and sheet", () => {
 		expect(
-			getVisibleMapVerticalOffset({
+			getMobileSelectionTargetY({
 				mapTop: 100,
 				mapHeight: 800,
-				sheetTop: 600,
+				sheetTop: 700,
+				controlsBottom: 300,
 			}),
-		).toBe(158);
+		).toBe(480);
 		expect(
-			getVisibleMapVerticalOffset({
+			getMobileSelectionTargetY({
 				mapTop: 100,
 				mapHeight: 800,
-				sheetTop: 916,
+				sheetTop: 430,
+				controlsBottom: 360,
 			}),
-		).toBe(0);
+		).toBe(276);
+		expect(
+			getMobileSelectionTargetY({
+				mapTop: 100,
+				mapHeight: 800,
+				sheetTop: 520,
+				controlsBottom: 500,
+			}),
+		).toBe(404);
 	});
 
-	it("focuses a mobile selection in the visible area and responds to sheet resizing", () => {
+	it("focuses a mobile selection above the sheet and responds to sheet resizing", () => {
 		leafletHarness.mapSize = { x: 400, y: 900 };
+		const controls = document.createElement("div");
+		controls.getBoundingClientRect = () =>
+			({
+				top: 180,
+				bottom: 250,
+				left: 0,
+				right: 400,
+				width: 400,
+				height: 70,
+				x: 0,
+				y: 180,
+				toJSON: () => ({}),
+			}) as DOMRect;
 		const sheetWrapper = document.createElement("div");
 		const sheet = document.createElement("section");
 		sheet.className = "map-detail-sheet";
@@ -303,12 +330,13 @@ describe("PublicReportsMap marker grouping", () => {
 					minimumZoom: 12,
 					adjustForOcclusion: true,
 					occludingElement: sheetWrapper,
+					topOccludingElement: controls,
 				}}
 			/>,
 		);
 
 		expect(leafletHarness.flyTo).toHaveBeenLastCalledWith(
-			expect.objectContaining({ lat: 3.139178, lng: 101.68692 }),
+			expect.objectContaining({ lat: 3.13904, lng: 101.68692 }),
 			13,
 			expect.objectContaining({ duration: 0.45 }),
 		);
@@ -317,7 +345,7 @@ describe("PublicReportsMap marker grouping", () => {
 			leafletHarness.onceHandlers.moveend?.();
 		});
 		expect(leafletHarness.panBy).toHaveBeenCalledWith(
-			expect.objectContaining({ x: 0, y: -22 }),
+			expect.objectContaining({ x: 0, y: -160 }),
 			expect.objectContaining({ animate: true }),
 		);
 
@@ -327,7 +355,7 @@ describe("PublicReportsMap marker grouping", () => {
 		});
 
 		expect(leafletHarness.flyTo).toHaveBeenLastCalledWith(
-			expect.objectContaining({ lat: 3.139228, lng: 101.68692 }),
+			expect.objectContaining({ lat: 3.13914, lng: 101.68692 }),
 			13,
 			expect.objectContaining({ duration: 0.45 }),
 		);
@@ -431,8 +459,37 @@ describe("PublicReportsMap marker grouping", () => {
 		expect(screen.getByTestId("user-location-accuracy")).toHaveAttribute("data-radius", "20");
 	});
 
-	it("renders one non-interactive 400 m buffer only while mobile visibility is enabled", () => {
+	it("reveals one explicitly red 400 m buffer only after focus movement settles", () => {
 		const selectedHotspot = hotspot();
+		const controls = document.createElement("div");
+		controls.getBoundingClientRect = () =>
+			({
+				top: 180,
+				bottom: 250,
+				left: 0,
+				right: 400,
+				width: 400,
+				height: 70,
+				x: 0,
+				y: 180,
+				toJSON: () => ({}),
+			}) as DOMRect;
+		const sheetWrapper = document.createElement("div");
+		const sheet = document.createElement("section");
+		sheet.className = "map-detail-sheet";
+		sheet.getBoundingClientRect = () =>
+			({
+				top: 600,
+				bottom: 850,
+				left: 0,
+				right: 400,
+				width: 400,
+				height: 250,
+				x: 0,
+				y: 600,
+				toJSON: () => ({}),
+			}) as DOMRect;
+		sheetWrapper.append(sheet);
 		const { rerender } = render(
 			<PublicReportsMap
 				reports={[]}
@@ -444,10 +501,21 @@ describe("PublicReportsMap marker grouping", () => {
 					key: "hotspot:hotspot-1",
 					center: [3.2001, 101.7182],
 					minimumZoom: 15,
-					adjustForOcclusion: false,
+					adjustForOcclusion: true,
+					occludingElement: sheetWrapper,
+					topOccludingElement: controls,
 				}}
 			/>,
 		);
+
+		expect(screen.queryByTestId("hotspot-advisory-buffer")).not.toBeInTheDocument();
+		act(() => {
+			leafletHarness.onceHandlers.moveend?.();
+		});
+		expect(screen.queryByTestId("hotspot-advisory-buffer")).not.toBeInTheDocument();
+		act(() => {
+			leafletHarness.onceHandlers.moveend?.();
+		});
 
 		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
 			"data-radius",
@@ -469,11 +537,29 @@ describe("PublicReportsMap marker grouping", () => {
 			"data-weight",
 			"2",
 		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-color",
+			"#d32f2f",
+		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-fill-color",
+			"#d32f2f",
+		);
 		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
-			[3.2001, 101.7182],
+			expect.anything(),
 			15,
 			expect.objectContaining({ duration: 0.45 }),
 		);
+
+		act(() => {
+			leafletHarness.resizeCallbacks.at(-1)?.([], {} as ResizeObserver);
+		});
+		expect(screen.queryByTestId("hotspot-advisory-buffer")).not.toBeInTheDocument();
+		act(() => {
+			leafletHarness.onceHandlers.moveend?.();
+			leafletHarness.onceHandlers.moveend?.();
+		});
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toBeInTheDocument();
 
 		rerender(
 			<PublicReportsMap
@@ -486,7 +572,9 @@ describe("PublicReportsMap marker grouping", () => {
 					key: "hotspot:hotspot-1",
 					center: [3.2001, 101.7182],
 					minimumZoom: 15,
-					adjustForOcclusion: false,
+					adjustForOcclusion: true,
+					occludingElement: sheetWrapper,
+					topOccludingElement: controls,
 				}}
 			/>,
 		);

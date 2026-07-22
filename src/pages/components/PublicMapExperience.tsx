@@ -37,6 +37,8 @@ export function PublicMapExperience() {
 	const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 	const [activeSheetElement, setActiveSheetElement] =
 		useState<HTMLDivElement | null>(null);
+	const [floatingControlsElement, setFloatingControlsElement] =
+		useState<HTMLDivElement | null>(null);
 	const habitatFilter = session.habitatFilter;
 	const selectedHotspotId =
 		session.selection?.kind === "hotspot"
@@ -78,6 +80,7 @@ export function PublicMapExperience() {
 				minimumZoom: isMobile ? REVIEW_MAP_ZOOM : DEFAULT_MAP_ZOOM,
 				adjustForOcclusion: isMobile,
 				occludingElement: isMobile ? activeSheetElement : undefined,
+				topOccludingElement: isMobile ? floatingControlsElement : undefined,
 			};
 		}
 
@@ -90,11 +93,18 @@ export function PublicMapExperience() {
 				minimumZoom: DEFAULT_MAP_ZOOM,
 				adjustForOcclusion: isMobile,
 				occludingElement: isMobile ? activeSheetElement : undefined,
+				topOccludingElement: isMobile ? floatingControlsElement : undefined,
 			};
 		}
 
 		return undefined;
-	}, [activeSheetElement, isMobile, selectedHotspot, selectedReportGroup]);
+	}, [
+		activeSheetElement,
+		floatingControlsElement,
+		isMobile,
+		selectedHotspot,
+		selectedReportGroup,
+	]);
 
 	const clearSelectedReportGroup = useCallback(() => {
 		patchSession({ selection: undefined });
@@ -342,7 +352,7 @@ export function PublicMapExperience() {
 			</div>
 
 			{/* Floating Filters (Scrolling Pills) */}
-			<div className="floating-filter-container">
+			<div ref={setFloatingControlsElement} className="floating-filter-container">
 				{/* Habitat Class Filter */}
 				<div className="filter-pill-group">
 					<span className="filter-pill-label">TYPE</span>

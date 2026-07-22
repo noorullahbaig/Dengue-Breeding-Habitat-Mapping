@@ -1,5 +1,5 @@
 import L from "leaflet";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	Circle,
 	MapContainer,
@@ -44,6 +44,7 @@ export interface MapSelectionFocus {
 	minimumZoom: number;
 	adjustForOcclusion: boolean;
 	occludingElement?: HTMLElement | null;
+	topOccludingElement?: HTMLElement | null;
 }
 
 type TileStatus = "loading" | "ready" | "fallback";
@@ -53,6 +54,7 @@ const PUBLIC_MAP_MAX_ZOOM = 22;
 const REPORT_COLLISION_RADIUS_PX = 36;
 const EXACT_LOCATION_DECIMALS = 6;
 const SELECTION_SHEET_GAP_PX = 16;
+const SELECTION_MARKER_SHEET_DISTANCE_PX = 120;
 
 interface ProjectionPoint {
 	x: number;
@@ -68,22 +70,32 @@ interface ReportGroupingOptions {
 	) => ProjectionPoint;
 }
 
-export function getVisibleMapVerticalOffset({
+export function getMobileSelectionTargetY({
 	mapTop,
 	mapHeight,
 	sheetTop,
+	controlsBottom,
 	gap = SELECTION_SHEET_GAP_PX,
+	markerSheetDistance = SELECTION_MARKER_SHEET_DISTANCE_PX,
 }: {
 	mapTop: number;
 	mapHeight: number;
 	sheetTop: number;
+	controlsBottom?: number;
 	gap?: number;
+	markerSheetDistance?: number;
 }) {
-	const visibleHeight = Math.min(
-		mapHeight,
-		Math.max(0, sheetTop - mapTop - gap),
+	const minimumTargetY = Math.max(
+		0,
+		(controlsBottom ?? mapTop) - mapTop + gap,
 	);
-	return mapHeight / 2 - visibleHeight / 2;
+	const maximumTargetY = Math.min(mapHeight, sheetTop - mapTop - gap);
+	const preferredTargetY = sheetTop - mapTop - markerSheetDistance;
+
+	return Math.min(
+		maximumTargetY,
+		Math.max(minimumTargetY, preferredTargetY),
+	);
 }
 
 export interface PublicReportGroupSelection {
@@ -306,8 +318,12 @@ function MapCenterSync({
 
 function SelectionFocusSync({
 	selectionFocus,
+	onFocusStart,
+	onFocusSettled,
 }: {
 	selectionFocus?: MapSelectionFocus;
+	onFocusStart: (selectionKey: string) => void;
+	onFocusSettled: (selectionKey: string) => void;
 }) {
 	const map = useMap();
 	const correctionHandlerRef = useRef<(() => void) | undefined>(undefined);
@@ -317,6 +333,7 @@ function SelectionFocusSync({
 	const minimumZoom = selectionFocus?.minimumZoom;
 	const adjustForOcclusion = selectionFocus?.adjustForOcclusion;
 	const occludingElement = selectionFocus?.occludingElement;
+	const topOccludingElement = selectionFocus?.topOccludingElement;
 
 	useEffect(() => {
 		if (
@@ -337,6 +354,7 @@ function SelectionFocusSync({
 			: undefined;
 
 		if (adjustForOcclusion && !panel) return;
+		const focusSelectionKey = selectionKey;
 		const focusMinimumZoom = minimumZoom;
 		const focusCenter: [number, number] = [latitude, longitude];
 
@@ -348,9 +366,16 @@ function SelectionFocusSync({
 
 		function focusSelection() {
 			const zoom = Math.max(map.getZoom(), focusMinimumZoom);
+			onFocusStart(focusSelectionKey);
 
 			if (!panel) {
 				clearPendingCorrection();
+				const settleFocus = () => {
+					correctionHandlerRef.current = undefined;
+					onFocusSettled(focusSelectionKey);
+				};
+				correctionHandlerRef.current = settleFocus;
+				map.once("moveend", settleFocus);
 				map.flyTo(focusCenter, zoom, {
 					duration: 0.45,
 					easeLinearity: 0.2,
@@ -360,11 +385,14 @@ function SelectionFocusSync({
 
 			const mapRect = map.getContainer().getBoundingClientRect();
 			const panelRect = panel.getBoundingClientRect();
-			const verticalOffset = getVisibleMapVerticalOffset({
+			const controlsRect = topOccludingElement?.getBoundingClientRect();
+			const targetY = getMobileSelectionTargetY({
 				mapTop: mapRect.top,
 				mapHeight: mapRect.height,
 				sheetTop: panelRect.top,
+				controlsBottom: controlsRect?.bottom,
 			});
+			const verticalOffset = mapRect.height / 2 - targetY;
 			const projectedSelection = map.project(L.latLng(focusCenter), zoom);
 			const adjustedCenter = map.unproject(
 				L.point(
@@ -379,14 +407,17 @@ function SelectionFocusSync({
 				correctionHandlerRef.current = undefined;
 				const liveMapRect = map.getContainer().getBoundingClientRect();
 				const livePanelRect = panel.getBoundingClientRect();
-				const liveVerticalOffset = getVisibleMapVerticalOffset({
+				const liveControlsRect =
+					topOccludingElement?.getBoundingClientRect();
+				const liveTargetY = getMobileSelectionTargetY({
 					mapTop: liveMapRect.top,
 					mapHeight: liveMapRect.height,
 					sheetTop: livePanelRect.top,
+					controlsBottom: liveControlsRect?.bottom,
 				});
 				const desiredPoint = L.point(
 					liveMapRect.width / 2,
-					liveMapRect.height / 2 - liveVerticalOffset,
+					liveTargetY,
 				);
 				const renderedSelection = map.latLngToContainerPoint(
 					L.latLng(focusCenter),
@@ -396,7 +427,16 @@ function SelectionFocusSync({
 					renderedSelection.y - desiredPoint.y,
 				);
 
-				if (Math.hypot(correction.x, correction.y) <= 1) return;
+				if (Math.hypot(correction.x, correction.y) <= 1) {
+					onFocusSettled(focusSelectionKey);
+					return;
+				}
+				const settleFocus = () => {
+					correctionHandlerRef.current = undefined;
+					onFocusSettled(focusSelectionKey);
+				};
+				correctionHandlerRef.current = settleFocus;
+				map.once("moveend", settleFocus);
 				map.panBy(correction, {
 					animate: true,
 					duration: 0.2,
@@ -419,6 +459,7 @@ function SelectionFocusSync({
 		const observer = new ResizeObserver(focusSelection);
 		observer.observe(panel);
 		observer.observe(map.getContainer());
+		if (topOccludingElement) observer.observe(topOccludingElement);
 		const handlePanelAnimationEnd = (event: AnimationEvent) => {
 			if (event.target === panel) focusSelection();
 		};
@@ -436,7 +477,10 @@ function SelectionFocusSync({
 		map,
 		minimumZoom,
 		occludingElement,
+		onFocusSettled,
+		onFocusStart,
 		selectionKey,
+		topOccludingElement,
 	]);
 
 	return null;
@@ -599,7 +643,14 @@ export function PublicReportsMap({
 	mapRef,
 }: PublicReportsMapProps) {
 	const [tileStatus, setTileStatus] = useState<TileStatus>("loading");
+	const [settledSelectionKey, setSettledSelectionKey] = useState<string>();
 	const hadTileErrorRef = useRef(false);
+	const handleFocusStart = useCallback(() => {
+		setSettledSelectionKey(undefined);
+	}, []);
+	const handleFocusSettled = useCallback((selectionKey: string) => {
+		setSettledSelectionKey(selectionKey);
+	}, []);
 	const fallbackReport = reports[0];
 	const fallbackHotspot = hotspots[0];
 	const mapCenter =
@@ -660,7 +711,11 @@ export function PublicReportsMap({
 					centerOverride={centerOverride}
 					minimumZoom={DEFAULT_MAP_ZOOM}
 				/>
-				<SelectionFocusSync selectionFocus={selectionFocus} />
+				<SelectionFocusSync
+					selectionFocus={selectionFocus}
+					onFocusStart={handleFocusStart}
+					onFocusSettled={handleFocusSettled}
+				/>
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -680,14 +735,19 @@ export function PublicReportsMap({
 					}}
 				/>
 
-				{showHotspots && showSelectedHotspotBuffer && selectedHotspot ? (
+				{showHotspots &&
+				showSelectedHotspotBuffer &&
+				selectedHotspot &&
+				settledSelectionKey === selectionFocus?.key ? (
 					<Circle
 						center={toLeafletPosition(selectedHotspot.center)}
 						radius={selectedHotspot.warningRadiusMeters}
 						interactive={false}
 						pathOptions={{
 							className: "map-hotspot-advisory-buffer",
+							color: "#d32f2f",
 							dashArray: "8 7",
+							fillColor: "#d32f2f",
 							fillOpacity: 0.07,
 							opacity: 0.72,
 							weight: 2,

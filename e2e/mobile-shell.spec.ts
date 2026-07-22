@@ -358,17 +358,22 @@ test.describe('mobile shell regressions', () => {
               const marker = document.querySelector(markerSelector)
               const sheet = document.querySelector(`${sheetSelector} .map-detail-sheet`)
               const map = document.querySelector('.map-frame__canvas')
-              if (!(marker instanceof HTMLElement) || !(sheet instanceof HTMLElement) || !(map instanceof HTMLElement)) {
+              const controls = document.querySelector('.floating-filter-container')
+              if (!(marker instanceof HTMLElement) || !(sheet instanceof HTMLElement) || !(map instanceof HTMLElement) || !(controls instanceof HTMLElement)) {
                 return Number.POSITIVE_INFINITY
               }
 
               const markerRect = marker.getBoundingClientRect()
               const sheetRect = sheet.getBoundingClientRect()
               const mapRect = map.getBoundingClientRect()
+              const controlsRect = controls.getBoundingClientRect()
               const markerCenter = markerRect.top + markerRect.height / 2
-              const visibleCenter = (mapRect.top + sheetRect.top - 16) / 2
+              const targetCenter = Math.min(
+                sheetRect.top - 16,
+                Math.max(controlsRect.bottom + 16, sheetRect.top - 120),
+              )
 
-              return Math.abs(markerCenter - visibleCenter)
+              return Math.abs(markerCenter - targetCenter)
             },
             { markerSelector, sheetSelector },
           ),
@@ -377,11 +382,14 @@ test.describe('mobile shell regressions', () => {
     }
 
     await page.goto('/map')
+    await expect(page.locator('.map-hotspot-advisory-buffer')).toHaveCount(0)
     await page.locator('.map-pin--hotspot').dispatchEvent('click')
     await expect(page.locator('.map-mobile-sheet--hotspot')).toBeVisible()
     await expect(page.getByText('Habitat reports within 400 m are prioritized for review.')).toBeVisible()
     await expect(page.locator('.leaflet-tooltip')).toHaveCount(0)
+    await expect(page.locator('.map-hotspot-advisory-buffer')).toHaveCount(0)
     await expectMarkerAboveSheet('.map-pin--hotspot', '.map-mobile-sheet--hotspot')
+    await expect(page.locator('.map-hotspot-advisory-buffer')).toBeVisible()
 
     const advisoryStyle = await page.locator('.map-hotspot-advisory-buffer').evaluate((element) => {
       const style = getComputedStyle(element)

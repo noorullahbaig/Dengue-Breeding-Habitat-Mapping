@@ -102,6 +102,7 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 			minimumZoom: number;
 			adjustForOcclusion: boolean;
 			occludingElement?: HTMLElement | null;
+			topOccludingElement?: HTMLElement | null;
 		};
 	}) => {
 		const [mountId] = useState(() => ++experienceHarness.mapMountCount);
@@ -122,7 +123,7 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 			</div>
 			<div data-testid="selection-focus-state">
 				{selectionFocus
-					? `${selectionFocus.center.join(",")}@${selectionFocus.minimumZoom}:${selectionFocus.adjustForOcclusion ? "adjusted" : "centered"}:${selectionFocus.occludingElement ? "sheet ready" : "no sheet"}`
+					? `${selectionFocus.center.join(",")}@${selectionFocus.minimumZoom}:${selectionFocus.adjustForOcclusion ? "adjusted" : "centered"}:${selectionFocus.occludingElement ? "sheet ready" : "no sheet"}:${selectionFocus.topOccludingElement ? "controls ready" : "no controls"}`
 					: "none"}
 			</div>
 			<button
@@ -399,7 +400,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		const reportSheet = document.querySelector(".map-mobile-sheet--report");
 		expect(reportSheet).toBeInstanceOf(HTMLElement);
 		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
-			"3.13902,101.68692@12:adjusted:sheet ready",
+			"3.13902,101.68692@12:adjusted:sheet ready:controls ready",
 		);
 		expect(screen.getByTestId("map-center")).toHaveTextContent("default center");
 
@@ -437,7 +438,7 @@ describe("PublicMapExperience report stack sheet", () => {
 			screen.getByRole("link", { name: "View report details" }),
 		).toBeInTheDocument();
 		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
-			"3.13902,101.68692@12:adjusted:sheet ready",
+			"3.13902,101.68692@12:adjusted:sheet ready:controls ready",
 		);
 
 		await user.click(
@@ -511,7 +512,7 @@ describe("PublicMapExperience report stack sheet", () => {
 		expect(screen.queryByText(/iDengue hotspot context/)).not.toBeInTheDocument();
 		expect(screen.queryByText(/20 Jul 2026/)).not.toBeInTheDocument();
 		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
-			"3.2001,101.7182@15:adjusted:sheet ready",
+			"3.2001,101.7182@15:adjusted:sheet ready:controls ready",
 		);
 		expect(screen.getByTestId("map-center")).toHaveTextContent("default center");
 
@@ -544,7 +545,7 @@ describe("PublicMapExperience report stack sheet", () => {
 			screen.queryByText("Habitat reports within 400 m are prioritized for review."),
 		).not.toBeInTheDocument();
 		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
-			"3.2001,101.7182@12:centered:no sheet",
+			"3.2001,101.7182@12:centered:no sheet:no controls",
 		);
 	});
 
