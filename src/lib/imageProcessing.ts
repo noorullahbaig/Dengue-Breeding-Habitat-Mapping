@@ -9,13 +9,6 @@ export async function preparePhotoForUpload(
   file: File | Blob | null | undefined,
   options: { signal?: AbortSignal } = {},
 ): Promise<Blob> {
-  console.log('Validating photo upload:', {
-    name: file instanceof File ? file.name : undefined,
-    type: file?.type,
-    size: file?.size,
-    isFile: file instanceof File,
-  })
-
   if (!file) {
     throw new StaleFileError()
   }

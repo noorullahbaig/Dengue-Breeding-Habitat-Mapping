@@ -47,6 +47,7 @@ This file records implementation choices made after reviewing `/Users/noorullah/
 - The current sync path still uses an officer-only backend endpoint retained in the repository as an operational utility.
 - The backend assesses nearest iDengue hotspot distance with PostGIS distance logic and stores snapshot, nearest hotspot identity, priority level, and priority reason on each report.
 - Frontend map hotspot listing is served from the local mirror, which prepares the future path for scheduled AWS mirroring instead of browser-direct ArcGIS calls.
+- The public hotspot response exposes the 200 m source/core radius and separate 400 m warning radius. The frontend renders the 400 m value as a selected-hotspot-only advisory circle on mobile widths up to 760 px; desktop remains marker-only, and the overlay is hidden while selection movement is settling.
 
 ## Out-of-Scope Officer Prototype
 

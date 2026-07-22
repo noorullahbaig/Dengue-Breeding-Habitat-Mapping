@@ -60,3 +60,9 @@ output/
 # AWS Keys and Credentials
 *.pem
 *.ppk
+
+# Dev-tool docs and internal AI planning notes
+docs/*.cjs
+docs/report.txt
+docs/fyp_erd_render.html
+docs/superpowers/

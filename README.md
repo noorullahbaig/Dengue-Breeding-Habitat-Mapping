@@ -1,193 +1,441 @@
-# Breeding Habitat Watch Prototype
+# DengueWatch — Dengue Breeding Habitat Mapping
 
-React + Vite + TypeScript frontend plus a local FastAPI backend for the dengue breeding-habitat reporting prototype described in the FYP report.
+A civic web application that lets Kuala Lumpur residents submit photo evidence of likely mosquito breeding habitats, confirm exact map location, and track reports anonymously. The system provides a public awareness map and supports AI-assisted habitat classification using a YOLOv8s model trained on local breeding-site imagery.
 
-Current documentation scope: the assessed implementation covers the resident submission flow and the public map/status experience. Prototype officer routes still exist in the repository, but they are out of scope for architecture, deployment acceptance, and evaluation claims. The current deployed edge entrypoint uses Amazon CloudFront at `d2yol17g6mes38.cloudfront.net`; its origin and cache configuration are managed outside this repository.
+**Assessed scope:** The resident submission flow, public map, public report detail, and anonymous status lookup. A prototype officer console exists in the repository but is out of scope for architecture and evaluation claims.
 
-Visual implementation rule: treat mobile view as the authoritative layout for this prototype. Any visual/UI change should be designed and validated for phone-sized viewports first; desktop/laptop rendering is secondary and should adapt from the mobile behavior rather than redefining it.
+**Live deployment:** CloudFront distribution at `d2yol17g6mes38.cloudfront.net` → EC2 origin (Docker Compose) → RDS PostgreSQL/PostGIS + S3.
 
-## Current scope
+---
 
-- Resident landing page and guided reporting flow
-- Browser-based photo capture or upload fallback
-- Browser/demo geolocation capture with map-pin correction before submit
-- FastAPI report submission API
-- Local PostgreSQL persistence for report metadata and advisory model output
-- Local PostGIS geography columns and hotspot mirror for AWS RDS/PostGIS rehearsal
-- Local evidence image and thumbnail storage under `backend/uploads`
-- AWS-ready storage keys for future private S3 object mapping
-- Explicit public image and exact-pin consent capture
-- Backend-owned hotspot priority context for each submitted report
-- Ultralytics YOLOv8s inference from `backend/models/denguewatch_yolov8s_best.pt`
-- Submission success screen and anonymous status lookup
-- Public crowdsourced map with exact consented pins, report thumbnails, and public detail galleries
-- ML-gated nearby report stacking for same-class public submissions
-- Kuala Lumpur service-area enforcement for report submission and hotspot context
-- Experimental officer review routes remain in the repo for local prototype work, but they are out of scope for the assessed implementation
+## Table of Contents
 
-## Directory layout
+1. [Project Structure](#project-structure)
+2. [Routes](#routes)
+3. [Local Development Setup](#local-development-setup)
+4. [Environment Variables](#environment-variables)
+5. [Running Tests](#running-tests)
+6. [Production Deployment (EC2)](#production-deployment-ec2)
+7. [Authentication — AWS Cognito](#authentication--aws-cognito)
+8. [Database Schema](#database-schema)
+9. [AI Model](#ai-model)
+10. [Design System](#design-system)
+11. [Architecture Decisions](#architecture-decisions)
 
-- `src/app`: app shell, routing, providers, and context wiring
-- `src/pages`: route-level screens
-- `src/features/report`: resident reporting flow
-- `src/features/public-map`: public map display
-- `src/features/status`: status lookup UI
-- `src/features/shared`: shared feature-level UI
-- `src/components`: reusable UI building blocks
-- `src/services`: service contracts
-- `src/mocks`: mock adapters and seeded data
-- `src/lib`: browser helpers, constants, formatting, and map helpers
-- `src/types`: shared domain models
-- `src/styles`: tokens and global styling
-- `src/test`: shared test setup
-- `backend/app`: FastAPI application, persistence, image handling, and model inference
-- `backend/migrations`: Alembic database migrations
-- `backend/tests`: backend unit tests
-- `e2e`: Playwright full-flow browser rehearsal against local frontend/backend/PostgreSQL
+---
+
+## Project Structure
+
+```
+prototype/
+├── src/
+│   ├── app/          # App shell, routing, auth context, providers
+│   ├── pages/        # Route-level screens and page components
+│   ├── features/     # report/, shared/
+│   ├── components/   # Reusable UI building blocks
+│   ├── services/     # API service contracts and adapters
+│   ├── lib/          # Browser helpers, geolocation, prediction, formatting
+│   ├── mocks/        # Mock service adapters for isolated UI tests
+│   ├── styles/       # CSS design tokens and per-route stylesheets
+│   ├── types/        # Shared TypeScript domain models
+│   └── test/         # Shared test setup
+├── backend/
+│   ├── app/          # FastAPI application: auth, domain, inference, storage
+│   ├── migrations/   # Alembic database migration versions (9 migrations)
+│   ├── models/       # YOLOv8s .pt checkpoint + metadata + operating profile
+│   ├── tests/        # Backend unit and integration tests
+│   └── scripts/      # setup_local_db.sh, derive_operating_profile.py
+├── e2e/              # Playwright end-to-end browser tests
+├── docs/
+│   ├── academic/     # Model operating profile, use-case analysis
+│   ├── diagrams/     # Architecture diagrams, flowcharts, use-case SVGs
+│   └── wireframe_*.html  # UI wireframes for all major flows
+├── scripts/          # Deployment scripts, perf measurement
+└── public/           # favicon.svg
+```
+
+---
 
 ## Routes
 
-- `/`: resident start page
-- `/report`: evidence capture
-- `/report/review`: map correction and final review
-- `/report/success`: submission confirmation
-- `/status`: anonymous status lookup
-- `/map`: public crowdsourced report map
-- `/map/reports/:reference`: public report detail with stacked image timeline
-- `/officer`: experimental local officer review queue retained in the repo, but out of scope for the assessed implementation
-- `/next`, `/next/report`, `/next/status`, `/next/map`, `/next/map/reports/:reference`, `/next/officer`: temporary v2 aliases kept during cutover cleanup window, including the same out-of-scope officer prototype route
-- `/legacy`, `/legacy/report`, `/legacy/status`, `/legacy/map`, `/legacy/map/reports/:reference`, `/legacy/officer`: rollback-only legacy routes (temporary), including the same out-of-scope officer prototype route
+| Route | Description |
+|---|---|
+| `/` | Resident landing page |
+| `/report` | Multi-step evidence capture wizard |
+| `/report/success` | Submission confirmation with reference code |
+| `/status` | Anonymous status lookup by reference |
+| `/map` | Public crowdsourced awareness map |
+| `/map/reports/:reference` | Public report detail with image evidence timeline |
+| `/learn` | Habitat identification guidance |
+| `/activity` | Authenticated resident's own report history |
+| `/profile` | Authenticated resident profile |
+| `/officer` | Prototype officer console — retained in repo, out of scope |
 
-Legacy routes remain unchanged by default. The v2 lane is additive and isolated until explicit cutover.
+**Mobile-first:** Mobile view is the authoritative layout. All UI changes are validated phone-first; desktop adapts from mobile behaviour.
 
-## Commands
+---
+
+## Local Development Setup
+
+### Prerequisites
+
+- Node.js 20+
+- Python 3.12+
+- PostgreSQL 16+ with PostGIS
 
 ### Frontend
 
 ```bash
 npm install
-npx playwright install chromium
-npm run dev
-npm run lint
-npm run test:run
-npm run test:e2e
-npm run build
+npx playwright install chromium   # for e2e tests only
+npm run dev                        # starts Vite on http://localhost:5173
 ```
 
 ### Backend
 
 ```bash
 cd backend
-python3 -m pip install -r requirements.txt
-brew install postgresql@18 postgis
-brew services start postgresql@18
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# One-command local DB setup (starts PostgreSQL, enables PostGIS, runs all migrations):
+./scripts/setup_local_db.sh
+
+# Or manually:
+brew install postgresql@16 postgis
+brew services start postgresql@16
 createdb codex_fyp
 alembic upgrade head
+
 uvicorn app.main:app --reload --port 8000
 ```
 
-The helper script starts PostgreSQL@18 when needed, creates/enables PostGIS, and runs all migrations:
+### Local Environment Files
+
+Copy the examples to create your local overrides:
 
 ```bash
-cd backend
-./scripts/setup_local_db.sh
+cp .env.local.example .env.local                   # frontend
+cp backend/.env.local.example backend/.env.local   # backend
 ```
 
-The backend reads local settings from `backend/.env.local` first, then `backend/.env`:
+Minimal `backend/.env.local`:
 
 ```env
-DATABASE_URL=postgresql+psycopg://noorullah@localhost:5432/codex_fyp
+DATABASE_URL=postgresql+psycopg://your_username@localhost:5432/codex_fyp
 MODEL_PATH=./models/denguewatch_yolov8s_best.pt
 UPLOAD_ROOT=./uploads
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
-# Optional: only for the experimental officer-only prototype endpoints
-OFFICER_API_TOKEN=local-officer-demo-token
 ```
 
-Model path policy:
+> If PostgreSQL rejects passwordless TCP, use the socket form:
+> `DATABASE_URL=postgresql+psycopg://your_username@/codex_fyp`
 
-- Keep `MODEL_PATH` pointed at the committed runtime checkpoint: `backend/models/denguewatch_yolov8s_best.pt`.
-- The default deployment checkpoint is the clean YOLOv8s epoch-44 model identified by the hash below. This repository does not use the retired training run as comparative evidence.
-- Runtime metadata for the promoted checkpoint lives in `backend/models/denguewatch_yolov8s_metadata.json`.
-- Current promoted checkpoint SHA-256 (2026-07-19): `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`
-- The retrained checkpoint uses validation-derived F1 review floors (`0.547`, `0.486`, `0.448`) and F0.5 stronger-evidence thresholds (`0.674`, `0.553`, `0.712`) for Artificial Container, Drain Inlet, and Tire respectively. Inference uses `conf=0.448` only as the envelope needed to expose every class candidate for post-filtering.
-- The complete selection rationale, validation evidence, limitations, and reproduction command are documented in `docs/academic/model-operating-profile.md`.
-
-Recommended local setup:
-
-- Copy `prototype/.env.local.example` to `prototype/.env.local` for frontend-only values such as `VITE_API_BASE_URL`
-- Copy `prototype/backend/.env.local.example` to `prototype/backend/.env.local` for backend-only values such as `DATABASE_URL` and `MODEL_PATH`
-- Add `OFFICER_API_TOKEN` only if you are using the experimental officer-only prototype endpoints
-- Keep `.env.example` files committed as templates, and treat `.env.local` as your machine-specific override
-
-For local browser testing, support both the Vite dev server and local preview/manual access origins:
-
-```env
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
-```
-
-If local PostgreSQL rejects passwordless TCP, switch `DATABASE_URL` to:
-
-```env
-DATABASE_URL=postgresql+psycopg://noorullah@/codex_fyp
-```
-
-The frontend reads `VITE_API_BASE_URL=http://localhost:8000/api` from `.env.local` or `.env`.
-
-Parallel UX safety flags:
-
-```env
-VITE_ENABLE_UX_V2_PREVIEW=false
-```
-
-- Canonical routes are now v2 by default.
-- `VITE_ENABLE_UX_V2_PREVIEW=true`: optional UI affordance while validating/cleaning up transition links.
-
-### Local readiness check
+### Readiness Check
 
 ```bash
 curl http://localhost:8000/api/health
+# Expected: { "ok": true, "database": true, "model": true, "postgis": true }
 ```
 
-Expected once PostgreSQL is running, migrations are applied, and the model is present:
+### Hotspot Sync (local)
 
-```json
-{ "ok": true, "database": true, "model": true, "postgis": true }
-```
-
-PostGIS is now part of local readiness, not an optional AWS-only detail. The Alembic migration enables it, adds report geography points plus GiST indexes, and creates the local `hotspots` mirror table.
-
-### Report flow troubleshooting
-
-- `Failed to fetch` in the resident report AI pre-check means the browser could not reach the API at all. Check that the backend is running on `localhost:8000`.
-- Browser access also depends on the active frontend origin being listed in backend `CORS_ORIGINS`. Local development should allow both `5173` and `4173`.
-- `curl http://localhost:8000/api/health` returning `database=true`, `model=true`, and `postgis=true` means the backend, model, and spatial DB path are ready for report submission.
-- `curl` success does not prove browser success. If browser preflight fails with `Disallowed CORS origin` for `http://127.0.0.1:4173`, add that origin to `backend/.env.local` and restart the backend.
-- A model-specific `503` from the report pre-check means the backend is up, but the AI path is not ready yet. Typical cases are:
-  - `The detection model is not ready.`
-  - `The detection model could not process the uploaded image.`
-- For local validation, start the frontend on `5173` or `4173`, then confirm `/api/health` is green before testing `/report`.
-
-### Hotspot mirror sync
-
-The public map and report priority logic read from PostgreSQL, not directly from the browser. The current local sync path is still an officer-only backend endpoint retained as an operational utility, even though the officer workflow itself is out of scope for the assessed prototype:
+The public map reads iDengue hotspot data from PostgreSQL. To populate it locally:
 
 ```bash
 curl -X POST http://localhost:8000/api/officer/hotspots/sync \
   -H "Authorization: Bearer local-officer-demo-token"
 ```
 
-You can also sync from the experimental `/officer` dashboard.
+---
 
-## Notes
+## Environment Variables
 
-- The frontend uses the FastAPI backend when `VITE_API_BASE_URL` is configured; if it is not set, mock services are still available for isolated UI tests.
-- The current deployed public entrypoint is the CloudFront distribution `d2yol17g6mes38.cloudfront.net`, but the CloudFront origin and cache behavior are managed outside this repository, so local docs should not claim an exact edge-to-origin topology beyond CloudFront sitting in front of the application.
-- The backend syncs hotspot context from the public iDengue ArcGIS layer into local PostgreSQL/PostGIS. Cloud deployment can move the same sync boundary to a scheduled App Runner job, Lambda, or EventBridge-triggered worker.
-- Public map markers show exact pins and submitted photos after explicit resident consent.
-- Nearby report stacking is ML-gated and uses an internal same-site matching rule; the 200 m/400 m hotspot visuals remain dengue context, not duplicate-report logic.
-- Report submissions and public hotspot context are constrained to the Kuala Lumpur service area.
-- AI output is always framed as advisory and never as final proof.
-- The officer prototype remains in the repository as an experimental utility surface and should not be used as a required scope claim for diagrams, deployment acceptance, or academic evaluation.
-- The system is currently deployed to AWS. The local development environment continues to use local PostgreSQL and local uploads for development purposes, while the production AWS environment utilizes hosted PostgreSQL (RDS) and S3 object storage without changing the resident-facing workflow.
-- Design tradeoffs are documented in `DESIGN_CHOICES.md`.
+### Frontend (`VITE_*`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | Yes | Backend API base, e.g. `/api` or `http://localhost:8000/api` |
+| `VITE_COGNITO_REGION` | Prod only | AWS region, e.g. `ap-southeast-1` |
+| `VITE_COGNITO_USER_POOL_ID` | Prod only | Cognito User Pool ID |
+| `VITE_COGNITO_USER_POOL_CLIENT_ID` | Prod only | Cognito App Client ID |
+| `VITE_COGNITO_HOSTED_UI_DOMAIN` | Prod only | Cognito Hosted UI domain |
+| `VITE_COGNITO_REDIRECT_SIGN_IN` | Prod only | OAuth redirect after sign-in |
+| `VITE_COGNITO_REDIRECT_SIGN_OUT` | Prod only | OAuth redirect after sign-out |
+
+### Backend
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string (`postgresql+psycopg://...`) |
+| `MODEL_PATH` | Yes | Path to `.pt` checkpoint, e.g. `./models/denguewatch_yolov8s_best.pt` |
+| `UPLOAD_ROOT` | Yes | Local upload directory, e.g. `./uploads` |
+| `CORS_ORIGINS` | Yes | Comma-separated allowed origins |
+| `STORAGE_BACKEND` | Prod | `local` (default) or `s3` |
+| `S3_BUCKET` | Prod (S3) | S3 bucket name |
+| `S3_REGION` | Prod (S3) | S3 region |
+| `CLEANUP_LOCAL_AFTER_S3_UPLOAD` | Prod (S3) | `true` to delete local files after S3 upload |
+| `COGNITO_REGION` | Prod | Must match frontend `VITE_COGNITO_REGION` |
+| `COGNITO_USER_POOL_ID` | Prod | Must match frontend value |
+| `COGNITO_APP_CLIENT_ID` | Prod | Must match frontend value |
+| `OFFICER_API_TOKEN` | Optional | Simple bearer token for officer endpoints — omit to use default |
+
+---
+
+## Running Tests
+
+### Frontend Unit Tests
+
+```bash
+npm run test:run        # run all Vitest unit tests once
+npm run test            # watch mode
+```
+
+### Backend Unit Tests
+
+```bash
+cd backend
+pytest                  # runs all tests
+pytest tests/test_inference.py   # single file
+```
+
+### End-to-End Tests (Playwright)
+
+Requires both frontend (port 5173) and backend (port 8000) running locally:
+
+```bash
+npm run test:e2e
+```
+
+---
+
+## Production Deployment (EC2)
+
+The production environment uses Docker Compose on an EC2 instance, with RDS PostgreSQL/PostGIS as the database and S3 for image storage.
+
+### Architecture
+
+```
+Browser → CloudFront (CDN/edge) → EC2 (nginx + Docker Compose)
+                                       ├── frontend container (Vite build served by nginx)
+                                       ├── backend container (FastAPI + Uvicorn)
+                                       ├── migrate service (alembic upgrade head, runs once on deploy)
+                                       └── nginx (reverse proxy: / → frontend, /api → backend)
+EC2 backend → RDS PostgreSQL/PostGIS
+EC2 backend → S3 (image evidence storage)
+EC2 backend → AWS Cognito (JWT verification)
+```
+
+### Deployment Steps
+
+Production credentials are stored as an AWS SSM SecureString. The deploy script fetches, validates, and applies them automatically.
+
+```bash
+# SSH into EC2
+chmod 400 denguewatch-noorullah-key.pem
+ssh -i denguewatch-noorullah-key.pem ec2-user@<YOUR-EC2-PUBLIC-IP>
+
+# Pull latest code
+cd /home/ec2-user/prototype
+git pull origin main
+
+# Deploy
+./scripts/deploy-production.sh
+```
+
+The script:
+1. Fetches `.env.production` from AWS SSM SecureString
+2. Validates all required variables
+3. Builds Docker images tagged with the current Git SHA
+4. Runs the `migrate` service (`alembic upgrade head`) before app containers start
+5. Brings up `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans`
+6. Waits for health checks to pass
+
+### Verifying Deployment
+
+```bash
+curl http://localhost/health        # nginx → frontend health
+curl http://localhost/api/health    # nginx → backend health
+# Expected: { "ok": true, "database": true, "model": true, "postgis": true }
+```
+
+Also verify:
+- Frontend login flow reaches Cognito
+- An authenticated submission writes `user_id` to the DB
+- An anonymous submission followed by sign-in claims the report
+
+### Useful Docker Commands on EC2
+
+```bash
+# View running services
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+
+# Tail logs
+docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=100
+
+# Re-run without pulling new code (e.g. config-only change)
+./scripts/deploy-production.sh --skip-pull
+```
+
+### Rollback
+
+The deploy script saves `.deploy/previous-release.env`. If a release fails after images are built, redeploy the earlier `APP_VERSION` manually with the same compose file. Do not rollback the database automatically — only downgrade if the migration is confirmed forward-compatible with the older image.
+
+### Production Rules
+
+- **Never** commit `.env.production` to git.
+- **Never** rely on ambient shell variables for production deploys — always use `--env-file .env.production`.
+- **Never** edit `.env.production` directly on EC2 and treat it as source of truth — update SSM, then redeploy.
+- **Never** use mock auth in production as a fallback for missing Cognito configuration.
+
+---
+
+## Authentication — AWS Cognito
+
+### How It Works
+
+- **Anonymous reporting** is always available — no sign-in required.
+- **Authenticated reporting:** A report submitted with a valid Cognito ID token is automatically linked to that resident. `GET /api/my-reports` returns only the authenticated resident's own reports.
+- **Claim flow:** An anonymous submission receives a private one-time claim token, held in session storage. When the user later signs in, `POST /api/my-reports/claim` attaches the report to the account. Claim tokens are stored as hashes server-side, never in URLs, and cleared after a successful claim.
+
+### Required Configuration
+
+Frontend and backend must reference the **same** User Pool and App Client. Cognito identifiers are safe to include in the frontend build; App Client secrets must not be placed in the browser.
+
+```
+Backend:  COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID
+Frontend: VITE_COGNITO_REGION, VITE_COGNITO_USER_POOL_ID,
+          VITE_COGNITO_USER_POOL_CLIENT_ID, VITE_COGNITO_HOSTED_UI_DOMAIN,
+          VITE_COGNITO_REDIRECT_SIGN_IN, VITE_COGNITO_REDIRECT_SIGN_OUT
+```
+
+### API Contract
+
+| Endpoint | Auth | Notes |
+|---|---|---|
+| `POST /api/reports` | Optional bearer token | Anonymous: returns `claimToken`. Authenticated: links report immediately. |
+| `GET /api/my-reports` | Required Cognito ID token | Returns only the authenticated resident's reports |
+| `POST /api/my-reports/claim` | Required Cognito ID token | Body: `{ reference, claimToken }` |
+| `GET /api/reports/status/{reference}` | None | Public status lookup |
+| `GET /api/public/reports` | None | Public map data |
+| `GET /api/hotspots/current` | None | iDengue hotspot mirror |
+
+If Cognito configuration is incomplete in production, public reporting remains available but account sign-in is disabled — no mock auth fallback.
+
+---
+
+## Database Schema
+
+PostgreSQL with PostGIS. Managed by Alembic (9 migration files in `backend/migrations/versions/`).
+
+### `users`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | VARCHAR | Primary key |
+| `cognito_sub` | VARCHAR | Unique — Cognito subject identifier |
+| `email` | VARCHAR | |
+| `display_name` | VARCHAR | From Google/Cognito profile |
+| `photo_url` | TEXT | Google/Cognito profile image |
+| `provider` | VARCHAR | `cognito` or `local` |
+| `created_at` / `updated_at` | TIMESTAMPTZ | |
+
+### `reports`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `reference` | VARCHAR | Human-readable ID, e.g. `KL-ABCD-1234` — unique |
+| `parent_report_id` | UUID | FK for stacked/duplicate reports |
+| `user_id` | VARCHAR | FK to `users.id` — nullable for anonymous |
+| `claim_token_hash` | TEXT | SHA-256 of one-time claim token |
+| `latitude` / `longitude` | FLOAT | Submitted GPS coordinates |
+| `address` | TEXT | Reverse-geocoded address |
+| `public_location_geog` | Geography(Point) | PostGIS spatial index for bounding-box map queries |
+| `habitat_class` | VARCHAR | AI classification: `artificial_container`, `drain_inlet`, `tire` |
+| `confidence_score` | FLOAT | Raw model confidence |
+| `ai_decision` | VARCHAR | `confirmed`, `low_confidence`, `rejected` |
+| `storage_key` | TEXT | Evidence image path/S3 key |
+| `thumbnail_key` | TEXT | Thumbnail path/S3 key |
+| `annotated_key` | TEXT | Annotated overlay image key |
+| `status` | VARCHAR | `submitted`, `under_review`, `action_recorded`, `closed` |
+| `consent_public_location` | BOOLEAN | Resident consent for public pin display |
+| `consent_public_image` | BOOLEAN | Resident consent for public photo display |
+| `created_at` / `captured_at` | TIMESTAMPTZ | |
+| `hotspot_id` | INTEGER | FK to nearest iDengue hotspot at time of submission |
+
+### `hotspots`
+Local mirror of the iDengue ArcGIS layer. Synced via `POST /api/officer/hotspots/sync`. Used for hotspot priority context on public map and report submissions. Includes a PostGIS geography column with GiST index for spatial proximity queries.
+
+### `user_reports` (association)
+Many-to-many join between `users` and `reports` for the claim flow.
+
+---
+
+## AI Model
+
+**Model:** YOLOv8s image classifier, trained on local Kuala Lumpur breeding-site imagery.
+
+**Checkpoint:** `backend/models/denguewatch_yolov8s_best.pt`
+- SHA-256: `af33db97278948b7feb6bddf3ebc351ca757922e47643d05d713b7026eeb3d92`
+- Epoch: 44 (best validation checkpoint)
+
+**Classes:**
+- `artificial_container` — buckets, pots, open containers
+- `drain_inlet` — drains, culverts, channel openings
+- `tire` — discarded tyres
+
+**Inference settings:** `conf=0.448, iou=0.70, imgsz=640, augment=False`
+- `conf=0.448` is the envelope to expose all class candidates for post-filtering, not a hard accept threshold.
+- Post-filter applies per-class F1 review floors: `0.547` (container), `0.486` (drain), `0.448` (tire).
+- Stronger-evidence (F0.5) thresholds: `0.674`, `0.553`, `0.712` respectively.
+
+**Operating profile:** `backend/models/denguewatch_yolov8s_operating_profile.json`
+Full derivation rationale in `docs/academic/model-operating-profile.md`.
+
+AI output is always framed as advisory — never final proof. Low-confidence submissions are still accepted with a warning shown to the user.
+
+---
+
+## Design System
+
+**Palette:**
+| Token | Value | Usage |
+|---|---|---|
+| `--color-accent` | `#00464f` | Primary CTA, active states |
+| `--color-surface` | `#f3faff` | Page canvas |
+| `--color-surface-muted` | `#e6f6ff` | Secondary panels |
+| `--color-ink` | `#021f29` | Body text |
+| `--color-ink-soft` | `#42585f` | Secondary text |
+| `--color-warning` | `#ba1a1a` | Errors, warnings |
+| `--color-success` | `#156874` | Confirmations |
+
+**Typography:** Work Sans (headings + body), Inter (labels + compact UI). Tone: civic, high-legibility, no decorative display treatment.
+
+**Layout:** Mobile-first. Fixed top bar + 5-item bottom nav for resident routes on mobile; fixed left rail on desktop. 8px spacing rhythm. Map-first layouts throughout.
+
+**Accessibility:** WCAG AA contrast target. Large touch targets for mobile field use. Keyboard accessible on desktop. Color not used as sole status indicator.
+
+---
+
+## Architecture Decisions
+
+| Decision | Chosen | Rationale |
+|---|---|---|
+| Frontend framework | React + Vite + TypeScript | Component model fits multi-step wizard; Vite fast dev/build |
+| Backend framework | FastAPI (Python) | Async support; direct integration with Ultralytics/PyTorch inference |
+| Database | PostgreSQL + PostGIS | Spatial queries for bounding-box map data and hotspot proximity |
+| ORM / Migrations | SQLAlchemy + Alembic | Versioned schema; reproducible across local and RDS |
+| Image storage | Local (dev) / S3 (prod) | Consistent `storage_key` abstraction; S3 fallback to local if unavailable |
+| Auth | AWS Cognito (Google OAuth) | Managed identity; anonymous fallback preserved for non-auth users |
+| AI model | YOLOv8s (classification head) | Suitable size for single-GPU EC2; fits `backend/models/` in repo |
+| Deployment | Docker Compose on EC2 | Reproducible multi-service environment; nginx handles routing |
+| CDN | CloudFront | Edge caching; shields EC2 origin |
+| Map | OpenLayers + OpenStreetMap | Open-source; no API key for tile rendering |
+| Service area | KL boundary GeoJSON | Submissions and hotspot context constrained to Kuala Lumpur |
+| Report stacking | ML-gated 200m radius | Reduces duplicate reports for same habitat; class-aware matching |
+
+**Spatial queries:** `public_location_geog` uses a PostGIS geography column with a GiST index. Public map endpoint uses `ST_Intersects` with a bounding-box envelope — benchmarked at ~10ms for 500 reports vs ~80ms without the index.
+
+**Storage fallback:** If S3 is unreachable when serving an image, the backend falls back to a local `FileResponse` transparently. Startup validates S3 connectivity and logs a warning (does not crash) if unreachable.
+
+**Officer prototype note:** Officer routes and endpoints remain in the repository as an operational utility (hotspot sync, experimental review queue). They are not part of the assessed implementation. No UI for officers is built; endpoints use a simple shared bearer token independent of Cognito.
