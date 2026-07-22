@@ -275,6 +275,131 @@ test.describe('mobile shell regressions', () => {
     expect(profileScrollSafety.paddingBottom).toBeGreaterThanOrEqual(48)
     expect(profileScrollSafety.scrollPaddingBottom).toBeGreaterThanOrEqual(24)
   })
+
+  test('keeps selected hotspot and report markers visible above their sheets', async ({ page }) => {
+    const publicReports = [
+      {
+        id: 'map-report-1',
+        reference: 'KL-MAP-0001',
+        publicLocation: { latitude: 3.13902, longitude: 101.68692, source: 'public' },
+        habitatClass: 'drain_inlet',
+        prediction: {
+          label: 'drain_inlet',
+          confidence: 0.82,
+          confidenceBand: 'high',
+          advisoryText: 'Advisory only.',
+        },
+        status: 'submitted',
+        neighborhood: 'Sentul',
+        reportedAt: '2026-07-20T08:00:00.000Z',
+        latestReportedAt: '2026-07-20T08:00:00.000Z',
+        reportCount: 1,
+        thumbnailUrl: '/evidence-thumb.jpg',
+        imageUrl: '/evidence.jpg',
+        privacyNote: 'Public location.',
+      },
+      {
+        id: 'map-report-2',
+        reference: 'KL-MAP-0002',
+        publicLocation: { latitude: 3.13902, longitude: 101.68692, source: 'public' },
+        habitatClass: 'tire',
+        prediction: {
+          label: 'tire',
+          confidence: 0.71,
+          confidenceBand: 'moderate',
+          advisoryText: 'Advisory only.',
+        },
+        status: 'submitted',
+        neighborhood: 'Wangsa Maju',
+        reportedAt: '2026-07-19T08:00:00.000Z',
+        latestReportedAt: '2026-07-19T08:00:00.000Z',
+        reportCount: 1,
+        thumbnailUrl: '/evidence-thumb.jpg',
+        imageUrl: '/evidence.jpg',
+        privacyNote: 'Public location.',
+      },
+    ]
+    const hotspot = {
+      id: 'hotspot-map-1',
+      locality: 'Taman Melati',
+      district: 'Wangsa Maju',
+      center: { latitude: 3.2001, longitude: 101.7182, source: 'public' },
+      radiusMeters: 200,
+      warningRadiusMeters: 400,
+      cumulativeCases: 12,
+      outbreakDurationDays: 36,
+      outbreakStartDate: '2026-06-21T00:00:00.000Z',
+      weekNumber: 29,
+      year: 2026,
+      snapshotDate: '2026-07-20T00:00:00.000Z',
+      sourceLabel: 'iDengue hotspot context',
+    }
+
+    await page.route('**/api/public/reports*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(publicReports),
+      })
+    })
+    await page.route('**/api/hotspots/current', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([hotspot]),
+      })
+    })
+
+    const expectMarkerAboveSheet = async (markerSelector: string, sheetSelector: string) => {
+      await expect
+        .poll(async () =>
+          page.evaluate(
+            ({ markerSelector, sheetSelector }) => {
+              const marker = document.querySelector(markerSelector)
+              const sheet = document.querySelector(`${sheetSelector} .map-detail-sheet`)
+              const map = document.querySelector('.map-frame__canvas')
+              if (!(marker instanceof HTMLElement) || !(sheet instanceof HTMLElement) || !(map instanceof HTMLElement)) {
+                return Number.POSITIVE_INFINITY
+              }
+
+              const markerRect = marker.getBoundingClientRect()
+              const sheetRect = sheet.getBoundingClientRect()
+              const mapRect = map.getBoundingClientRect()
+              const markerCenter = markerRect.top + markerRect.height / 2
+              const visibleCenter = (mapRect.top + sheetRect.top - 16) / 2
+
+              return Math.abs(markerCenter - visibleCenter)
+            },
+            { markerSelector, sheetSelector },
+          ),
+        )
+        .toBeLessThanOrEqual(8)
+    }
+
+    await page.goto('/map')
+    await page.locator('.map-pin--hotspot').dispatchEvent('click')
+    await expect(page.locator('.map-mobile-sheet--hotspot')).toBeVisible()
+    await expect(page.getByText('Habitat reports within 400 m are prioritized for review.')).toBeVisible()
+    await expect(page.locator('.leaflet-tooltip')).toHaveCount(0)
+    await expectMarkerAboveSheet('.map-pin--hotspot', '.map-mobile-sheet--hotspot')
+
+    const advisoryStyle = await page.locator('.map-hotspot-advisory-buffer').evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { fill: style.fill, fillOpacity: style.fillOpacity, stroke: style.stroke }
+    })
+    expect(advisoryStyle.fill).toBe('rgb(211, 47, 47)')
+    expect(advisoryStyle.stroke).toBe('rgb(211, 47, 47)')
+    expect(advisoryStyle.fillOpacity).toBe('0.07')
+
+    await page.getByRole('button', { name: 'Close hotspot details' }).click()
+    await page.locator('.map-pin--public').dispatchEvent('click')
+    await expect(page.locator('.map-mobile-sheet--report')).toBeVisible()
+    await expectMarkerAboveSheet('.map-pin--public', '.map-mobile-sheet--report')
+
+    await page.getByRole('button', { name: /Open report for Wangsa Maju/i }).click()
+    await expect(page.getByRole('heading', { name: 'Report' })).toBeVisible()
+    await expectMarkerAboveSheet('.map-pin--public', '.map-mobile-sheet--report')
+  })
 })
 
 for (const width of mobileWidths) {

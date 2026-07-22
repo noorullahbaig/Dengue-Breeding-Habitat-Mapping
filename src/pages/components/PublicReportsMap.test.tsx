@@ -4,6 +4,7 @@ import type { PointExpression } from "leaflet";
 import type { UserLocationFix } from "@/app/PublicMapSessionContext";
 import {
 	buildPublicReportMarkerGroups,
+	getVisibleMapVerticalOffset,
 	getPublicPriorityState,
 	PublicReportsMap,
 	type PublicReportGroupSelection,
@@ -17,6 +18,12 @@ const leafletHarness = vi.hoisted(() => ({
 	containerCenter: undefined as [number, number] | undefined,
 	containerZoom: undefined as number | undefined,
 	flyTo: vi.fn(),
+	mapContainer: undefined as HTMLDivElement | undefined,
+	mapSize: { x: 400, y: 800 },
+	selectionPoint: { x: 200, y: 220 },
+	panBy: vi.fn(),
+	onceHandlers: {} as Record<string, (() => void) | undefined>,
+	resizeCallbacks: [] as ResizeObserverCallback[],
 	latestHandlers: undefined as
 		| {
 				zoomend?: () => void;
@@ -48,6 +55,26 @@ vi.mock("react-leaflet", () => {
 			zoom: number,
 		): PointExpression =>
 			projectPoint({ latitude: latLng.lat, longitude: latLng.lng }, zoom),
+		unproject: (point: { x: number; y: number }, zoom: number) => {
+			const effectiveZoom = Math.min(zoom, 19);
+			const zoomScale = 2 ** (effectiveZoom - 13);
+			return {
+				lat: point.y / (1_000_000 * zoomScale),
+				lng: point.x / (1_000_000 * zoomScale),
+			};
+		},
+		getSize: () => leafletHarness.mapSize,
+		getContainer: () => leafletHarness.mapContainer,
+		latLngToContainerPoint: () => leafletHarness.selectionPoint,
+		panBy: leafletHarness.panBy,
+		once: (event: string, handler: () => void) => {
+			leafletHarness.onceHandlers[event] = handler;
+		},
+		off: (event: string, handler: () => void) => {
+			if (leafletHarness.onceHandlers[event] === handler) {
+				leafletHarness.onceHandlers[event] = undefined;
+			}
+		},
 		flyTo: leafletHarness.flyTo,
 	};
 
@@ -59,7 +86,13 @@ vi.mock("react-leaflet", () => {
 		}: {
 			radius: number;
 			interactive?: boolean;
-			pathOptions?: { className?: string };
+			pathOptions?: {
+				className?: string;
+				dashArray?: string;
+				fillOpacity?: number;
+				opacity?: number;
+				weight?: number;
+			};
 		}) => (
 			<div
 				data-testid={
@@ -69,6 +102,10 @@ vi.mock("react-leaflet", () => {
 				}
 				data-radius={radius}
 				data-interactive={String(interactive)}
+				data-dash-array={pathOptions?.dashArray}
+				data-fill-opacity={pathOptions?.fillOpacity}
+				data-opacity={pathOptions?.opacity}
+				data-weight={pathOptions?.weight}
 			/>
 		),
 		MapContainer: ({
@@ -94,11 +131,13 @@ vi.mock("react-leaflet", () => {
 			title,
 			alt,
 			icon,
+			children,
 		}: {
 			eventHandlers?: { click?: () => void };
 			title?: string;
 			alt?: string;
 			icon?: { options?: { className?: string } };
+			children?: React.ReactNode;
 		}) => (
 			<button
 				type="button"
@@ -107,6 +146,7 @@ vi.mock("react-leaflet", () => {
 				onClick={() => eventHandlers?.click?.()}
 			>
 				{title}
+				{children}
 			</button>
 		),
 		TileLayer: () => null,
@@ -185,7 +225,134 @@ describe("PublicReportsMap marker grouping", () => {
 		leafletHarness.containerCenter = undefined;
 		leafletHarness.containerZoom = undefined;
 		leafletHarness.flyTo.mockClear();
+		leafletHarness.mapSize = { x: 400, y: 800 };
+		leafletHarness.selectionPoint = { x: 200, y: 220 };
+		leafletHarness.panBy.mockClear();
+		leafletHarness.onceHandlers = {};
+		leafletHarness.mapContainer = document.createElement("div");
+		leafletHarness.mapContainer.getBoundingClientRect = () =>
+			({
+				top: 100,
+				bottom: 900,
+				left: 0,
+				right: 400,
+				width: 400,
+				height: 800,
+				x: 0,
+				y: 100,
+				toJSON: () => ({}),
+			}) as DOMRect;
+		leafletHarness.resizeCallbacks = [];
+		window.ResizeObserver = class {
+			constructor(callback: ResizeObserverCallback) {
+				leafletHarness.resizeCallbacks.push(callback);
+			}
+
+			observe() {}
+			unobserve() {}
+			disconnect() {}
+		} as typeof ResizeObserver;
 		leafletHarness.latestHandlers = undefined;
+	});
+
+	it("calculates the vertical shift needed to center a marker above a sheet", () => {
+		expect(
+			getVisibleMapVerticalOffset({
+				mapTop: 100,
+				mapHeight: 800,
+				sheetTop: 600,
+			}),
+		).toBe(158);
+		expect(
+			getVisibleMapVerticalOffset({
+				mapTop: 100,
+				mapHeight: 800,
+				sheetTop: 916,
+			}),
+		).toBe(0);
+	});
+
+	it("focuses a mobile selection in the visible area and responds to sheet resizing", () => {
+		leafletHarness.mapSize = { x: 400, y: 900 };
+		const sheetWrapper = document.createElement("div");
+		const sheet = document.createElement("section");
+		sheet.className = "map-detail-sheet";
+		sheetWrapper.append(sheet);
+		let sheetTop = 600;
+		sheet.getBoundingClientRect = () =>
+			({
+				top: sheetTop,
+				bottom: 850,
+				left: 0,
+				right: 400,
+				width: 400,
+				height: 250,
+				x: 0,
+				y: sheetTop,
+				toJSON: () => ({}),
+			}) as DOMRect;
+
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[]}
+				showHotspots={false}
+				selectionFocus={{
+					key: "report:KL-1",
+					center: [3.13902, 101.68692],
+					minimumZoom: 12,
+					adjustForOcclusion: true,
+					occludingElement: sheetWrapper,
+				}}
+			/>,
+		);
+
+		expect(leafletHarness.flyTo).toHaveBeenLastCalledWith(
+			expect.objectContaining({ lat: 3.139178, lng: 101.68692 }),
+			13,
+			expect.objectContaining({ duration: 0.45 }),
+		);
+
+		act(() => {
+			leafletHarness.onceHandlers.moveend?.();
+		});
+		expect(leafletHarness.panBy).toHaveBeenCalledWith(
+			expect.objectContaining({ x: 0, y: -22 }),
+			expect.objectContaining({ animate: true }),
+		);
+
+		sheetTop = 500;
+		act(() => {
+			leafletHarness.resizeCallbacks.at(-1)?.([], {} as ResizeObserver);
+		});
+
+		expect(leafletHarness.flyTo).toHaveBeenLastCalledWith(
+			expect.objectContaining({ lat: 3.139228, lng: 101.68692 }),
+			13,
+			expect.objectContaining({ duration: 0.45 }),
+		);
+	});
+
+	it("keeps desktop selection focus at the true marker coordinates", () => {
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[]}
+				showHotspots={false}
+				selectionFocus={{
+					key: "report:KL-1",
+					center: [3.13902, 101.68692],
+					minimumZoom: 12,
+					adjustForOcclusion: false,
+				}}
+			/>,
+		);
+
+		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
+			[3.13902, 101.68692],
+			13,
+			expect.objectContaining({ duration: 0.45 }),
+		);
 	});
 
 	it("groups exact duplicate public coordinates into one hard stack", () => {
@@ -273,7 +440,12 @@ describe("PublicReportsMap marker grouping", () => {
 				showHotspots
 				selectedHotspot={selectedHotspot}
 				showSelectedHotspotBuffer
-				centerOverride={[3.2001, 101.7182]}
+				selectionFocus={{
+					key: "hotspot:hotspot-1",
+					center: [3.2001, 101.7182],
+					minimumZoom: 15,
+					adjustForOcclusion: false,
+				}}
 			/>,
 		);
 
@@ -284,6 +456,18 @@ describe("PublicReportsMap marker grouping", () => {
 		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
 			"data-interactive",
 			"false",
+		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-fill-opacity",
+			"0.07",
+		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-dash-array",
+			"8 7",
+		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-weight",
+			"2",
 		);
 		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
 			[3.2001, 101.7182],
@@ -298,11 +482,37 @@ describe("PublicReportsMap marker grouping", () => {
 				showHotspots
 				selectedHotspot={selectedHotspot}
 				showSelectedHotspotBuffer={false}
-				centerOverride={[3.2001, 101.7182]}
+				selectionFocus={{
+					key: "hotspot:hotspot-1",
+					center: [3.2001, 101.7182],
+					minimumZoom: 15,
+					adjustForOcclusion: false,
+				}}
 			/>,
 		);
 
 		expect(screen.queryByTestId("hotspot-advisory-buffer")).not.toBeInTheDocument();
+	});
+
+	it("hides only the selected hotspot tooltip", () => {
+		const selectedHotspot = hotspot();
+		const otherHotspot = {
+			...hotspot(),
+			id: "hotspot-2",
+			locality: "Setapak",
+		};
+
+		render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[selectedHotspot, otherHotspot]}
+				showHotspots
+				selectedHotspot={selectedHotspot}
+			/>,
+		);
+
+		expect(screen.queryByText("Taman Melati")).not.toBeInTheDocument();
+		expect(screen.getByText("Setapak")).toBeInTheDocument();
 	});
 
 	it("collapses core and warning into the same prioritized public state", () => {

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, RefCallback } from "react";
 import { ArrowLeft, ChevronRight, Navigation, X } from "lucide-react";
 import { ButtonLink, IconButton, Surface } from "@/components/ui";
 import {
@@ -14,6 +14,7 @@ import type { PublicHotspot, PublicMapReport } from "@/types/report";
 interface MapHotspotSheetProps {
 	hotspot: PublicHotspot;
 	showAdvisoryBuffer: boolean;
+	sheetRef?: RefCallback<HTMLDivElement>;
 	onClose: () => void;
 }
 
@@ -25,10 +26,12 @@ const mapMobileSheetStyle = {
 export function MapHotspotSheet({
 	hotspot,
 	showAdvisoryBuffer,
+	sheetRef,
 	onClose,
 }: MapHotspotSheetProps) {
 	return (
 		<div
+			ref={sheetRef}
 			className="map-mobile-sheet map-mobile-sheet--hotspot"
 			style={mapMobileSheetStyle}
 		>
@@ -54,17 +57,9 @@ export function MapHotspotSheet({
 				</h2>
 				<p className="map-detail-sheet__subtitle">{hotspot.district}</p>
 				{showAdvisoryBuffer ? (
-					<div className="hotspot-advisory-note">
-						<strong>400 m advisory proximity buffer</strong>
-						<p>
-							Used by DengueWatch to prioritize nearby habitat reports. This is
-							not an official hotspot boundary or an individual dengue case
-							location. Risk does not stop at the line.
-						</p>
-						<span>
-							{hotspot.sourceLabel} · {formatCalendarDate(hotspot.snapshotDate)}
-						</span>
-					</div>
+					<p className="hotspot-advisory-note">
+						Habitat reports within 400 m are prioritized for review.
+					</p>
 				) : null}
 				<dl className="map-detail-facts map-detail-facts--three">
 					<div>
@@ -94,6 +89,7 @@ export function MapHotspotSheet({
 interface MapReportSheetProps {
 	group: PublicReportGroupSelection;
 	selectedReport?: PublicMapReport;
+	sheetRef?: RefCallback<HTMLDivElement>;
 	onSelectReport: (report: PublicMapReport) => void;
 	onBack: () => void;
 	onClose: () => void;
@@ -142,6 +138,7 @@ function ReportSummary({ report }: { report: PublicMapReport }) {
 export function MapReportSheet({
 	group,
 	selectedReport,
+	sheetRef,
 	onSelectReport,
 	onBack,
 	onClose,
@@ -153,6 +150,7 @@ export function MapReportSheet({
 
 	return (
 		<div
+			ref={sheetRef}
 			className="map-mobile-sheet map-mobile-sheet--report"
 			style={mapMobileSheetStyle}
 		>

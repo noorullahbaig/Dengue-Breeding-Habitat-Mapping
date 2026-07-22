@@ -4,6 +4,7 @@ import { usePublicMapSession } from "@/app/PublicMapSessionContext";
 import { useServices } from "@/app/useServices";
 import { useMobileViewport } from "@/app/useMobileViewport";
 import { Notice } from "@/components/ui";
+import { DEFAULT_MAP_ZOOM, REVIEW_MAP_ZOOM } from "@/lib/constants";
 import { formatHabitatLabel } from "@/lib/formatters";
 import { toLeafletPosition } from "@/lib/map";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/pages/components/MapDetailSheets";
 import {
 	PublicReportsMap,
+	type MapSelectionFocus,
 	type PublicReportGroupSelection,
 } from "@/pages/components/PublicReportsMap";
 import { usePublicMapLocation } from "@/pages/components/usePublicMapLocation";
@@ -33,6 +35,8 @@ export function PublicMapExperience() {
 		[number, number] | undefined
 	>(undefined);
 	const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+	const [activeSheetElement, setActiveSheetElement] =
+		useState<HTMLDivElement | null>(null);
 	const habitatFilter = session.habitatFilter;
 	const selectedHotspotId =
 		session.selection?.kind === "hotspot"
@@ -66,6 +70,31 @@ export function PublicMapExperience() {
 			(report) => report.reference === selectedReportReference,
 		);
 	}, [selectedReportGroup, session.selection]);
+	const selectionFocus = useMemo<MapSelectionFocus | undefined>(() => {
+		if (selectedHotspot) {
+			return {
+				key: `hotspot:${selectedHotspot.id}`,
+				center: toLeafletPosition(selectedHotspot.center),
+				minimumZoom: isMobile ? REVIEW_MAP_ZOOM : DEFAULT_MAP_ZOOM,
+				adjustForOcclusion: isMobile,
+				occludingElement: isMobile ? activeSheetElement : undefined,
+			};
+		}
+
+		if (selectedReportGroup) {
+			return {
+				key: `report:${selectedReportGroup.reports
+					.map((report) => report.reference)
+					.join(":")}`,
+				center: selectedReportGroup.center,
+				minimumZoom: DEFAULT_MAP_ZOOM,
+				adjustForOcclusion: isMobile,
+				occludingElement: isMobile ? activeSheetElement : undefined,
+			};
+		}
+
+		return undefined;
+	}, [activeSheetElement, isMobile, selectedHotspot, selectedReportGroup]);
 
 	const clearSelectedReportGroup = useCallback(() => {
 		patchSession({ selection: undefined });
@@ -188,13 +217,10 @@ export function PublicMapExperience() {
 	}
 
 	function handleHotspotClick(hotspot: PublicHotspot) {
-		const coords = toLeafletPosition(hotspot.center);
-		setCenterOverride(coords);
 		patchSession({ selection: { kind: "hotspot", hotspotId: hotspot.id } });
 	}
 
 	function handleReportGroupClick(group: PublicReportGroupSelection) {
-		setCenterOverride(group.center);
 		patchSession({
 			selection: {
 				kind: "report",
@@ -239,6 +265,7 @@ export function PublicMapExperience() {
 						showHotspots={showHotspots}
 						selectedHotspot={selectedHotspot}
 						showSelectedHotspotBuffer={isMobile && Boolean(selectedHotspot)}
+						selectionFocus={selectionFocus}
 						centerOverride={centerOverride}
 						initialViewport={session.viewport}
 						userLocationFix={session.userLocationFix}
@@ -355,6 +382,7 @@ export function PublicMapExperience() {
 				<MapHotspotSheet
 					hotspot={selectedHotspot}
 					showAdvisoryBuffer={isMobile}
+					sheetRef={setActiveSheetElement}
 					onClose={() => patchSession({ selection: undefined })}
 				/>
 			) : null}
@@ -363,6 +391,7 @@ export function PublicMapExperience() {
 				<MapReportSheet
 					group={selectedReportGroup}
 					selectedReport={selectedReport}
+					sheetRef={setActiveSheetElement}
 					onSelectReport={handleSelectReport}
 					onBack={handleBackToReportList}
 					onClose={clearSelectedReportGroup}

@@ -83,6 +83,7 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 		onViewportChange,
 		selectedHotspot,
 		showSelectedHotspotBuffer,
+		selectionFocus,
 	}: {
 		onSelectReportGroup?: (
 			group: NonNullable<typeof experienceHarness.group>,
@@ -96,6 +97,12 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 		onViewportChange?: (viewport: { center: [number, number]; zoom: number }) => void;
 		selectedHotspot?: PublicHotspot;
 		showSelectedHotspotBuffer?: boolean;
+		selectionFocus?: {
+			center: [number, number];
+			minimumZoom: number;
+			adjustForOcclusion: boolean;
+			occludingElement?: HTMLElement | null;
+		};
 	}) => {
 		const [mountId] = useState(() => ++experienceHarness.mapMountCount);
 
@@ -112,6 +119,11 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 			<div data-testid="selected-hotspot-id">{selectedHotspot?.id ?? "none"}</div>
 			<div data-testid="hotspot-buffer-state">
 				{showSelectedHotspotBuffer ? "buffer enabled" : "buffer disabled"}
+			</div>
+			<div data-testid="selection-focus-state">
+				{selectionFocus
+					? `${selectionFocus.center.join(",")}@${selectionFocus.minimumZoom}:${selectionFocus.adjustForOcclusion ? "adjusted" : "centered"}:${selectionFocus.occludingElement ? "sheet ready" : "no sheet"}`
+					: "none"}
 			</div>
 			<button
 				type="button"
@@ -386,6 +398,10 @@ describe("PublicMapExperience report stack sheet", () => {
 
 		const reportSheet = document.querySelector(".map-mobile-sheet--report");
 		expect(reportSheet).toBeInstanceOf(HTMLElement);
+		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
+			"3.13902,101.68692@12:adjusted:sheet ready",
+		);
+		expect(screen.getByTestId("map-center")).toHaveTextContent("default center");
 
 		expect(
 			screen.getByRole("heading", {
@@ -420,6 +436,9 @@ describe("PublicMapExperience report stack sheet", () => {
 		expect(
 			screen.getByRole("link", { name: "View report details" }),
 		).toBeInTheDocument();
+		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
+			"3.13902,101.68692@12:adjusted:sheet ready",
+		);
 
 		await user.click(
 			screen.getByRole("button", { name: "Back to report list" }),
@@ -484,10 +503,17 @@ describe("PublicMapExperience report stack sheet", () => {
 		expect(screen.getByText("Wangsa Maju")).toBeInTheDocument();
 		expect(screen.getByTestId("selected-hotspot-id")).toHaveTextContent("hotspot-1");
 		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer enabled");
-		expect(screen.getByText("400 m advisory proximity buffer")).toBeInTheDocument();
-		expect(screen.getByText(/This is not an official hotspot boundary/)).toBeInTheDocument();
-		expect(screen.getByText(/iDengue hotspot context/)).toBeInTheDocument();
-		expect(screen.getByText(/20 Jul 2026/)).toBeInTheDocument();
+		expect(
+			screen.getByText("Habitat reports within 400 m are prioritized for review."),
+		).toBeInTheDocument();
+		expect(screen.queryByText("400 m advisory proximity buffer")).not.toBeInTheDocument();
+		expect(screen.queryByText(/This is not an official hotspot boundary/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/iDengue hotspot context/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/20 Jul 2026/)).not.toBeInTheDocument();
+		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
+			"3.2001,101.7182@15:adjusted:sheet ready",
+		);
+		expect(screen.getByTestId("map-center")).toHaveTextContent("default center");
 
 		await user.click(
 			screen.getByRole("button", { name: "Close hotspot details" }),
@@ -500,7 +526,10 @@ describe("PublicMapExperience report stack sheet", () => {
 		});
 		expect(screen.getByTestId("selected-hotspot-id")).toHaveTextContent("none");
 		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer disabled");
-		expect(screen.queryByText("400 m advisory proximity buffer")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Habitat reports within 400 m are prioritized for review."),
+		).not.toBeInTheDocument();
+		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent("none");
 	});
 
 	it("keeps the 400 m buffer and explanation off desktop", async () => {
@@ -511,7 +540,12 @@ describe("PublicMapExperience report stack sheet", () => {
 		await user.click(await screen.findByRole("button", { name: "Select hotspot" }));
 
 		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer disabled");
-		expect(screen.queryByText("400 m advisory proximity buffer")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Habitat reports within 400 m are prioritized for review."),
+		).not.toBeInTheDocument();
+		expect(screen.getByTestId("selection-focus-state")).toHaveTextContent(
+			"3.2001,101.7182@12:centered:no sheet",
+		);
 	});
 
 	it("opens a single report directly without cluster copy and closes on Escape", async () => {

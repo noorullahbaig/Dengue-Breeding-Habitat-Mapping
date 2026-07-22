@@ -13,7 +13,7 @@ import type {
 	MapViewport,
 	UserLocationFix,
 } from "@/app/PublicMapSessionContext";
-import { DEFAULT_MAP_ZOOM, KL_CENTER, REVIEW_MAP_ZOOM } from "@/lib/constants";
+import { DEFAULT_MAP_ZOOM, KL_CENTER } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
 import type {
 	HotspotPriority,
@@ -27,6 +27,7 @@ interface PublicReportsMapProps {
 	showHotspots: boolean;
 	selectedHotspot?: PublicHotspot;
 	showSelectedHotspotBuffer?: boolean;
+	selectionFocus?: MapSelectionFocus;
 	hotspotError?: string;
 	centerOverride?: [number, number];
 	initialViewport?: MapViewport;
@@ -37,12 +38,21 @@ interface PublicReportsMapProps {
 	mapRef?: React.RefCallback<L.Map>;
 }
 
+export interface MapSelectionFocus {
+	key: string;
+	center: [number, number];
+	minimumZoom: number;
+	adjustForOcclusion: boolean;
+	occludingElement?: HTMLElement | null;
+}
+
 type TileStatus = "loading" | "ready" | "fallback";
 
 const PUBLIC_MAP_MIN_ZOOM = 11;
 const PUBLIC_MAP_MAX_ZOOM = 22;
 const REPORT_COLLISION_RADIUS_PX = 36;
 const EXACT_LOCATION_DECIMALS = 6;
+const SELECTION_SHEET_GAP_PX = 16;
 
 interface ProjectionPoint {
 	x: number;
@@ -56,6 +66,24 @@ interface ReportGroupingOptions {
 		point: Pick<PublicMapReport["publicLocation"], "latitude" | "longitude">,
 		zoom: number,
 	) => ProjectionPoint;
+}
+
+export function getVisibleMapVerticalOffset({
+	mapTop,
+	mapHeight,
+	sheetTop,
+	gap = SELECTION_SHEET_GAP_PX,
+}: {
+	mapTop: number;
+	mapHeight: number;
+	sheetTop: number;
+	gap?: number;
+}) {
+	const visibleHeight = Math.min(
+		mapHeight,
+		Math.max(0, sheetTop - mapTop - gap),
+	);
+	return mapHeight / 2 - visibleHeight / 2;
 }
 
 export interface PublicReportGroupSelection {
@@ -276,6 +304,144 @@ function MapCenterSync({
 	return null;
 }
 
+function SelectionFocusSync({
+	selectionFocus,
+}: {
+	selectionFocus?: MapSelectionFocus;
+}) {
+	const map = useMap();
+	const correctionHandlerRef = useRef<(() => void) | undefined>(undefined);
+	const selectionKey = selectionFocus?.key;
+	const latitude = selectionFocus?.center[0];
+	const longitude = selectionFocus?.center[1];
+	const minimumZoom = selectionFocus?.minimumZoom;
+	const adjustForOcclusion = selectionFocus?.adjustForOcclusion;
+	const occludingElement = selectionFocus?.occludingElement;
+
+	useEffect(() => {
+		if (
+			!selectionKey ||
+			latitude === undefined ||
+			longitude === undefined ||
+			minimumZoom === undefined
+		) {
+			return;
+		}
+
+		if (adjustForOcclusion && !occludingElement) return;
+
+		const panel = adjustForOcclusion
+			? occludingElement?.matches(".map-detail-sheet")
+				? occludingElement
+				: occludingElement?.querySelector<HTMLElement>(".map-detail-sheet")
+			: undefined;
+
+		if (adjustForOcclusion && !panel) return;
+		const focusMinimumZoom = minimumZoom;
+		const focusCenter: [number, number] = [latitude, longitude];
+
+		function clearPendingCorrection() {
+			if (!correctionHandlerRef.current) return;
+			map.off("moveend", correctionHandlerRef.current);
+			correctionHandlerRef.current = undefined;
+		}
+
+		function focusSelection() {
+			const zoom = Math.max(map.getZoom(), focusMinimumZoom);
+
+			if (!panel) {
+				clearPendingCorrection();
+				map.flyTo(focusCenter, zoom, {
+					duration: 0.45,
+					easeLinearity: 0.2,
+				});
+				return;
+			}
+
+			const mapRect = map.getContainer().getBoundingClientRect();
+			const panelRect = panel.getBoundingClientRect();
+			const verticalOffset = getVisibleMapVerticalOffset({
+				mapTop: mapRect.top,
+				mapHeight: mapRect.height,
+				sheetTop: panelRect.top,
+			});
+			const projectedSelection = map.project(L.latLng(focusCenter), zoom);
+			const adjustedCenter = map.unproject(
+				L.point(
+					projectedSelection.x,
+					projectedSelection.y + verticalOffset,
+				),
+				zoom,
+			);
+
+			clearPendingCorrection();
+			const correctRenderedPosition = () => {
+				correctionHandlerRef.current = undefined;
+				const liveMapRect = map.getContainer().getBoundingClientRect();
+				const livePanelRect = panel.getBoundingClientRect();
+				const liveVerticalOffset = getVisibleMapVerticalOffset({
+					mapTop: liveMapRect.top,
+					mapHeight: liveMapRect.height,
+					sheetTop: livePanelRect.top,
+				});
+				const desiredPoint = L.point(
+					liveMapRect.width / 2,
+					liveMapRect.height / 2 - liveVerticalOffset,
+				);
+				const renderedSelection = map.latLngToContainerPoint(
+					L.latLng(focusCenter),
+				);
+				const correction = L.point(
+					renderedSelection.x - desiredPoint.x,
+					renderedSelection.y - desiredPoint.y,
+				);
+
+				if (Math.hypot(correction.x, correction.y) <= 1) return;
+				map.panBy(correction, {
+					animate: true,
+					duration: 0.2,
+					easeLinearity: 0.2,
+				});
+			};
+			correctionHandlerRef.current = correctRenderedPosition;
+			map.once("moveend", correctRenderedPosition);
+
+			map.flyTo(adjustedCenter, zoom, {
+				duration: 0.45,
+				easeLinearity: 0.2,
+			});
+		}
+
+		focusSelection();
+
+		if (!panel) return;
+
+		const observer = new ResizeObserver(focusSelection);
+		observer.observe(panel);
+		observer.observe(map.getContainer());
+		const handlePanelAnimationEnd = (event: AnimationEvent) => {
+			if (event.target === panel) focusSelection();
+		};
+		panel.addEventListener("animationend", handlePanelAnimationEnd);
+
+		return () => {
+			clearPendingCorrection();
+			observer.disconnect();
+			panel.removeEventListener("animationend", handlePanelAnimationEnd);
+		};
+	}, [
+		adjustForOcclusion,
+		latitude,
+		longitude,
+		map,
+		minimumZoom,
+		occludingElement,
+		selectionKey,
+	]);
+
+	return null;
+}
+
 function MapViewportObserver({
 	initialViewport,
 	onViewportChange,
@@ -422,6 +588,7 @@ export function PublicReportsMap({
 	showHotspots,
 	selectedHotspot,
 	showSelectedHotspotBuffer = false,
+	selectionFocus,
 	hotspotError,
 	centerOverride,
 	initialViewport,
@@ -491,12 +658,9 @@ export function PublicReportsMap({
 			>
 				<MapCenterSync
 					centerOverride={centerOverride}
-					minimumZoom={
-						showSelectedHotspotBuffer && selectedHotspot
-							? REVIEW_MAP_ZOOM
-							: DEFAULT_MAP_ZOOM
-					}
+					minimumZoom={DEFAULT_MAP_ZOOM}
 				/>
+				<SelectionFocusSync selectionFocus={selectionFocus} />
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -524,7 +688,7 @@ export function PublicReportsMap({
 						pathOptions={{
 							className: "map-hotspot-advisory-buffer",
 							dashArray: "8 7",
-							fillOpacity: 0.06,
+							fillOpacity: 0.07,
 							opacity: 0.72,
 							weight: 2,
 						}}
@@ -536,20 +700,22 @@ export function PublicReportsMap({
 							<Marker
 								key={hotspot.id}
 								position={toLeafletPosition(hotspot.center)}
-								icon={hotspotMarkerIcon}
-								eventHandlers={{ click: () => onSelectHotspot?.(hotspot) }}
-							>
-								<Tooltip direction="top" offset={[0, -10]}>
-									<span
-										style={{
-											fontWeight: 800,
-											fontSize: "0.8rem",
-											textTransform: "uppercase",
-										}}
-									>
-										{hotspot.locality}
-									</span>
-								</Tooltip>
+				icon={hotspotMarkerIcon}
+				eventHandlers={{ click: () => onSelectHotspot?.(hotspot) }}
+			>
+								{hotspot.id !== selectedHotspot?.id ? (
+									<Tooltip direction="top" offset={[0, -10]}>
+										<span
+											style={{
+												fontWeight: 800,
+												fontSize: "0.8rem",
+												textTransform: "uppercase",
+											}}
+										>
+											{hotspot.locality}
+										</span>
+									</Tooltip>
+								) : null}
 							</Marker>
 						))
 					: null}
