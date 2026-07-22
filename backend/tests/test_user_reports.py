@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
@@ -171,30 +172,36 @@ def test_owner_detail_hides_another_users_report(db: Session):
     assert hidden.value.status_code == 404
 
 
-def test_owner_media_allows_private_evidence_only_for_owner(db: Session):
+def test_owner_media_allows_private_evidence_only_for_owner(tmp_path: Path, monkeypatch, db: Session):
     owner = make_user("cognito:owner")
     other = make_user("cognito:other")
     report = make_report("KL-PRIVATE-0002", datetime.now(timezone.utc), user_id=owner.id)
-    image_path = settings.upload_root / "test-private-owner-evidence.jpg"
+
+    # Use a temporary directory so this test does not depend on the ignored
+    # backend/uploads folder being present in the working tree.
+    upload_root = tmp_path / "uploads"
+    upload_root.mkdir()
+    patched = replace(settings, upload_root=upload_root)
+    monkeypatch.setattr("app.main.settings", patched)
+    monkeypatch.setattr("app.image_storage.settings", patched)
+
+    image_path = upload_root / "test-private-owner-evidence.jpg"
     image_path.write_bytes(b"private evidence")
     report.image_path = str(image_path)
     report.public_consent_accepted = False
     db.add_all([owner, other, report])
     db.commit()
 
-    try:
-        response = owner_report_image(report.reference, current_user=owner, db=db)
-        assert response.path == image_path
+    response = owner_report_image(report.reference, current_user=owner, db=db)
+    assert response.path == image_path
 
-        with pytest.raises(HTTPException) as hidden:
-            owner_report_image(report.reference, current_user=other, db=db)
-        assert hidden.value.status_code == 404
+    with pytest.raises(HTTPException) as hidden:
+        owner_report_image(report.reference, current_user=other, db=db)
+    assert hidden.value.status_code == 404
 
-        with pytest.raises(HTTPException) as public_hidden:
-            public_report_image(report.reference, db=db)
-        assert public_hidden.value.status_code == 404
-    finally:
-        image_path.unlink(missing_ok=True)
+    with pytest.raises(HTTPException) as public_hidden:
+        public_report_image(report.reference, db=db)
+    assert public_hidden.value.status_code == 404
 
 
 @pytest.mark.anyio

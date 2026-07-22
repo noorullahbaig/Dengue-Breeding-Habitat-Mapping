@@ -2,9 +2,9 @@
 
 A civic web application that lets Kuala Lumpur residents submit photo evidence of likely mosquito breeding habitats, confirm exact map location, and track reports anonymously. The system provides a public awareness map and supports AI-assisted habitat classification using a YOLOv8s model trained on local breeding-site imagery.
 
-**Assessed scope:** The resident submission flow, public map, public report detail, and anonymous status lookup. A prototype officer console exists in the repository but is out of scope for architecture and evaluation claims.
+**Assessed scope:** The resident submission flow, public map, public report detail, and anonymous status lookup.
 
-**Live deployment:** CloudFront distribution at `d2yol17g6mes38.cloudfront.net` → EC2 origin (Docker Compose) → RDS PostgreSQL/PostGIS + S3.
+**Live deployment:** CloudFront CDN → EC2 origin (Docker Compose) → RDS PostgreSQL/PostGIS + S3.
 
 ---
 
@@ -69,7 +69,6 @@ prototype/
 | `/learn` | Habitat identification guidance |
 | `/activity` | Authenticated resident's own report history |
 | `/profile` | Authenticated resident profile |
-| `/officer` | Prototype officer console — retained in repo, out of scope |
 
 **Mobile-first:** Mobile view is the authoritative layout. All UI changes are validated phone-first; desktop adapts from mobile behaviour.
 
@@ -141,12 +140,14 @@ curl http://localhost:8000/api/health
 
 ### Hotspot Sync (local)
 
-The public map reads iDengue hotspot data from PostgreSQL. To populate it locally:
+The public map reads iDengue hotspot data from PostgreSQL. The backend syncs automatically from the iDengue ArcGIS layer on startup and periodically in the background. To trigger a manual sync during development:
 
 ```bash
 curl -X POST http://localhost:8000/api/officer/hotspots/sync \
   -H "Authorization: Bearer local-officer-demo-token"
 ```
+
+This endpoint is a development/operational utility. It is not part of the assessed resident-facing implementation.
 
 ---
 
@@ -179,7 +180,7 @@ curl -X POST http://localhost:8000/api/officer/hotspots/sync \
 | `COGNITO_REGION` | Prod | Must match frontend `VITE_COGNITO_REGION` |
 | `COGNITO_USER_POOL_ID` | Prod | Must match frontend value |
 | `COGNITO_APP_CLIENT_ID` | Prod | Must match frontend value |
-| `OFFICER_API_TOKEN` | Optional | Simple bearer token for officer endpoints — omit to use default |
+
 
 ---
 
@@ -232,9 +233,9 @@ EC2 backend → AWS Cognito (JWT verification)
 Production credentials are stored as an AWS SSM SecureString. The deploy script fetches, validates, and applies them automatically.
 
 ```bash
-# SSH into EC2
-chmod 400 denguewatch-noorullah-key.pem
-ssh -i denguewatch-noorullah-key.pem ec2-user@<YOUR-EC2-PUBLIC-IP>
+# SSH into EC2 (use your own .pem key file)
+chmod 400 YOUR_KEY_FILE.pem
+ssh -i YOUR_KEY_FILE.pem ec2-user@<YOUR-EC2-PUBLIC-IP>
 
 # Pull latest code
 cd /home/ec2-user/prototype
@@ -364,7 +365,7 @@ PostgreSQL with PostGIS. Managed by Alembic (9 migration files in `backend/migra
 | `hotspot_id` | INTEGER | FK to nearest iDengue hotspot at time of submission |
 
 ### `hotspots`
-Local mirror of the iDengue ArcGIS layer. Synced via `POST /api/officer/hotspots/sync`. Used for hotspot priority context on public map and report submissions. Includes a PostGIS geography column with GiST index for spatial proximity queries.
+Local mirror of the iDengue ArcGIS layer. Synced automatically on backend startup and periodically in the background. Used for hotspot priority context on the public map and at report submission time. Includes a PostGIS geography column with a GiST index for spatial proximity queries.
 
 ### `user_reports` (association)
 Many-to-many join between `users` and `reports` for the claim flow.
@@ -438,4 +439,4 @@ AI output is always framed as advisory — never final proof. Low-confidence sub
 
 **Storage fallback:** If S3 is unreachable when serving an image, the backend falls back to a local `FileResponse` transparently. Startup validates S3 connectivity and logs a warning (does not crash) if unreachable.
 
-**Officer prototype note:** Officer routes and endpoints remain in the repository as an operational utility (hotspot sync, experimental review queue). They are not part of the assessed implementation. No UI for officers is built; endpoints use a simple shared bearer token independent of Cognito.
+
