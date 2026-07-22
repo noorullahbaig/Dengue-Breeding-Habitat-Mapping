@@ -73,7 +73,15 @@ class Report(Base):
     public_consent_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     hotspot_snapshot_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    nearest_hotspot_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    nearest_hotspot_id: Mapped[str | None] = mapped_column(
+        String(255),
+        ForeignKey(
+            "hotspots.id",
+            name="fk_reports_nearest_hotspot_id_hotspots",
+        ),
+        nullable=True,
+        index=True,
+    )
     nearest_hotspot_locality: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nearest_hotspot_district: Mapped[str | None] = mapped_column(String(120), nullable=True)
     nearest_hotspot_distance_meters: Mapped[float | None] = mapped_column(Float, nullable=True)

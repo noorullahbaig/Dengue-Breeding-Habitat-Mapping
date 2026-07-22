@@ -348,7 +348,20 @@ def sync_current_hotspots(db: Session) -> HotspotSyncResult:
             },
         )
 
-    db.execute(text("DELETE FROM hotspots WHERE snapshot_date <> :snapshot_date"), {"snapshot_date": latest_snapshot})
+    db.execute(
+        text(
+            """
+            DELETE FROM hotspots AS hotspot
+            WHERE hotspot.snapshot_date <> :snapshot_date
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM reports AS report
+                  WHERE report.nearest_hotspot_id = hotspot.id
+              )
+            """
+        ),
+        {"snapshot_date": latest_snapshot},
+    )
     db.commit()
 
     return HotspotSyncResult(

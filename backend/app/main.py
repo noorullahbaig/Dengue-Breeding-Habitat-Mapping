@@ -82,7 +82,7 @@ from app.serializers import (
 
 
 logger = logging.getLogger(__name__)
-EXPECTED_MIGRATION_REVISION = "0007_annotated_evidence"
+EXPECTED_MIGRATION_REVISION = "0008_report_hotspot_fk"
 
 
 def migration_is_ready(db: Session) -> bool:

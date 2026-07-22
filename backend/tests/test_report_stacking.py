@@ -21,7 +21,7 @@ from app.domain import distance_meters
 from app.inference import Detection, PredictionSummary
 from app.hotspots import HotspotPriority
 from app.main import app, get_db
-from app.models import Report
+from app.models import Hotspot, Report
 
 
 class ReadyModel:
@@ -355,6 +355,74 @@ def test_create_report_with_stack_parent_creates_child_reference(client):
     assert child.thumbnail_storage_key and child.thumbnail_storage_key.startswith("thumbnails/")
     assert child.hotspot_priority_level == "unavailable"
     db.close()
+
+
+def test_create_report_persists_hotspot_id_and_submission_snapshot_fields(
+    client,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    test_client, session_factory, _model, _upload_root = client
+    snapshot = datetime(2026, 4, 20, tzinfo=timezone.utc)
+    with session_factory() as db:
+        db.add(
+            Hotspot(
+                id="submission-hotspot",
+                locality="Submission Locality",
+                district="Wilayah Persekutuan",
+                latitude=3.139,
+                longitude=101.6869,
+                radius_meters=200,
+                cumulative_cases=8,
+                outbreak_duration_days=12,
+                outbreak_start_date=snapshot,
+                week_number=17,
+                year=2026,
+                snapshot_date=snapshot,
+                synced_at=snapshot,
+            )
+        )
+        db.commit()
+
+    import app.main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "assess_hotspot_priority",
+        lambda db, latitude, longitude: HotspotPriority(
+            snapshot_date=snapshot,
+            nearest_hotspot_id="submission-hotspot",
+            nearest_hotspot_locality="Submission Locality",
+            nearest_hotspot_district="Wilayah Persekutuan",
+            nearest_hotspot_distance_meters=18.4,
+            priority_level="core",
+            priority_reason="Within 200 m of current hotspot context.",
+        ),
+    )
+
+    response = test_client.post(
+        "/api/reports",
+        data={
+            "captured_at": "2026-04-20T01:00:00.000Z",
+            "latitude": "3.13901",
+            "longitude": "101.68691",
+            "source": "browser",
+            **trusted_detected_payload(latitude="3.13901", longitude="101.68691"),
+            "public_consent_accepted": "true",
+        },
+        files={"image": ("sample.jpg", jpeg_bytes(), "image/jpeg")},
+    )
+
+    assert response.status_code == 201
+    with session_factory() as db:
+        report = db.scalar(select(Report).where(Report.reference == response.json()["reference"]))
+        assert report is not None
+        assert report.nearest_hotspot_id == "submission-hotspot"
+        assert report.hotspot_snapshot_date is not None
+        assert report.hotspot_snapshot_date.replace(tzinfo=timezone.utc) == snapshot
+        assert report.nearest_hotspot_locality == "Submission Locality"
+        assert report.nearest_hotspot_district == "Wilayah Persekutuan"
+        assert report.nearest_hotspot_distance_meters == 18.4
+        assert report.hotspot_priority_level == "core"
 
 
 def test_create_report_rejects_outside_kuala_lumpur_before_inference(client):
