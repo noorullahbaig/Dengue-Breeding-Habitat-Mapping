@@ -1,0 +1,1030 @@
+                                                                                        
+Developing Crowdsourced Photo Based Detection and Risk Mapping for Dengue Breeding Habitats in Kuala Lumpur
+
+
+By
+		Muhammad Noorullah Baig
+   TP077979
+APD3F2511CS(AI)
+
+A report submitted in partial fulfilment of the requirements for the degree of 
+B.Sc. (Hons) Computer Science Specialism in Artificial Intelligence
+at Asia Pacific University of Technology and Innovation.
+
+Supervised by Amad Arshad
+2nd Marker: Assoc. Prof. Dr. Muhammad Ehsan Rana
+2026
+Acknowledgements
+
+All praise is due to Allah SWT, whose mercy, guidance, and countless blessings have sustained me throughout this journey. It is only through His will that I was granted the strength, patience, and perseverance to complete this project.
+I would like to especially mention my late grandfather, whose character, values, and way of life have been a lasting source of inspiration to me. He will always remain a role model in my life.
+My deepest gratitude goes to my mother and father, whose care, sacrifices, prayers, endless efforts, and unwavering belief in me have shaped every step of my academic journey. Their love, guidance, and support have been my greatest source of strength, and this achievement is as much theirs as it is mine.
+I am sincerely thankful to my beloved grandmother for her prayers, care, kindness, and encouragement. Her warmth and support have always brought me comfort.
+My heartfelt thanks go to my siblings, who have been a source of joy and light throughout this journey. Their presence made difficult moments easier and this path more meaningful for me.
+I am deeply grateful to my aunts, uncles, and cousins for their special care, love, and prayers.
+I am equally grateful to my friends for their companionship, encouragement, and reassurance throughout this project.
+I would like to express my sincere appreciation to my supervisor, Amad Arshad, for his guidance, patience, and valuable feedback throughout this project. I also extend my sincere thanks to my second marker, Assoc. Prof. Dr. Muhammad Ehsan Rana, for his thoughtful feedback, valuable suggestions, and the insights from our discussions.
+Finally, I would like to thank my classmates, lecturers, and Asia Pacific University of Technology and Innovation (APU) for their support, knowledge, and resources that made this project possible.
+Abstract
+Despite public dengue information and complaint channels in Kuala Lumpur, an operational gap remains between residents noticing suspected mosquito breeding habitats and officers receiving reports detailed enough for timely verification and prioritisation. This Investigation Report examined a mobile web-based reporting-and-review approach for suspected breeding habitats in which image-based classification supports initial officer review within a bounded, human-reviewed process. The investigation drew on a review of relevant literature and existing reporting and surveillance systems, a questionnaire survey involving 63 participants, and an assessment of publicly available image datasets. The review showed that public reporting, image-based screening, and officer review are usually handled as separate functions rather than combined into a process designed to produce verification-ready reports. The survey found that suspected breeding habitats were often noticed but seldom formally reported through existing channels. It also showed that respondents preferred a reporting process that is quick, low in typing effort, provides clear submission confirmation, and allows detected location to be corrected before submission. In parallel, the dataset assessment narrowed the initial habitat scope to categories supported by local relevance and available image data. Taken together, these findings justify a bounded reporting-and-review approach and provide an empirical foundation for the next stage of prototype development in Kuala Lumpur by defining the initial workflow, minimum evidence requirements, and feasible habitat scope.
+Keywords: dengue breeding habitats, crowdsourced reporting, image classification, spatial decision support, Kuala Lumpur
+Table of Contents
+Acknowledgements	2
+Abstract	3
+Chapter 1	12
+INTRODUCTION	12
+1.1 Introduction	12
+1.2 Problem Background	13
+1.3 Project Aim	14
+1.4 Objectives	14
+1.5 Project Scope	15
+1.5.1 Tasks to Be Executed	15
+1.5.2 Constraints	15
+1.5.3 In-Scope and Out-of-Scope	16
+1.6 Potential Benefits	17
+1.6.1 Tangible Benefits	17
+1.6.2 Intangible Benefits	17
+1.6.3 Target Users	17
+1.7 Overview of the IR	18
+1.8 Organisation of the Report	19
+Chapter 2	22
+LITERATURE REVIEW	22
+2.1 Domain Context	22
+2.1.1 Dengue Burden in Kuala Lumpur	22
+2.1.2 Aedes Breeding Habitats, Container Positivity, and Productivity	23
+2.1.3 Current Surveillance and Field Inspection Workflow Bottlenecks	25
+2.1.4 Participatory Surveillance and Citizen Reporting: Benefits and Limitations	26
+2.2 Related Works	29
+2.2.1 Official Dengue Dashboards for Hotspot and Cluster Mapping	29
+2.2.2 Municipal Reporting Channels for Environmental Complaints and Vector Control Requests (DBKL and Comparable Councils)	33
+2.2.3 Citizen Mosquito and Breeding Habitat Reporting Platforms	34
+2.2.4 Machine Learning and Computer Vision for Breeding Habitat Detection and Decision Support	38
+2.2.5 Comparative Synthesis and Research Gap	40
+2.3 Technical Research	49
+2.3.1 Frontend Framework and User Interface	49
+2.3.2 Browser-Based Evidence Capture	50
+2.3.3 Mapping and Report Visualisation	52
+2.3.4 Backend API and Application Logic	53
+2.3.5 Database, Spatial Data, and Image Storage	54
+2.3.6 Machine Learning Model and Inference	56
+2.3.7 Cloud Deployment and Hosting	57
+2.3.8 Privacy, Security, Governance, and Access Control	58
+2.3.9 Supporting Development and Training Tools	59
+2.4 Summary	60
+Chapter 3	62
+METHODOLOGY	62
+3.1 System Development Methodology	62
+3.1.1 Overview of Candidate Development Methodologies	62
+3.1.2 Comparison of Waterfall and Iterative Development	63
+3.1.3 Justification for the Chosen Methodology	66
+3.1.4 Application of Iterative Development to the Project	67
+3.2 Data Gathering Design	68
+3.2.1 Overview of Data Gathering Approach	68
+3.2.2 Survey Structure and Questionnaire Sections	69
+3.2.3 Public Dataset Selection and Preliminary Habitat Class Mapping	76
+3.3 Data Gathering Findings	81
+3.4 Implications of the Findings for Prototype Design	97
+Chapter 4	101
+CONCLUSION	101
+4.1 Achievements of the First Part of the Project	101
+4.2 Justification of Research Adequacy in Relation to SDG 3	102
+4.3 Gaps and Future Improvements	103
+References	105
+Appendices	119
+
+
+List of Figures
+Figure 2.1. Annual dengue incidence rate in F.T. Kuala Lumpur, 2014-2021.	23
+Figure 2.2. Distribution of positive Aedes larvae container types reported in Kepong, Kuala Lumpur.	24
+Figure 2.3. Example outputs from integrated citizen-science mosquito reporting and risk visualisation.	27
+Figure 2.4. Screenshot of the iDengue For Community portal interface showing dengue hotspot and cluster map layers.	30
+Figure 2.5. Screenshot of the NEA dengue clusters page showing the cluster map.	31
+Figure 3.2. Google Forms introduction and consent framing used in the questionnaire survey.	70
+Figure 3.3. Questionnaire Section 1 on respondent background and connection to Kuala Lumpur.	71
+Figure 3.4. Questionnaire Section 2 on observation behaviour and current reporting practices.	72
+Figure 3.5. Questionnaire Section 3 on submission barriers, trust, and privacy.	74
+Figure 3.6. Questionnaire Section 4 on interface preferences for mobile reporting.	75
+Figure 3.7. Questionnaire Section 5 optional open-ended feedback prompt.	76
+Figure 3.8. Representative source images showing class labels in VisText-Mosquito and MosquitoFusion	80
+Figure 3.9. Survey respondents' connection to Kuala Lumpur.	82
+Figure 3.10. Age distribution of survey respondents.	82
+Figure 3.11. Main area of activity of survey respondents within Kuala Lumpur.	83
+Figure 3.12. Frequency with which respondents notice containers that could collect stagnant water.	84
+Figure 3.13. Actions respondents usually take when they notice containers that could collect stagnant water.	85
+Figure 3.14. Prior experience reporting mosquito-related issues or environmental complaints.	85
+Figure 3.15. Channels previously used to report mosquito-related issues or environmental complaints.	86
+Figure 3.16. Main reason respondents have not previously reported mosquito-related issues.	86
+Figure 3.17. Comfort with using a mobile website to take or upload a photo of a suspected breeding habitat.	87
+Figure 3.18. Comfort with allowing a mobile website to use location data during report submission.	88
+Figure 3.19. Main concern that could discourage submission of a report.	89
+Figure 3.20. Effect of anonymity on willingness to submit a report.	89
+Figure 3.21. Importance of receiving feedback after report submission.	90
+Figure 3.22. Preferred type of follow-up after report submission.	90
+Figure 3.23. Factors most likely to increase completion of a report on a mobile website.	91
+Figure 3.24. Preference for being able to adjust the detected report location manually.	92
+Figure 3.25. Comfort with adjusting the report location using a map-based pin.	92
+Figure 3.26. Preferred interface language for the reporting system.	93
+Figure 3.27. optional open-ended feedback responses	96
+Figure A.1. First meeting project log sheet.	119
+Figure A.2. Second meeting project log sheet.	120
+Figure A.3. Third meeting project log sheet.	121
+Figure A.4. Ethics form (page 1).	122
+Figure A.5. Ethics form (page 2).	123
+Figure A.6. Ethics form (page 3).	124
+Figure A.7. Ethics form (page 4).	125
+Figure A.8. Project proposal form.	126
+Figure A.9. Project gantt chart.	127
+
+
+List of Tables
+Table 1.1. Investigation Report work schedule.	19
+Table 2.1. Comparison of official dengue dashboards as public area-scale risk layers	32
+Table 2.2. Comparison of citizen mosquito and breeding-habitat reporting platforms	36
+Table 2.3. Comparison of image-based studies relevant to breeding-habitat detection and decision support	40
+Table 2.4. Comparison of reviewed similar works against the requirements of the proposed Kuala Lumpur dengue breeding-habitat reporting prototype	42
+Table 3.1. Comparison between Waterfall and Iterative and Incremental Development	64
+Table 3.2. Comparison of selected public datasets for preliminary habitat-class mapping	77
+Table 3.3. Evaluation of candidate habitat categories for the preliminary retained taxonomy	79
+Table 3.4. Summary of recurring themes identified in the Section 5 optional feedback responses	96
+
+
+Chapter 1
+INTRODUCTION
+1.1 Introduction
+Dengue is a significant mosquito-borne health issue in both tropical and subtropical areas, and its spread to humans is carried out mainly through infected female Aedes mosquitoes, especially Aedes aegypti (World Health Organization [WHO], 2025a). WHO recorded approximately 14 million dengue cases and 11201 deaths attributed to this disease in 2024 alone, which means that the burden of the disease is enormous and it is detrimental to human wellbeing (WHO, 2025b). Also in 2024, the Department of Statistics Malaysia reported 122,423 dengue cases including 11,133 cases reported in W.P. Kuala Lumpur and W.P. Putrajaya which directly justifies local significance of the topic (Department of Statistics Malaysia [DOSM], 2025).
+The prevention of dengue is based predominantly on the control of vectors, especially by detecting and eliminating areas where water remains stagnant as such places can provide a breeding environment to the mosquitoes (WHO, n.d.). Since reduction of the source requires us to locate and confirm probable breeding habitat first before intervention so the importance of habitat identification is significant for dengue prevention in urban areas.
+Due to this operational environment, this project suggests a decision support prototype for Kuala Lumpur to support the identification and prioritisation of suspected mosquito breeding habitats. Through a mobile-friendly web interface, users will be able to submit reports containing a photograph, geolocation, and timestamp. A computer vision model is classifies the likely habitat category, while hotspot information from the iDengue platform is incorporated to assess report priority (iDengue, n.d.). The resulting information is presented through a geospatial dashboard to assist officers in reviewing and prioritising submitted reports when they are out for field verification. The prototype is intended as an operational support to be used during vectors-control processes but not as clinical diagnostic system used to assess human disease status, or as an automated enforcement mechanism that independently authorises inspection orders, penalties, or other regulatory actions.
+1.2 Problem Background
+Despite the fact that the Kuala Lumpur dengue control is assisted by developed surveillance and reporting systems, the source reduction activities in dense urban areas can still be problematic in the phase of finding and verifying probable breeding locations. Local evidence collected in Kepong indicates that positive containers for mosquito larvae in monitored habitats may concentrate around particular habitat types as opposed to being distributed evenly among the inspected environments (Rahim et al., 2021). This suggests that identifying containers that actually warrant intervention requires considerable effort searching and verification effort in localities with an outbreak.
+This challenge is not simply a matter of absent dengue risk information. National tools such as iDengue publish hotspot and active outbreak information to provide area-level visibility of dengue activity (iDengue, n.d.). At the municipal level, Kuala Lumpur City Hall (DBKL) provides vector control services as well as public contact and complaint channels through its customer service and hotline mechanisms (Kuala Lumpur City Hall, n.d.-a, n.d.-b, n.d.-c). However, these systems support awareness and complaint intake at a broad level; they do not by themselves ensure that an individual report contains sufficiently specific, verification-ready detail about a suspected breeding container before field inspection takes place.
+One of the operational challenges is thus at the stage of report verification. When a report is vague, responders may first need to interpret what is being described and locate the suspected container before confirmation and removal can happen. In practice, the absence of supporting details can make it harder to assess report specificity and urgency in advance. This concern is consistent with the broader digital surveillance literature, which notes that web-based and app-based surveillance inputs require methods to ensure information quality, integrity, and reliability for operational use (Melo et al., 2024).
+Overall, the key operational gap in Kuala Lumpur is not at the level of dengue risk visibility, but at the point where broad surveillance awareness must be translated into verification-ready, container-level action. Existing systems may show where dengue activity is concentrated, but efficient source reduction remains determined by the quality of individual reports that have sufficient evidence to lead to a prompt field follow up. When that evidence is weak, time is lost in interpretating the location, confirming the threat and thus intervention is delayed. In dense urban environments, this verification gap can drastically limit the practical responsiveness of dengue source-reduction efforts.
+1.3 Project Aim
+To develop a crowdsourced reporting prototype for mapping and prioritising reports of suspected mosquito breeding habitats in Kuala Lumpur using computer vision and current dengue hotspot information.
+1.4 Objectives
+	•	To develop a mobile-friendly web prototype for reporting suspected mosquito breeding habitats in Kuala Lumpur.
+	•	To enable submission of reports with a photograph, geolocation, and timestamp.
+	•	To develop a computer vision model to classify submitted habitat images.
+	•	To integrate dengue hotspot data to support report prioritisation.
+	•	To provide role-based map and dashboard views for community reporters and public health officers.
+	•	To evaluate the prototype through functional, model performance, and usability testing.
+1.5 Project Scope
+1.5.1 Tasks to Be Executed
+This project will be carried out through five iterative tasks. Although presented separately, these tasks may overlap and be refined across development cycles.
+1. Requirements Refinement and Workflow Definition
+Define and refine the system requirements, reporting workflow, habitat categories, urgency logic, and role-based access requirements.
+2. Dataset Preparation and Labelling
+Prepare and label a suitable image dataset of suspected mosquito breeding habitats for model development and evaluation.
+3. Model Development and Evaluation
+Develop and evaluate a computer vision model to classify submitted habitat images.
+4. Prototype Development and Integration
+Implement the reporting workflow, report-location preview, hotspot-informed prioritisation, role-based map views, and supporting backend components.
+5. Testing, Validation, and Demonstration
+Test and validate the prototype in terms of functionality, model behaviour, usability, and access control before final demonstration.
+1.5.2 Constraints
+	•	The prototype must handle submitted photos, location data, and timestamps in accordance with personal data protection requirements.
+	•	The prototype must be feasible within the project’s available time, development capacity, and computing resources.
+	•	The system must be delivered as a mobile-friendly web application and will not include native mobile applications.
+	•	The prototype will operate online only and requires an internet connection for report submission, public map access, and dashboard access.
+	•	The prototype will use authoritative dengue hotspot data for Kuala Lumpur as an external reference layer.
+	•	The prototype is limited to Kuala Lumpur as its area of operation.
+1.5.3 In-Scope and Out-of-Scope
+In-Scope The prototype will:
+	•	Submission of suspected mosquito breeding habitat reports through a mobile-friendly web interface with photo, geolocation, and timestamp.
+	•	Storage of submitted reports and related metadata for later review.
+	•	Advisory computer vision classification of submitted habitat images.
+	•	Integration of Kuala Lumpur dengue hotspot data for report prioritisation.
+	•	Resident-facing public map showing limited report location and hotspot information.
+	•	Officer-facing dashboard for reviewing submitted reports and supporting prioritisation.
+Out-of-Scope
+The prototype will not:
+	•	Clinical diagnosis, individual infection risk prediction, or patient monitoring.
+	•	Autonomous operational decisions or automated field actions.
+	•	Public access to submitted photographs or detailed report information.
+	•	Native mobile applications or offline operation.
+	•	Direct integration with DBKL, MOH, or other enterprise case-management systems.
+	•	Geographic operation beyond Kuala Lumpur.
+1.6 Potential Benefits
+1.6.1 Tangible Benefits
+1. More structured and reviewable reports
+The prototype requires each submission to include a photo, location, and timestamp, providing clearer information for report review.
+2. More consistent initial report assessment
+The computer vision component provides an initial habitat classification to support review of submitted reports.
+3. Clearer report prioritisation
+The integration of report data and hotspot context can support more informed prioritisation of submitted reports.
+1.6.2 Intangible Benefits
+1. Greater public awareness of breeding habitat indicators
+The reporting process may encourage closer attention to visible conditions associated with mosquito breeding.
+2. Stronger community participation in reporting
+The prototype may encourage greater public participation in reporting suspected breeding habitats.
+1.6.3 Target Users
+The proposed prototype is intended for two primary user groups: Community Reporters and Public Health Officers.
+1. Community Reporters
+Community Reporters are Kuala Lumpur residents and other community members who observe suspected mosquito breeding habitats and submit reports through the system.
+2. Public Health Officers
+Public Health Officers are authorised personnel involved in dengue surveillance, vector control, or related source reduction activities who review submitted reports through the dashboard.
+1.7 Overview of the IR
+This Investigation Report is structured to move from problem definition to evidence gathering and then to design direction for the proposed prototype. Chapter 1 defines the project by introducing the dengue breeding-habitat reporting problem in Kuala Lumpur and setting out the aim, objectives, scope, constraints, benefits, and target users. Chapter 2 then establishes the academic and technical basis of the study by reviewing the dengue context, related reporting and surveillance approaches, relevant image-based studies, and the technical options that inform the proposed system. Building on that foundation, Chapter 3 explains the methodology adopted for the project and presents the investigation carried out in this phase, including the survey design, dataset review, key findings, and the resulting implications of the findings for prototype design. Finally, Chapter 4 consolidates the outcomes of the investigation by summarising the main achievements of this phase, discussing their relevance to SDG 3, and identifying the limitations and future work that shape the next stage of prototype development.
+
+
+1.8 Organisation of the Report 
+Table 1.1. Investigation Report work schedule.
+Task Name
+Duration (days)
+Start Date
+End Date
+Project Proposal
+32
+15/12/2025
+15/01/2026
+Chapter 1: Introduction
+40
+15/01/2026
+23/02/2026
+1.1 Introduction
+4
+15/01/2026
+18/01/2026
+1.2 Problem Background
+6
+19/01/2026
+24/01/2026
+1.3 Project Aim
+3
+25/01/2026
+27/01/2026
+1.4 Objectives
+3
+28/01/2026
+30/01/2026
+1.5 Project Scope
+8
+31/01/2026
+07/02/2026
+1.6 Potential Benefits
+7
+08/02/2026
+14/02/2026
+1.7 Overview of the IR
+4
+15/02/2026
+18/02/2026
+1.8 Organisation of the Report
+5
+19/02/2026
+23/02/2026
+Chapter 2: Literature Review
+9
+23/02/2026
+03/03/2026
+2.1 Domain Context
+3
+23/02/2026
+25/02/2026
+2.2 Related Works
+3
+26/02/2026
+28/02/2026
+2.3 Technical Research
+2
+01/03/2026
+02/03/2026
+2.4 Summary
+1
+03/03/2026
+03/03/2026
+Chapter 3: Methodology
+7
+03/03/2026
+09/03/2026
+3.1 System Development Methodology
+2
+03/03/2026
+04/03/2026
+3.2 Data Gathering Design
+2
+05/03/2026
+06/03/2026
+3.3 Data Gathering Findings
+2
+07/03/2026
+08/03/2026
+3.4 Implications of the Findings for Prototype Design
+1
+09/03/2026
+09/03/2026
+Chapter 4: Conclusion
+3
+09/03/2026
+11/03/2026
+4.1 Achievements of the First Part of the Project
+1
+09/03/2026
+09/03/2026
+4.2 Justification of Research Adequacy in Relation to SDG 3
+1
+10/03/2026
+10/03/2026
+4.3 Gaps and Future Improvements
+1
+11/03/2026
+11/03/2026
+Ethics Form Submission
+1
+03/03/2026
+03/03/2026
+Final IR Submission
+1
+11/03/2026
+11/03/2026
+
+Chapter 2
+LITERATURE REVIEW
+2.1 Domain Context
+2.1.1 Dengue Burden in Kuala Lumpur
+A systematic literature review of dengue epidemiology in Malaysia reported that dengue cases increased over the 2012–2019 period, reaching 130,101 cases in 2019, the highest annual total recorded during the review period (AbuBakar et al., 2022). Another epidemiological review of dengue in Malaysia discusses urbanisation as an important factor in the country’s dengue context (Mohd-Zaki et al., 2014). Taken together, these national reviews support examining dengue burden in a highly urbanised setting such as Kuala Lumpur.
+Taken together, older and newer incidence reports suggest that dengue burden in Kuala Lumpur has been sustained rather than episodic. In the 2007 incidence data as considered by Mohd-Zaki et al. (2014), Kuala Lumpur was the lead in Malaysia with an incidence of 455.7 cases per 100,000 population. More recent state-level data compiled by Md Iderus et al. (2023) show that F.T. Kuala Lumpur recorded annual incidence rates ranging from 395.6 to 805.4 cases per 100,000 population between 2014 and 2021, with the highest rate observed in 2019 (see Figure 2.1).
+
+Figure 2.1. Annual dengue incidence rate in F.T. Kuala Lumpur, 2014-2021.
+Note. Adapted from Table 1 in Md Iderus et al. (2023), Frontiers in Public Health, 11, Article 1213514, https://doi.org/10.3389/fpubh.2023.1213514. Values represent incidence rate per 100,000 population.
+Mortality evidence reinforces the same pattern of continuing burden. Khaw et al. (2024) reported that Kuala Lumpur experienced the highest age-adjusted dengue mortality rate in Malaysia during the 2012-2021 period, at 0.89 deaths per 100,000 population. Against that continuing burden, the next subsection turns to breeding habitats and container types as operationally relevant vector-control evidence.
+2.1.2 Aedes Breeding Habitats, Container Positivity, and Productivity
+In routine entomological surveillance, Aedes breeding sites are typically assessed through inspections of water-holding containers for larvae and pupae (World Health Organization, 2011). Common summary measures include the Container Index (CI), defined as the percentage of water-holding containers infested with larvae or pupae, and the Breteau Index (BI), defined as the number of positive containers per 100 houses inspected (World Health Organization, 2011). However, WHO guidance distinguishes between container positivity and container productivity. A positive container indicates that immature stages are present, but it does not by itself show how much that container contributes to adult mosquito production. For that reason, pupal or pupal/demographic surveys are recommended when the objective is to identify the container categories contributing most to adult vector emergence and to support targeted control (World Health Organization, 2011). WHO guidance further notes that containers most frequently positive for immature stages are not necessarily those contributing most to pupal production (World Health Organization, 2011).
+
+Figure 2.2. Distribution of positive Aedes larvae container types reported in Kepong, Kuala Lumpur.
+Note. Adapted from Table 2 in Rahim et al. (2021), Journal of Diseases, 8(1), 1-8, https://doi.org/10.18488/journal.99.2021.81.1.8. Percentages represent shares of the 227 positive containers reported in the study.
+Malaysian urban larval studies reinforce this distinction by demonstrating both the value and the limitations of container-based surveillance. Rahim et al. (2021) inspected 2,067 containers in Kepong, Kuala Lumpur, and found 227 to be positive. Figure 2.2 presents the reported distribution of positive container types in the Kepong study, with plastic containers, water drums, drains, and flowerpots accounting for the largest shares. Similarly, in Putrajaya, Saleeza et al. (2013) organised their findings by container category and identified gardening utensils as the most common breeding habitat category. Collectively, these works indicate that Malaysian urban larval surveillance is often structured by recognisable types of containers. At the same time, both studies remain principally positivity-based larval surveys rather than productivity studies. Their findings therefore indicate where breeding is detected and which container categories recur in field surveillance, but they do not by themselves establish which categories contribute most to adult mosquito production. Read together with WHO guidance, the literature suggests that container-based larval surveillance is operationally useful, but that interpretation of container importance remains incomplete when based on positivity alone.
+2.1.3 Current Surveillance and Field Inspection Workflow Bottlenecks
+Malaysia’s dengue surveillance framework is described in the cited Ministry of Health Malaysia (2017) case-definition guidance as including mandatory notification of suspected dengue fever or dengue haemorrhagic fever cases to the nearest District Health Office within 24 hours of diagnosis, followed by submission of the notification form. The same cited guidance frames notification as the basis for timely response, investigation, and implementation of control measures. Within this policy framework, notification functions as the formal trigger for dengue response.
+One workflow issue discussed in the Malaysian literature concerns the form in which notified case-location data are available for spatial analysis. Rizwan et al. (2018) explain that Malaysia maintains separate databases for registered and notified dengue cases: the eDengue database contains latitude and longitude information for registered cases, whereas the eNotifikasi database contains case-location addresses without coordinates. As a result, notified cases must first be geocoded before they can be plotted and analysed spatially. This additional processing step matters because spatial mapping has been presented as useful for outbreak investigation; for example, Hasim et al. (2018) state that mapping dengue cases can guide stakeholders in identifying outbreak sources. Taken together, these studies suggest that when notified cases are not immediately available in coordinate-based form, additional processing may be needed before they can support spatial analysis and response planning.
+The second workflow problem can be observed in the way the field and entomological evidence is recorded and consolidated. According to Cheong et al. (2021), Aedes surveillance field teams recorded trap identifiers and location descriptions on paper datasheets, captured coordinates using separate GPS devices and later transferred the records into a master Excel file. The authors report common problems including large volumes of data to compile, inconsistent recording procedures, transcription errors, misidentification of ovitraps, and non-integrated data platforms. They also mention that the spreadsheet-based management became tiresome and prone to errors as the number of monitoring sites increased. Although the study relates to entomological surveillance rather than the full dengue case notification-to-inspection chain, it remains relevant as an example of how field evidence collection may depend on multi-step consolidation and matching before records are ready for analysis and operational follow-up.
+Although the reviewed literature does not directly measure end-to-end operational delay in Malaysia’s dengue response system, it indicates that delays or complications may arise when notified case records or field-collected data require geocoding, reconciliation, or consolidation before use. Mandatory notification provides the formal basis for response, but the studies reviewed indicate that the movement from reported information to investigation and follow-up may be slowed when location data and field records are not immediately available in a consistent and usable form.
+2.1.4 Participatory Surveillance and Citizen Reporting: Benefits and Limitations
+Participatory reporting is relevant to dengue control because household-level Aedes interventions are often implemented in domestic and peri-domestic settings where breeding-habitat detection and elimination depend partly on household practices. The literature on household-level dengue intervention justifies the applicability of public involvement in such an environment. Montenegro-Quinonez et al. (2023) reviewed household-level Aedes/dengue interventions and concluded that long-term success depends on suitability, community commitment, and official support, while some technically demanding interventions are harder to sustain routinely at community level. Although the review does not evaluate citizen reporting systems directly, it supports the broader relevance of public participation to household-level breeding-habitat detection and control.
+The general mosquito citizen science literature suggests that public reporting has the potential to increase observational coverage by having geographically distributed reports. Sousa et al. (2022) conducted a scoping review of 29 mosquito citizen science projects in 16 countries and found that the methodological approach to the collection and reporting of observations of mosquitoes varied significantly, which indicates that citizen science could be used to develop distributed surveillance under different local designs. Low et al. (2022) also describe the GLOBE Observer Mosquito Habitat Mapper as a smartphone-based tool that allows users to document larval habitats with automatically recorded location and photo documentation, alongside optional larval sampling and identification steps. Carney et al. (2022) further illustrate how citizen-science observations can be converted into a map-based surveillance output, as shown in Figure 2.3. These studies indicate that public reporting can widen the spatial reach of mosquito observation and, by extension, support dengue surveillance where breeding habitats are widely dispersed and not always captured through routine inspection alone.
+
+Figure 2.3. Example outputs from integrated citizen-science mosquito reporting and risk visualisation.
+Note. Reproduced from Figure 4 in Carney, R. M., Mapes, C., Low, R. D., Long, A., Bowser, A., Durieux, D., Rivera, K., Dekramanjian, B., Bartumeus, F., Guerrero, D., Seltzer, C. E., Azam, F., Chellappan, S., and Palmer, J. R. B. (2022), Insects, 13(8), 675, https://doi.org/10.3390/insects13080675. Licensed under CC BY 4.0.
+The literature more clearly suggests that participatory reporting is most useful when integrated with established surveillance activities rather than treated as a wholly separate stream of public submissions. Eritja et al. (2025) frame citizen science and field sampling as complementary approaches, each contributing different strengths and limitations to surveillance practice. Framed this way, participatory reporting functions best as one component within a wider surveillance system: citizen-generated observations may expand coverage, but they still require validation, interpretation, and institutional follow-up before they can be used as reliable operational evidence.
+Meanwhile, the evidence has defined significant constraints in the quality and interpretability of citizen-generated data. Low et al. (2022) report that the Mosquito Habitat Mapper automatically records date, time, and geolocation, but GPS accuracy declines under obscured sky conditions such as buildings, bridges, and trees, with error estimates of 7-13 m possible in urban settings. The same paper also discusses data-density and opportunistic-sampling challenges that can limit how confidently citizen-generated observations are interpreted for surveillance use. Citizen-scientist larval identification was also error-prone in some cases, with over 60 percent of siphon identifications reported as incorrect (Low et al., 2022). Taken together, these results suggest that citizen submissions can extend observational reach, but they do not automatically provide operationally reliable surveillance data without review and verification.
+Sustained participation poses another limitation. In the Italian Mosquito Alert implementation, Virgillito et al. (2024) reported high recruitment but found that only 30% of those who registered ended up submitting records. The same study also found that the probability of a participant sending a record dropped off quickly after initial registration. This implies that the visibility and enrolment are not sufficient to generate a consistent reporting stream in the long run. For surveillance purposes, this means that initial visibility and enrolment are not sufficient by themselves; the usefulness of participatory systems also depends on whether contribution levels can be sustained over time.
+Overall, the literature suggests that participatory reporting can expand observation scope for dengue surveillance. This happens especially when reporting tools that allow making georeferenced and image-based submissions are used. The literature also points out several limitations such as uneven participation, quality of data, spatial clustering, and technical error in observations acquired from citizens. Participatory reporting is thus more often introduced as an add-on to more general surveillance systems instead of a complete replacement to regular inspection and professional verification. 
+2.2 Related Works
+2.2.1 Official Dengue Dashboards for Hotspot and Cluster Mapping
+Official dengue dashboards commonly communicate public risk through hotspot or cluster maps aggregated from case-based surveillance, rather than through display of individual dengue case records. Hotspot and cluster identification in dengue spatial analysis can help identify higher-risk zones and support prioritisation of prevention and control activities (Masrani et al., 2022). Within this category, Malaysia’s iDengue For Community portal and Singapore’s National Environment Agency (NEA) dengue clusters page illustrate how the official systems can convert the reported dengue cases into the public risk displays at the area-scale.
+According to the cited iDengue pages, the portal is updated daily and its public interface includes layers such as Dengue Hotspot and Daily Dengue Cluster (Malaysian Space Agency [MYSA] & Ministry of Health Malaysia, n.d.-a). The portal defines a dengue outbreak as two or more cases within a 200-metre radius of the index case within 14 days of the index case report date, and a dengue hotspot as an outbreak that has persisted for more than 30 days since onset (MYSA & Ministry of Health Malaysia, n.d.-b). These definitions show that the displayed risk layers are generated through explicit spatial and temporal thresholds tied to case occurrence and persistence. Figure 2.4 illustrates how hotspot and cluster information is presented to the public as locality-level map overlays.
+
+Figure 2.4. Screenshot of the iDengue For Community portal interface showing dengue hotspot and cluster map layers.
+Note. Reproduced from MYSA and Ministry of Health Malaysia (n.d.-a).
+Singapore’s NEA dengue clusters page provides a comparable official example of case-derived public risk display. According to the NEA, the map is refreshed daily at 1 am, and a dengue cluster is defined as two or more cases reported within 14 days and located within 150 metres of one another (National Environment Agency, n.d.). NEA also classifies clusters into red, yellow, and green alert categories: red for 10 or more cases, yellow for fewer than 10 cases, and green for clusters with no new cases that remain under 21 days of surveillance (National Environment Agency, n.d.). NEA also indicates the current intervention status for each cluster on the public map (National Environment Agency, n.d.). The NEA page makes alert categorisation and intervention visibility more explicit on the public display, while still representing risk cluster areas based on cases.
+
+Figure 2.5. Screenshot of the NEA dengue clusters page showing the cluster map.
+Note. Reproduced from National Environment Agency (n.d.).
+Collectively, these dashboards show how official systems communicate dengue risk to the public through case-derived hotspot or cluster maps. They are mainly useful in communicating the area-level transmission patterns and alert status using defined spatial and temporal rules. Although the NEA dashboard provides a more explicit presentation of the categories of alerts and the visibility of interventions than iDengue, both systems remain oriented toward area-scale risk display rather than publicly presenting point-level records of specific suspected breeding habitats. For the present project, the key limitation is that these dashboards provide hotspot context, but they do not function as structured intake systems for point-level suspected breeding-habitat reports. Table 2.1 summarises the comparison between the two systems.
+
+
+
+
+Table 2.1. Comparison of official dengue dashboards as public area-scale risk layers
+System
+Public spatial unit shown
+Public update cadence
+Rule basis for displayed risk
+Public alert or status categories
+Published case-based criteria
+Response status display
+
+iDengue For Community (MYSA; Ministry of Health Malaysia)
+Hotspot and cluster/locality layers
+Updated daily
+Outbreak: 2+ cases within 200 m within 14 days; hotspot: localised epidemic lasting more than 30 days
+Hotspot and cluster status categories
+Not described on the public portal as an intervention-extent layer
+No
+NEA Dengue Clusters (Singapore)
+Cluster/locality areas
+Map data updated at 1 a.m. daily
+Cluster: 2+ cases within 150 m within 14 days; green status under surveillance for 21 days
+Explicit red, yellow, and green alert levels
+Yes; cluster maps state that they illustrate current vector control intervention
+No
+Note. Compiled by the author from MYSA and Ministry of Health Malaysia (n.d.-a, n.d.-b) and National Environment Agency (n.d.).
+
+2.2.2 Municipal Reporting Channels for Environmental Complaints and Vector Control Requests (DBKL and Comparable Councils)
+Municipal complaint systems are a useful comparison for this project because they show how local authorities receive and route citizen reports about environmental conditions, what kinds of evidence are requested, and how those reports connect to follow-up action. This is also relevant to dengue-associated habitat reporting, where suspected breeding locations likewise require a clear intake route, usable submission evidence, and a response pathway.
+In Kuala Lumpur, DBKL’s public-facing service information indicates a multi-channel complaint intake model rather than a single specialised reporting route. Across the cited service pages, complaints may be submitted through the Adu@KL portal, departmental hotlines, the Pusat Panggilan Setempat call centre, and customer-service counters (Dewan Bandaraya Kuala Lumpur, n.d.-a, n.d.-b, n.d.-d).
+DBKL’s service information also links complaint intake to subsequent vector-control actions. The Vector Control Unit under DBKL’s Department of Health and Environment is responsible for inspection and elimination of Aedes breeding sites, fogging and misting activities, and legal enforcement under the Destruction of Disease-Bearing Insects Act 1975 (Dewan Bandaraya Kuala Lumpur, n.d.-c).
+However, the DBKL public-facing complaint and service pages do not present a dedicated mosquito or dengue-breeding-habitat reporting interface. At the level of the reviewed public channels, they do not specify structured submission fields such as container type, geotagged location, or habitat photographs. This makes the reviewed intake routes a weaker fit for a prototype that depends on consistent, verification-ready evidence capture for later classification, prioritisation, and operational follow-up of suspected breeding habitats.
+Comparable local authorities also expose vector-control-related public complaint routes rather than relying only on general municipal complaint channels. For example, Majlis Daerah Batu Gajah states that its Vector Control Unit carries out fogging, ULV spraying, and abating activities, and also receives and acts on complaints related to disease-vector sources (Majlis Daerah Batu Gajah, n.d.). This provides a closer comparison for vector-control-related public reporting than a general municipal complaint page, although it is still not presented as a structured mosquito-breeding-habitat reporting portal with standardised intake fields.
+Collectively, these municipal channels show that local authorities already maintain public routes for environmental, vector, or dengue-related complaints, but these routes are not usually designed as specialised intake systems for structured mosquito-breeding-habitat reports. In the reviewed DBKL public-facing channels, no explicit structured fields for items such as container type, geotagged location, or habitat photographs were found to be described. MDBG is a closer comparison because it links complaint intake directly to vector-control responsibilities and follow-up action, but its public-facing route is still framed as a service or complaint function rather than a standardised evidence-capture form. As a result, reports received through such channels may vary in format and completeness, making them less suitable for consistent comparison, prioritisation, and triage of suspected breeding habitats at the container or premise level.
+2.2.3 Citizen Mosquito and Breeding Habitat Reporting Platforms
+Citizen mosquito and breeding-habitat reporting platforms are directly relevant to this project because they demonstrate how citizen reports can be captured in a structured format and then reviewed, validated, or followed up rather than being treated as confirmed breeding-habitat cases. Digital systems in which the public can report mosquitoes, standing water, or possible breeding places are the most applicable comparators for this study. Across such systems, the three most useful comparison dimensions are the evidence captured at intake, the level of structure imposed during reporting, and the way submitted reports are processed afterwards.
+An excellent example of a structured public digital reporting platform is provided by Mosquito Alert, which includes breeding-site reporting among a broader mosquito-surveillance application. Users submit geolocated reports with photographs and questionnaire information relating to mosquitoes, breeding sites, and biting behaviour, while the system separates initial public submissions from later reviews done by experts on those reports (Juznic Zonta et al., 2022). Juznic Zonta et al. (2022) also elaborate that attached photographs go through the review process of expert entomologists before the validated records are included into the dataset. For the present study, Mosquito Alert is most useful as an example of a structured citizen-reporting platform in which initial public submissions remain distinct from later expert-validated records.
+GLOBE Observer Mosquito Habitat Mapper, by contrast, represents a more guided habitat-reporting workflow. Low et al. (2022) describe a stepwise process that includes larval-habitat documentation, optional larval sampling and identification, and source-reduction steps. For the present study, the most relevant point is that the system captures date, time, geolocation, and photo-documented habitat observations through a structured submission flow. The same study also notes positional-accuracy limitations and common errors in volunteer larval identification. GLOBE is therefore most useful here as an example of a guided habitat workflow that improves observation structure while still leaving limits in data quality and interpretation.
+Mo-Buzz Public is relevant for a different reason. Instead of being primarily a citizen-science observation platform, it demonstrates the way in which the reports of the public can be incorporated into an operational public-health follow-up. According to Lwin et al. (2017), the Sri Lankan Mo-Buzz system involves a public-facing system where crowd-sourced reporting is possible, and the public health inspectors can visit the reported areas, monitor the case, verify reports, and update the status of the reports. Mo-Buzz Public is therefore useful as an example of how a citizen-submitted report can move from submission to inspection, verification, monitoring, and status updating within a public-health workflow.
+Table 2.2 summarises these systems against the main comparison dimensions used in this subsection.
+
+
+
+
+
+Table 2.2. Comparison of citizen mosquito and breeding-habitat reporting platforms
+Platform
+Intake evidence
+Reporting workflow
+Post-submission handling
+Mosquito Alert
+Geolocated reports with photographs and questionnaire information on mosquitoes, breeding sites, and biting behaviour
+App-based reporting within a broader mosquito-surveillance platform
+Submitted photographs are reviewed by expert entomologists before validated records are released into the dataset
+GLOBE Observer Mosquito Habitat Mapper
+Date, time, geolocation, habitat record, photographs, habitat descriptors, and optional larval observations
+Guided stepwise habitat-reporting workflow
+Structured submissions support later checking and quality control; the source notes possible GPS inaccuracy and volunteer larval-identification errors
+Mo-Buzz Public
+Public reports with location-aware submissions and images of potential mosquito-breeding sites
+Public-facing dengue app combining reporting with mapping, alerts, and education
+Reports are routed to health authorities for inspection, verification, and status updating rather than being treated as automatically validated records
+
+Note. Compiled from Juznic Zonta et al. (2022), Low et al. (2022), and Lwin et al. (2017).
+Taken together, these systems show that the key design differences lie in what evidence is captured at intake, how structured the reporting workflow is, and how submitted reports are processed after submission. Sousa et al. (2022) likewise note substantial methodological variation across mosquito citizen-science programmes, ranging from app-based reporting and questionnaires to traps and neighbourhood breeding-site inspection strategies. For the present project, the most relevant lesson is that citizen-reporting systems are stronger when they capture photo and location evidence in a structured way, keep initial submissions distinct from later review or validation, and connect reports to some form of official follow-up rather than leaving them as isolated public observations.
+2.2.4 Machine Learning and Computer Vision for Breeding Habitat Detection and Decision Support
+Machine learning and computer vision are relevant to this project because they show how imagery can be used to detect visible containers or micro-habitat proxies associated with potential Aedes breeding sites. In this literature, the automated target is usually a visible object or environmental proxy rather than a directly confirmed breeding habitat in the strict entomological sense. This strand is relevant because it explores how image-based container evidence can be transformed into decision-support outputs for screening, mapping, and surveillance prioritisation.
+The computer-vision pipeline introduced by Haddawy et al. (2019) identifies outdoor containers among geotagged Google Street View images and transforms the identifications into high-resolution container-density maps. The paper targets eight prevalent types of containers which were identified as possible sites where dengue vectors breed, and the paper also recorded correspondence between the number of containers determined by the street view images and the number of containers determined by manual surveys. The study also demonstrated that container densities can be used to predict larval index values. Haddawy et al. (2019) therefore show how image analysis of visible container evidence can be converted into spatial indicators for area targeting.
+Su Yin et al. (2021) build on this line of work by testing whether street-view-derived container densities improve dengue risk mapping. They use weather patterns over time and location-based factors along with container predictors to map dengue risk. They report that models that include container information outperform two baseline models across three Thai provinces. Their study therefore shows that image-derived container evidence can indeed contribute to spatial risk prediction and can support area-level prioritisation rather than serving only as a descriptive visual output.
+Knoblauch et al. (2024) link imagery-based detection more explicitly to entomological surveillance. Their study combines satellite and street-view imagery to derive breeding-container proxies and relates those proxies to ovitrap-based measurements of immature Aedes aegypti abundance in Rio de Janeiro. They report that object-detection-derived micro-habitat proxies explain substantial spatial variance in immature abundance and that the complementary use of satellite and street-view imagery supports high-resolution interpolation of entomological surveillance data. This puts computer-vision output in a supportive role rather than purely a descriptive one.
+Taken together, these studies do not mainly differ in how images are captured; their common logic is that automated detection is used to translate visible containers or habitat proxies into interim spatial evidence for screening, mapping, and prioritisation. The key distinction from the present project is that the reviewed studies rely mostly on remotely acquired imagery and area-scale modelling, whereas this project is concerned with close-range images submitted by citizens through a reporting workflow. The literature is therefore relevant because it shows that visual container evidence can be operationalised for decision support without being treated as direct confirmation of a breeding habitat. At the same time, the reviewed studies do not address how such inference should be used in a live reporting environment where volunteer-submitted close-range images vary in quality, framing, and ambiguity, and where model outputs should remain tentative signals for human review rather than autonomous decisions.
+A related but distinct line of work applies machine learning within citizen-image reporting systems, including mosquito-species classification and triage workflows such as Falk et al. (2025). That line of work is relevant as an adjacent boundary case because it shows ML operating inside a citizen-reporting pipeline, but it is not the main comparator here because its automated task differs from the breeding-container and habitat-proxy studies reviewed above.
+Table 2.3. Comparison of image-based studies relevant to breeding-habitat detection and decision support
+Study
+Image source
+Automated target
+Decision-support role
+Key limitation
+Haddawy et al. (2019)
+Geotagged street-view imagery
+Outdoor open containers as potential breeding-site indicators
+Generates container-density maps and supports larval index prediction
+Detects visible potential containers rather than confirmed breeding habitats
+Yin et al. (2021)
+Street-view-derived container information
+Container-related predictors in dengue risk models
+Improves dengue risk prediction when container variables are added to baseline models
+Container evidence remains indirect and does not confirm current breeding activity
+Knoblauch et al. (2024)
+Satellite and street-view imagery
+Breeding-container and micro-habitat proxies
+Supports estimation of spatial variation in immature mosquito abundance and interpolation of surveillance data
+Relies on proxy detection rather than direct confirmation of breeding habitats
+Note. Compiled from Haddawy et al. (2019), Yin et al. (2021), and Knoblauch et al. (2024).
+
+2.2.5 Comparative Synthesis and Research Gap
+Sections 2.2.1 to 2.2.4 review comparable systems and studies from four related strands, official dengue dashboards, municipal reporting channels, citizen reporting platforms, and image-based research for detection or prioritisation. Taken individually, each strand contributes one part of the operational problem, but none provides a complete model for the proposed Kuala Lumpur system. Table 2.4 consolidates the reviewed similar works against the core requirements of the present project.
+Table 2.4. Comparison of reviewed similar works against the requirements of the proposed Kuala Lumpur dengue breeding-habitat reporting prototype
+Reviewed work
+Evidence source
+Spatial unit
+Validation approach
+Decision-support basis
+Operational context
+Key limitation
+Official dengue dashboards
+iDengue for Community
+Case notifications aggregated into outbreak, cluster, and hotspot layers
+Area/locality hotspot and cluster layers
+Official surveillance validation before public display
+Explicit outbreak and hotspot definitions based on spatial and temporal case thresholds
+Public area-level risk display
+Does not capture point-level suspected breeding-habitat evidence at submission
+NEA Dengue Clusters
+Case notifications aggregated into cluster map layers and alert categories
+Cluster/locality area
+Official surveillance validation before public display
+Cluster thresholds and red, yellow, and green alert categories
+Public cluster display with intervention visibility
+Communicates area-level transmission context rather than intake of suspected breeding-habitat reports
+Municipal reporting channels
+DBKL Public Complaint and Vector-Control Channels
+Complaint information submitted through multiple public channels; the reviewed public-facing pages do not describe structured habitat-specific evidence fields
+Complaint address or report point
+Manual officer review, routing, and downstream service handling
+Complaint handling and service routing
+Inspection, source reduction, fogging or misting, and legal enforcement after complaint handling
+No dedicated standardised workflow for photo, location, time, and habitat-specific evidence capture
+Citizen mosquito and breeding-habitat reporting platforms
+Mosquito Alert
+Geolocated public reports with photographs and questionnaire information on mosquitoes, breeding sites, and biting behaviour
+Point observation
+Expert entomologist review before validated records are released
+Expert validation and record-release workflow rather than operational triage
+Validated records incorporated into surveillance outputs for researchers and public-health stakeholders
+Not designed as a Kuala Lumpur municipal workflow for officer-facing breeding-habitat triage
+GLOBE Observer Mosquito Habitat Mapper
+Date, time, geolocation, habitat documentation, photographs, and optional larval-related inputs captured through a guided workflow
+Point observation
+Guided workflow with later checking and expert validation where needed
+Evidence completeness and observation quality with later checking rather than operational urgency
+Observation record, source reduction support, and later surveillance use
+Structured intake improves completeness but does not remove user-capture errors or provide integrated municipal triage
+Mo-Buzz Public
+Crowdsourced public reports, including location-aware submissions and images of potential mosquito-breeding sites
+Report location or reported site
+Public-health inspectors can visit, verify, monitor, and update report status
+Inspector-led follow-up and case monitoring
+Inspection visit, verification, monitoring, and status updating
+Does not demonstrate bounded image-based habitat inference combined with hotspot-contextual report prioritisation
+Image-based decision-support research
+Haddawy et al. (2019)
+Geotagged Google Street View imagery of visible containers
+Area-level container-density surface
+Research validation against manual surveys and larval index relationships
+Image-derived container density used for spatial targeting and larval-index estimation
+Decision-support mapping for area targeting
+Depends on remote imagery and area-level modelling rather than citizen-submitted close-range reports
+Yin et al. (2021)
+Google Street View-derived environmental and container-related image features combined with other predictors
+Subdistrict or urban risk surface
+Research model evaluation against dengue cases
+Image-derived container predictors combined with other factors for area-level dengue risk mapping
+Spatial prioritisation for surveillance planning
+Produces area-level prediction rather than a verification-ready report workflow
+Knoblauch et al. (2024)
+Satellite- and street-view-derived breeding-site proxies
+Household-to-urban risk surface
+Research validation against immature abundance measures
+Object-detection-derived proxies and spatial prediction used for high-resolution intervention planning
+Surveillance support and urban-scale intervention planning
+Requires multi-source remote imagery and heavier infrastructure than a low-infrastructure citizen-reporting web system
+Note. Compiled by the author from the sources reviewed in Sections 2.2.1 to 2.2.4.
+
+The comparison shows that prior work typically solves one layer of the problem at a time. Official dashboards provide authoritative area-level context, municipal channels provide public intake, citizen reporting platforms provide structured observation records, and image-based research shows how visual evidence can inform spatial prioritisation. However, these capabilities remain separated across different systems and studies rather than being combined into one bounded workflow.
+The research gap is therefore not the absence of dengue dashboards, municipal complaint channels, citizen reporting platforms, or image-based decision support when considered separately. Rather, within the reviewed literature, the missing artefact is an integrated Kuala Lumpur-oriented workflow that captures suspected breeding-habitat reports as structured evidence bundles at submission, applies review-compatible image support to citizen close-range photographs, combines submission evidence with hotspot context for report-level prioritisation, and presents the result through an operationally reviewable officer-facing interface.
+Based on the reviewed literature, four specific gaps can be identified:
+1. Structured evidence-capture gap
+The reviewed dashboards externalise outbreak or cluster information at area level, while the reviewed municipal channels mainly support complaint intake and routing. None of these works provides a standardised public workflow that consistently captures suspected breeding-habitat reports at submission as a verification-ready combination of photograph, location, and time evidence.
+2. Review-compatible image-support gap
+Citizen reporting platforms demonstrate that public observations can be structured and reviewed, while image-based research shows that visual evidence can support classification or spatial inference. However, the reviewed literature does not provide a bounded workflow in which image-based habitat support is applied to citizen-submitted close-range photographs as an advisory input that remains explicitly subordinate to human review.
+3. Hotspot-contextual report-prioritisation gap
+Official dashboards provide authoritative hotspot and cluster context, but they are designed for area-level public communication rather than triage of individual suspected habitat reports. The reviewed works therefore do not define a lightweight report-level prioritisation logic that combines a submitted evidence bundle with hotspot context in order to identify which reports should receive more urgent operational attention.
+4. Submission-to-review integration gap
+The reviewed strands contribute useful components, but they do not connect those components into a single workflow in which a resident submission progresses from structured intake to evidence display, map linkage, hotspot-contextual status, and officer review within one operational process. This missing end-to-end integration is the central gap addressed by the present project.
+Section 2.3 therefore reviews the technical methods needed to implement this integrated workflow.
+2.3 Technical Research
+This section examines the core technologies selected for the development of the proposed prototype. These technologies are reviewed in relation to the main functional requirements of the system, including user-facing report submission, browser-based evidence capture, map-based report visualisation, backend processing, structured data and image storage, machine-learning-based habitat classification, cloud deployment, and governance controls. The purpose of this section is to justify the technical stack adopted for the prototype and to show how each selected technology supports the intended reporting, review, and prioritisation workflow of the system.
+2.3.1 Frontend Framework and User Interface
+In the case of the proposed prototype, the front end is not only a presentation layer but, essentially, the point where the reporting workflow of the system can be made accessible to the residents and officers. According to the requirements identified in the previous sections of this chapter, the interface should allow mobile-friendly report submission, browser-based image and location capture, structured form completion, access to public map, and a special section of the officer-facing view. The frontend option should then be considered against the overall objective of the project, namely to build a pragmatic web-based reporting and triage workflow instead of a page of information or static form.
+Simple browser handling by HTML, CSS, and JavaScript can be made to work technically with a basic implementation of event handling and client-side validation (Mozilla, 2025). Nonetheless, the proposed prototype involves multiple related interface states being synchronised like camera readiness, location permission processing, feedback of validation, submission progress, dashboard display, and review behaviour on officer-side. Here the entirely imperative JavaScript style would make interface logic more difficult to structure and reuse system-wide.
+That is why a component-based framework would be more adequate. Both Vue and React have the ability to do reusable, state-based user-interface development, which is appropriate for interactive web applications (Vue Team, n.d.; React Team, n.d.). Nevertheless, React would be a better fit to this project since the prototype will rely on the stability of interface behaviour between connected yet independent workflows (citizen reporting, public viewing and officer review). This gives reusable components and state predictability more significance over minimising initial set-up. Vite also supports this option further as it offers a lightweight frontend build experience in a separated frontend-backend architecture (Vite, n.d.). Based on this, React with Vite is the most suited frontend stack to use in the proposed prototype since it best suits the integrated reporting and review workflow that is warranted in this report.
+2.3.2 Browser-Based Evidence Capture
+In the case of the proposed prototype, evidence capture is not a simple technical feature, it is also a key component of the reporting workflow. The system relies on the citizens having the capability to report immediately through the use of a mobile device, and at the same time capture the fundamental evidence that can be examined by the officers at a later date. Thus, the evidence-capture approach should be able to facilitate the submission of photos, the capture of locations, and the practical implementation with a web interface without any superfluous reporting procedures or the need to install a separate application.
+The primary choices within this design space include a native mobile app, a simple web form utilising regular file upload and manual location entry or a browser-based strategy with the built-in web capture interfaces. A native mobile app is able to have more access to device functionality. That is however not determinant to this project since the functions that are required are image capture, location capture and structured report submission only. In the case of the prototype, the creation and upkeep of an independent mobile app is out of scope.
+Basic web form is easier to apply, though it is not appropriate in this project due to the fact that it is going to segregate image upload and the capture of other significant report information, particularly, location and submission context. This division poses the threat of partial submissions, inaccurate information, or less robust connection between the image uploaded and the situation of the report. This is a big limitation to a system that is meant to assist in structured public report on suspected breeding habitats since the quality of the evidence used initially influences the utility of the report in subsequent consideration.
+A capture strategy that is based on a browser is thus more suitable for the proposed prototype. MediaDevices interface will allow the camera to be accessed using getUserMedia() and Geolocation API will allow the browser to demand the current position of the device with the user's consent (Mozilla, 2025a; World Wide Web Consortium, 2025). HTML Media Capture also is still applicable as a fallback since file-input controls can trigger the device capture process via the capture attribute where live camera access is impractical (World Wide Web Consortium, 2018). These browser-native features come in handy within the realms of this system since they enable the reporting process to be web-accessible and enhance the completeness and timeliness of evidence provided to the officer to be reviewed. Meanwhile, captured place and time are to be regarded as primary report material, but not as absolute evidence as to the precise point of breeding-habitat in all occurrences. Moreover, these browser capabilities are anchored on secure-context and permissioning considerations, implying that the system deployed must be delivered on HTTPS and not considered an unsecured localised interface (Mozilla, 2025a; World Wide Web Consortium, 2023, 2025). As such, browser-based evidence capture is the best selection to the proposed prototype since it aligns with the most favourable reporting workflow enabling a low-friction, structured, and pragmatic reporting process according to the objective of the system.
+2.3.3 Mapping and Report Visualisation
+In the case of the suggested prototype, the mapping component will have to assist with report visualisation and operations review as part of the general reporting process. This is not intended to offer complete GIS analysis, but to to make sure the coordinates of submitted reports to be displayed in a format that enables public visibility and review by officers. Thus, the mapping technology is to be chosen according to its ability to be used in the browser, interactive visualisation of the reported locations, ease of implementing simple overlays, and according to the ability to be used in the role-based system structure.
+The key alternatives available in this design space are Leaflet, OpenLayers, and Google Maps Platform (Leaflet, n.d.; OpenLayers, n.d.; Google Maps Platform, n.d.-a). Googles Maps Platform has the technical capability and offers a wide range of hosted mapping services. Nevertheless, the suggested prototype does not demand the broader commercial service ecosystem related to that platform. It merely requires a map display, which the public can see during the reports, and a richer map that the officers can see to provide the context of operation. That is why, account, billing, and API-key assurances connected to Google Maps Platform are in more than is necessary to accomplish the scale of the planned project (Google Maps Platform, n.d.-a, n.d.-b).
+OpenLayers is also a possible choice. Its wider structure is however more appropriate when the applications needs a greater level of GIS interaction, greater control of the projection and increased control of the layers. Such capabilities are not in the focus of this prototype since the map will be used primarily to show reports, locations, and to overlay things and not high-level spatial analysis (OpenLayers, n.d.).
+The target prototype is better aligned to be based on leaflet as it allows the required degree of interactivity without introducing unnecessary complexity. Three utilitarian functions have to be supported by the map in this system. To begin with, it must be able to enable a resident to preview the chosen report location at the time of submission. Second, it must assist in supporting a visible map that depicts report points in a more regulated manner without exposing closed evidences like uploaded photos. Third, it will need to facilitate a more operational facing officer display that has the capability of showing report markers along with the hotspot related overlays to be reviewed and prioritised. Leaflet offers direct support of such requirements with typical web-mapping features, including markers, popups, and display using GeoJSON (Leaflet, n.d.). The applicability of OpenStreetMap in this case is that it is an open map-data ecosystem that is widely used as a basemap source that demands attribution and licence (OpenStreetMap contributors, n.d.). Leaflet with OpenStreetMap is therefore most suitable mapping solution to the proposed prototype given the fact that it is most befitting in terms of low-complexity, browser-based and role-sensitive visualisation requirements of the system. 
+2.3.4 Backend API and Application Logic
+For the proposed prototype, the backend is required to facilitate the reporting and review process that has been designed in the system design, as opposed to just storing data submitted. It is meant to serve as the processing and coordination layer between the frontend interface, database, image-storage component, and the machine-learning component. Here, the backend should be capable of receiving structured reports by the citizens, verifying incoming information, receiving uploaded images along with report fields, and presenting various types of endpoints to be public-facing and be accessed by the officers. Consequently, the backend technology must be chosen on the availability of its aptitude to a lightweight API-based architecture with distinct validation and reliable request processing.
+The principal choices in this design space are Flask, Django REST framework, and FastAPI (Fast API, n.d.-a; Flask, n.d.; Django REST framework, n.d.-a). Flask can be used with small web services. But in this project it would involve additional manual request validation, schema management and API framework. As the offered prototype relies on structured report submission, this would reduce the efficiency of the backend code to structure and maintain (Flask, n.d.).
+Django REST framework is also technically sound in that it offers serializers, validation support and wider API framework environment. But that higher stack is more suited where the project is already based on Django or needs a larger surrounding application infrastructure. The suggested prototype does not rely on server-rendered pages and a broader Django-based application framework. That is why the application of Django REST framework will introduce more framework surface than the planned scope of the system will demand (Django REST framework, n.d.-a, 2016).
+The best tool to use in the proposed prototype is FastAPI, as it is built on typed request and response models and auto-generated OpenAPI-based documentation. This directly applies to the current system since the backend should have the endpoints of citizen reports, publicly safe endpoints to view maps, and endpoints with more functionality to review and triage, but must validating received data before it is stored or sent to other parts of the system (FastAPI, n.d.-a, n.d.-b). Another feature of FastAPI is the ability to process form fields and uploaded files in the same request flow, and it is significant as every report consists of image evidence and other structured metadata (FastAPI, n.d.-c). Pydantic also enhances this practice by ensuring that the incoming data is validated against set data types and constraints before it is used in the application logic (Pydantic, n.d.). Uvicorn is also applicable as a supporting infrastructure since it is the source of the ASGI server on which the FastAPI application is executed, but it is not the factor on which the choice of the framework is based. As such, it is reasonable to consider FastAPI with Pydantic to be the best backend model to follow in the proposed prototype since it supports structured validation, clear API contracts, and role-sensitive request processing in the proposed system reporting and review process.
+2.3.5 Database, Spatial Data, and Image Storage
+In this case, the storage layer should not be limited to basic storage of submitted reports, as it is the case with the proposed prototype. It has to maintain the structured report data required in the reporting workflow, facilitate subsequent officer review, and keep the location and picture evidence related to the respective submission in a format that can be used in the hosted system. The storage strategy should also ensure reliable persistence, cuncurrent access and a separation between organised report records and uploaded evidence files, since the system is a web-based multi-user. Thus, the current subsection needs to prove the logic behind the database used in the reports as well as the method of storage of the images provided.
+The main options for structured data storage in this design space include SQLite, Cloud Firestore, and PostgreSQL, while image storage may be handled either on the application server or through object storage (Firebase, 2026; SQLite, 2025; The PostgreSQL Global Development Group, n.d.; Amazon Web Services, n.d.-g, n.d.-i). SQLite can be used as an effective transactional SQL engine, and it fits well under certain application scenarios. Its in-process and serverless architecture is more native to embedded, device-local, or relatively simple single-application storage rather than a centrally administered hosted storage that needs to support continuous writes, and access by multiple users (SQLite, 2025). In this prototype, such a difference is significant since the report repository will be behind a web API and will provide support in report submission, status updates, and subsequent officer side access.
+Cloud Firestore can also be used technically as a hosted document-oriented database with flexible querying and sorting capabilities (Firebase, 2026). The data model of the proposed prototype is however fairly stable. All reports are based on a standard structure, as they include the fields, including but not limited to: the time of the observation, coordinates, the estimated type of the habitat, the status of the review, and the link to the image. The fact that the system is also based on an explicit review process instead of highly heterogeneous document structures further implies that a relational model is more suitable than a schemaless document-oriented model.
+For that reason, PostgreSQL is more suitable for the proposed prototype, and Amazon RDS for PostgreSQL is an appropriate hosted implementation because it provides a managed database environment aligned with web application deployment (Amazon Web Services, n.d.-g). This choice is further strengthened by the need for persistent spatial support. The proposed system does not only store plain latitude and longitude values, but also uses location data in relation to map display, hotspot overlays, and prioritisation logic. PostGIS can be enabled in Amazon RDS for PostgreSQL, making it more appropriate than treating location merely as ordinary text or numeric fields without spatial support (Amazon Web Services, n.d.-h).
+The storage of uploaded evidence images should also be treated separately from the main application instance. Storing images directly on the application server would make the hosted system less cleanly organised and would provide weaker control over access to submitted evidence. Amazon S3 is more appropriate because it provides object storage suited to uploaded files, while presigned URLs allow controlled and time-limited access where image retrieval is needed for officer review (Amazon Web Services, n.d.-i, n.d.-j). Accordingly, the most appropriate storage architecture for the proposed prototype is Amazon RDS for PostgreSQL with PostGIS for structured and spatial report data, together with private Amazon S3 storage for uploaded evidence images. This combination best supports the reporting, storage, review, and hosted-deployment needs of the system.
+2.3.6 Machine Learning Model and Inference
+In the proposed prototype, the machine-learning sub-unit will be added to assist the reporting and review process by offering a starting prediction of the habitat category of the uploaded image. It does not serve to affirm the existence of mosquito breeding, or to substitute officer judgment, but rather to assist in limited decision support to the larger system. Thus, the model selection should be explained by the real need of this component in the report: to put the submitted images in categories of probable habitats in a manner that is both practical in the given dataset and achievable with the project limits and includes in the future workflow.
+The most applicable designs within this design space would be standard image-classification architectures of ResNet, EfficientNet, and MobileNetV3, along with the Ultralytics classification route (He et al., 2016; Howard et al., 2019; Tan and Le, 2019; Torch Contributors, n.d.-a, n.d.-b, n.d.-c; Ultralytics, n.d.-a, n.d.-b). The most important technical consideration is that the model must be appropriate to a whole-image single-label classification task, as opposed to an object-detection task. This is important since the proposed prototype will be aimed at placing one likely habitat category on a single image submitted, rather than doing object detection on a multi-objective basis or inferences about entomological status per se.
+The Ultralytics classification path is technically an achievable one. Nevertheless, the current issue does not necessitate a more comprehensive detection-based workflow and thereby a more direct fit of a typical image-classification design to the specified task. MobileNetV3 can also be used, particularly in the cases when model is to be deployed to a mobile or embedded device is the major concern (Howard et al., 2019). Nevertheless, that is not a more decisive benefit in this project since inference is supposed to be done on the server side instead of being done directly on the user devices. ResNet is still a powerful and popular pretrained baseline, yet in a limited single-label classification task, it could contain more model capacity than is required where a more accuracy-efficient model can exist (He et al., 2016).
+EfficientNet is more appropriate for the proposed prototype because its compound scaling strategy is specifically intended to improve the trade-off between accuracy and efficiency, and the original study reports strong transfer-learning performance with fewer parameters than earlier convolutional network baselines (Tan & Le, 2019). This is relevant to the present project because the system is expected to use a limited labelled dataset and to perform inference as part of a broader web-based workflow rather than as a standalone research-only model. TorchVision also provides pretrained EfficientNet model builders directly, making the transfer-learning process practical within the same Python ecosystem used elsewhere in the backend (Torch Contributors, n.d.-a). Where some source images may have been prepared through a YOLO-related workflow, that does not by itself require the deployed model to use YOLOv8, because those images can still be reorganised during dataset preparation into class-consistent sets suitable for classification training (Ultralytics, n.d.-c). Accordingly, a pretrained EfficientNet classifier implemented through PyTorch and TorchVision is the most appropriate model choice for the proposed prototype, and its output should be treated as an advisory habitat-category signal for officer review rather than as proof that breeding is present.
+2.3.7 Cloud Deployment and Hosting
+For the proposed prototype, the deployment environment must support a web-accessible reporting interface, backend processing for report submission and review, and persistent access to database and image-storage services. Since the system is intended to operate as an online prototype rather than as a local-only demonstration, the hosting approach should be selected according to how well it supports the chosen application structure and its practical implementation requirements.
+The main deployment approaches relevant to this system are local-only deployment, self-managed cloud hosting, a fully serverless architecture, and managed application hosting. Local-only deployment is not suitable because it would not support public access to the reporting interface or continuous availability of backend and storage services. Self-managed cloud hosting is technically viable, but it would require more direct configuration and maintenance of server infrastructure. For a bounded academic prototype, that would shift effort away from the reporting, review, and decision-support functions that form the main purpose of the system.
+A fully serverless architecture is also viable and may provide scalability and reduced infrastructure management. However, in this case it is less suitable because the selected backend approach is based on FastAPI with Uvicorn rather than a function-oriented serverless design. Adopting a Lambda- and API Gateway-based structure would therefore require more substantial restructuring of the application flow than is necessary for the proposed prototype (Amazon Web Services, n.d.-k, n.d.-l).
+Managed application hosting is more appropriate because it supports deployment of the selected frontend and backend with less infrastructure overhead while preserving the application structure already justified in the earlier subsections. Within this approach, AWS Amplify is suitable for hosting the React frontend, while AWS App Runner is suitable for hosting the FastAPI backend from source code or container images without direct management of lower-level server infrastructure (Amazon Web Services, n.d.-c, n.d.-d). Together with Amazon RDS for PostgreSQL and Amazon S3 for image storage, this provides a deployment arrangement that is consistent with the technical architecture of the system.
+AWS Free Tier and promotional credit arrangements may help reduce some initial deployment cost for eligible accounts, although services such as App Runner and Amazon RDS remain usage-priced rather than permanently free (Amazon Web Services, n.d.-a, n.d.-b, n.d.-f). For a low-traffic academic prototype, AWS Amplify for the frontend, AWS App Runner for the backend, Amazon RDS for PostgreSQL, and Amazon S3 for image storage form an appropriate hosted deployment stack. This combination is the most suitable for the proposed prototype because it supports public access, backend processing, persistent storage, and practical deployment without requiring unnecessary redesign of the selected system architecture.
+2.3.8 Privacy, Security, Governance, and Access Control
+The system collects photographs, locations, and timestamps from members of the public. Therefore, privacy, security, governance, and access control are essential to ensure that submitted information is handled appropriately and used only for reporting and review purposes. Since the system is intended to support public reporting and officer-side decision support, it should not expose submitted evidence without restriction.
+Residents and officers do not require the same level of access to report data. Residents may need limited public-facing visibility through a map that shows where reports have been submitted. However, they do not require access to submitted photographs, fuller report details, or officer-side review information. Officers, by contrast, require richer access to report evidence in order to review submissions, interpret model output, and carry out prioritisation and follow-up. For this reason, the system should apply role-sensitive visibility rather than exposing the same information to all users.
+This approach is consistent with the Principles of Personal Data Protection, which emphasise limits on disclosure, processing, and security in the handling of personal data (Department of Personal Data Protection, n.d.). Accordingly, the public-facing side of the system should expose only the minimum information needed for situational awareness, while submitted photographs, review-related metadata, and fuller evidence details remain restricted to the officer-facing side. In this way, the public map supports awareness without functioning as an unrestricted evidence repository.
+The same principle applies to evidence storage. Uploaded images should not be stored in a publicly readable location. Private object storage is more appropriate, and time-limited presigned URLs provide a practical way to allow controlled access to stored evidence only when it is required for officer review (Amazon Web Services, n.d.-j). Machine-learning output should also remain advisory rather than determinative. It may assist officer triage, but it should not be treated as proof that breeding is present or as a final decision. Accordingly, the system should operate as a role-sensitive decision-support platform in which public visibility is limited, officer access is controlled, and sensitive evidence remains protected.
+2.3.9 Supporting Development and Training Tools
+Supporting development and training tools are important to the implementation of the proposed prototype because they help maintain version control, dependency management, and reproducibility throughout development. Git-based version control is more appropriate than ad hoc file copies or manually renamed folders because it is designed to track changes over time and to allow earlier project states to be recovered when needed (Chacon & Straub, 2014). This is particularly important for a prototype that includes multiple connected components, including the frontend, backend, storage logic, and machine-learning workflow.
+A hosted remote repository is also preferable to relying only on a local repository because it improves backup, synchronisation, and traceability across development. In this role, GitHub is relevant as a repository-hosting platform built around Git rather than as a separate version-control system (Chacon & Straub, 2014; GitHub, Inc., n.d.).
+For the Python backend and machine-learning component, isolated virtual environments are more appropriate than installing packages directly into the system-wide Python environment. According to the Python documentation, venv is a standard utility for creating lightweight virtual environments whose installed packages are isolated by default from the base environment (Python Software Foundation, n.d.). In this project, that isolation helps keep backend dependencies, model-related libraries, and supporting packages manageable and reproducible across development and testing stages.
+Taken together, Git, GitHub, and venv provide an appropriate supporting toolset for the proposed prototype because they help maintain implementation control, dependency isolation, and reproducibility throughout development and training.
+2.4 Summary
+This chapter has reviewed the literature and technical foundations relevant to the proposed crowdsourced photo-based reporting and risk mapping prototype for suspected dengue breeding habitats in Kuala Lumpur. The chapter first established the domain context, including urban dengue burden, breeding-habitat patterns, field verification constraints, and the role of participatory reporting and bounded AI support. It then translated these requirements into a practical technical stack for prototype development, covering the frontend interface, browser-based evidence capture, role-appropriate map visualisation, backend API design, structured and spatial data storage, machine-learning-based habitat triage, cloud deployment, governance controls, and supporting development tools. Taken together, these elements define a coherent implementation basis for the methodology described in the next chapter.
+Chapter 3
+METHODOLOGY
+3.1 System Development Methodology
+3.1.1 Overview of Candidate Development Methodologies
+This project considers two candidate system development methodologies: the Waterfall model and iterative and incremental development. These were selected because they represent two contrasting ways of structuring software development, particularly in how requirements, feedback, and change are managed over the course of a project (Bourque & Fairley, 2014).
+Waterfall model is a strict development methodology where the key stages of the project like requirements, design, implementation, testing, and deployment are arranged in a linear manner. It is typically linked to projects in which the requirements can be defined with a high level of clarity at an early stage and projects which require a high level of control during developmental phases (Bourque & Fairley, 2014).
+By comparison, iterative and incremental development structures development around a series of repeated cycles whereby the system is successively refined and extended. The approach enables understanding to be enhanced through continued design, implementation, and evaluation rather than requiring all major requirements and technical decisions to be fixed at the beginning. Larman and Basili (2003) explain iterative and incremental development as a proven model of software engineering that is grounded in the concept of continually refining and gradually expanding the system.
+A methodology comparison is necessary for the present project because several aspects of the proposed prototype are not yet fully stable at the outset. These include the structure of citizen reporting inputs, the feasible scope of breeding-habitat categories, and the exact role of AI in generating habitat classification suggestions for officer-reviewed triage. The formal comparison of these two candidate methodologies, and the justification for the final choice, is presented in the next subsection.
+3.1.2 Comparison of Waterfall and Iterative Development
+The two candidate methodologies are distinct primarily in the way that they organise development, requirements management, and clarification within the project lifecycle. Linear life cycle models are outlined in SWEBOK as sequential and predictive models, and iterative models as developing software in steps and rounds of iterative cycles that are considered more adaptive in handling requirements (Bourque & Fairley, 2014). A similar characterisation of iterative and incremental development is presented by Larman and Basili (2003), who describe the two as methods that do not follow a single-pass, document-defined sequence but permit refinement to happen across cycles.
+In the current project, the comparison should be conducted not only on the basis of the general characteristics of the processes, but also regarding the very types of uncertainty that can still prevail at this point. These are the ultimate design of the citizen reporting fields, the scope of the breeding-habitat categories that is realistically achievable and practically useful, how much image data can be made available that can reliably support such categories, and what form of constrained AI service can be offered, including initial suggestions of habitat classes and indications of confidence in the triage reviewed by officers. Such uncertainties do not only impact requirements definition, but also interface design, data structures, workflow logic, and validation planning.
+
+Table 3.1. Comparison between Waterfall and Iterative and Incremental Development
+Aspect
+Waterfall
+Iterative and incremental development
+Process structure
+Predominantly sequential, with major phases planned in an ordered progression and limited backtracking once downstream work has begun
+Development proceeds through repeated cycles that deliver working increments and allow refinement across later iterations
+Requirements management
+Requirements are defined as fully as possible early in the project and then placed under tighter change control
+Requirements can be elaborated and adjusted across iterations as working versions and feedback reveal what needs refinement
+Accommodation of change
+Change is possible, but substantial late clarification may require revisiting earlier requirements, design decisions, and test artefacts
+Change is incorporated more naturally through replanning in later iterations and refinement of subsequent increments
+Feedback and validation timing
+Broad validation is concentrated after substantial design and implementation work has been completed
+Partial validation can occur earlier because each iteration can be reviewed before the next increment is expanded
+Impact of late clarification on this project
+If reporting fields, habitat categories, or AI-output boundaries change after early specification and design, rework would likely be needed across forms, database design, review logic, and testing documentation
+The same issues can be explored through early prototypes and revised in later cycles before wider integration depends on them
+Fit with this project
+Better suited where the reporting workflow, habitat taxonomy, data assumptions, and decision-support scope are already stable
+Better suited where these elements still require progressive clarification through prototyping, review, and staged refinement
+
+As Table 3.1 indicates, it is not the flexibility of the abstract sense, but whether this project is likely to require changes to its initial assumptions as development progresses. Royce (1970/2021) cautioned that when full testing occurs only after substantial upstream work has been completed, failures may require major redesign rather than smaller corrective adjustments. That risk is relevant here because early prototype development may reveal whether user-submitted evidence can be collected in a sufficiently usable form, whether the proposed habitat categories can be operationalised effectively in practice, and whether AI output should be limited to preliminary classification recommendations for officer review rather than broader decision support. Under a predominantly sequential model, such later clarification would likely create unnecessary rework across requirements, interface design, data structures, and validation artefacts. Iterative and incremental development is therefore more suitable for this project because it allows these uncertainties to be explored and reduced early, before later increments depend on this.
+3.1.3 Justification for the Chosen Methodology
+The project adopts iterative and incremental development because major aspects of the proposed prototype should not be fixed fully at the beginning; instead, they need to be clarified through development and evaluation. Three areas are especially significant. First, the final design of the citizen-reporting workflow is not yet settled, including which fields, prompts, and validation rules are needed to obtain usable submissions. Second, the feasible breeding-habitat class scope still needs to be narrowed on the basis of what can be distinguished reliably and supported by the available image data. Third, the boundary of AI output within the officer-reviewed triage process still needs to be defined, especially in relation to prediction display, confidence information, and review behaviour. These are not independent decisions, because they influence one another across the interface, data model, machine-learning component, and dashboard design.
+A Waterfall approach is less suitable because it relies more heavily on defining major requirements, design assumptions, and verification targets before downstream development proceeds (Pressman & Maxim, 2020). In this project, that would require early commitment to reporting fields, evidence prompts, validation rules, habitat definitions, dataset boundaries, and dashboard behaviour before those assumptions have been sufficiently validated. Such early commitment would be risky because changes in one area would propagate into others. For example, revising the reporting workflow would alter input structure and validation logic; revising the habitat taxonomy would affect dataset filtering, labelling, and model scope; and revising the AI decision-support boundary would affect interface behaviour, confidence presentation, and officer review rules. Under a predominantly sequential model, clarification at a later stage would therefore create avoidable rework across interface design, data structures, model configuration, and test design.
+Iterative and incremental development is more appropriate because it allows those uncertainties to be addressed through early working increments and repeated refinement. Larman and Basili (2003) describe iterative and incremental development as an approach in which understanding is improved across successive cycles rather than assumed to be complete at the beginning. For this project, an initial increment can be used to test whether the reporting structure captures sufficiently complete and consistent submissions. A subsequent increment can be used to examine whether the selected habitat classes are both operationally meaningful and adequately represented in the available image data. Further increments can then evaluate how AI-generated class suggestions should be displayed to officers so that the system remains a decision-support tool rather than an automated decision-maker. This staged approach allows each uncertain area to be tested in a form that is concrete enough to inform later design choices.
+For these reasons, iterative and incremental development is the most suitable methodology for the present project. It supports gradual clarification of the reporting workflow, habitat-classification scope, and officer-facing AI features before those elements are embedded more broadly across the prototype. The methodology therefore fits the project’s actual development conditions more closely than a predominantly sequential life cycle.
+3.1.4 Application of Iterative Development to the Project
+In this project, iterative development is applied by establishing an initial prototype concept, testing key assumptions through investigation activities, and using the resulting findings to refine the project’s prototype direction before later design and implementation decisions are fixed (Larman & Basili, 2003; Pressman & Maxim, 2020). At this stage of the project, iteration is used mainly to reduce uncertainty in the reporting workflow, the feasible habitat classification scope, and the role of hotspot information within an officer-reviewed triage process.
+The initial cycle produces a provisional formulation of the proposed prototype based on problem analysis and literature-supported scoping. In that provisional formulation, the prototype is defined as a citizen-reporting decision-support system for suspected dengue breeding habitats, with human officers retained as the final reviewing authority. This cycle also establishes the project’s initial assumptions regarding the type of user-submitted evidence required, the likely habitat categories to be recognised, and the possible use of hotspot information in prioritisation.
+The next cycle tests and refines those provisional assumptions through the investigation activities defined in Sections 3.2 and 3.3. Survey-based investigation is used to examine the practicality and expected structure of the citizen reporting workflow, while public dataset review and preliminary habitat class mapping are used to assess whether the intended classification scope is feasible from an image-data perspective. In parallel, hotspot and geospatial feasibility assessment is used to determine whether hotspot-based urgency logic can be incorporated on a defensible basis. These activities therefore function not as isolated data-gathering tasks, but as mechanisms for evaluating and revising the initial project concept.
+The outputs of those activities are then analysed and translated into the implications of the findings for prototype design. Through that synthesis, early assumptions are either retained, narrowed, or revised on the basis of investigation findings, producing a more evidence-based design direction for the next stage of development. Iterative development is therefore applied in this project as a feedback-driven process in which provisional assumptions are tested and progressively refined, rather than fixed fully at the outset (Larman & Basili, 2003). The resulting design direction then provides the basis for subsequent design and implementation work in later project stages.
+3.2 Data Gathering Design
+3.2.1 Overview of Data Gathering Approach
+This investigation report adopts a dual-source data gathering approach comprising a questionnaire survey and publicly available image datasets. The questionnaire survey is used to obtain user-side evidence relevant to the design of the reporting process, particularly in relation to current reporting behaviour, perceived reporting barriers, privacy and trust concerns, and preferences for a structured photo-based reporting workflow. The image datasets are used as technical input for the planned habitat detection component, specifically to identify suitable habitat classes, assess label availability and consistency, and assemble a small, class-consistent image set for later dataset curation and model development.
+The two sources are used for different purposes during investigation. The survey is used to understand what information potential users can provide and what concerns may affect participation in reporting. The image datasets are used to support early dataset selection and class-mapping decisions rather than model evaluation at this stage. Their role is to determine whether suitable training images exist for the selected habitat classes and whether those classes can be aligned consistently across the available sources for later model building. Together, these sources support early investigation from both the user side and the technical side.
+The questionnaire survey is presented in Section 3.2.2, while the image-dataset investigation is presented in Sections 3.2.4 and 3.2.5.
+3.2.2 Survey Structure and Questionnaire Sections
+A survey has been chosen as the primary elicitation tool as this stage of the project requires an organised input from the prospective users about their existing reporting behaviour, existing reporting barriers, privacy and trust concerns, as well as preferences for a structured photo-based reporting process. 
+The survey begins with a brief introductory statement explaining the academic purpose of the questionnaire, the anonymous nature of responses, and the intended use of the findings to inform the proposed prototype design. This introductory framing is important because later questions require a clear explanation of purpose of the survey at the outset.
+
+Figure 3.2. Google Forms introduction and consent framing used in the questionnaire survey.
+Section 1 establishes respondent background. It inquiries about the respondent's connection with Kuala Lumpur, their age group and their main area of activity within the city. This section is necessary because the prototype is scoped to Kuala Lumpur, and its requirements should therefore be informed by people who live in, study in, work in, or regularly move through the city and may encounter suspected breeding habitats during their routine movement.
+
+Figure 3.3. Questionnaire Section 1 on respondent background and connection to Kuala Lumpur.
+Section 2 studies observation Current Reporting Behaviour of the respondent now. Its questions are aimed at establishing how frequently the respondents see the objects that may accumulate stagnant water, what they normally do when they identify such locations, whether they have contacted the relevant authorities about problems with mosquitoes or environmental concerns in the past, what reporting mechanisms they have used and why they might not have done so before. This section helps us validate the need of the project.
+
+Figure 3.4. Questionnaire Section 2 on observation behaviour and current reporting practices.
+
+Section 3 addresses submission barriers, trust, and privacy. It asks about comfort with taking or uploading a photo, comfort with allowing location access, the main concern that might discourage submission, whether anonymity would increase willingness to report, the importance of receiving confirmation that a report was submitted successfully, and the type of follow-up that would make future reporting more likely. This section is especially important because willingness to submit structured evidence depends not only on interface usability, but also on privacy confidence, trust in downstream review, and belief that reporting may lead to meaningful action.
+
+Figure 3.5. Questionnaire Section 3 on submission barriers, trust, and privacy.
+Section 4 focuses on interface preferences that may affect whether a user completes the reporting workflow. It asks which factors would most increase the likelihood of completing a report on a mobile website, whether users would want to correct an inaccurate GPS location on a map, how comfortable they would be with automated photo analysis before officer review, and which language they would prefer for the interface. This section therefore informs both the usability design of the reporting process and the acceptable boundaries of the AI-assisted component.
+
+
+Figure 3.6. Questionnaire Section 4 on interface preferences for mobile reporting.
+Section 5 contains one optional open-ended question asking what would make the respondent more likely to use a mobile web system to report a suspected mosquito breeding habitat in Kuala Lumpur. This section is useful because it allows respondents to raise concerns, suggestions, or preferences that may not be fully captured by the closed-ended items in the earlier sections.
+
+Figure 3.7. Questionnaire Section 5 optional open-ended feedback prompt.
+Overall, the questionnaire is designed to capture practical user-side evidence on observation behaviour, current reporting practices, perceived barriers, workflow preferences, and any additional feedback they may want to share. This feedback helps ground the prototype requirements in actual user preferences.
+3.2.3 Public Dataset Selection and Preliminary Habitat Class Mapping
+This project includes an image-based habitat-classification component and therefore required public image sources during the investigation stage. In this report, dataset selection and preliminary habitat-class mapping are addressed together because source selection is meaningful only if the available labels can support a bounded set of habitat categories for later dataset preparation. The purpose of this subsection is therefore to justify the selected public sources and to show how their labels were used, together with Kuala Lumpur evidence, to derive the preliminary retained habitat classes.
+Sayeedi et al. (2024) describe MosquitoFusion as a multiclass dataset containing 1,204 images containing Mosquitoes, Swarms, and Breeding Sites as classes. For the present project, only the broad Breeding Sites class is directly relevant. Islam et al. (2025) present VisText-Mosquito as a broader multimodal benchmark for mosquito breeding sites; however, only its breeding-place detection subset is relevant here. That subset contains 1,828 images and 3,752 annotations across five classes: Coconut-Exocarp, Vase, Tire, Drain-Inlet, and Bottle (Islam et al., 2025). These two sources therefore differ at the level that matters most to this subsection: MosquitoFusion provides broad breeding-site imagery, whereas VisText-Mosquito provides multiple container-level labels.
+
+For the present project, dataset suitability was judged using four criteria: relevance to breeding-habitat reporting, label granularity, compatibility with a small urban habitat taxonomy, and the amount of manual curation required before later development, including image screening, label merging, relabelling, and exclusion of out-of-scope images. These criteria were used to determine whether the selected sources could support preliminary class mapping for a Kuala Lumpur-oriented reporting scope. Table 3.2 summarises the comparison.
+Table 3.2. Comparison of selected public datasets for preliminary habitat-class mapping
+Dataset
+Relevant dataset component
+Available labels
+Value for this study
+Key limitation
+Label structure for this study
+MosquitoFusion
+Breeding Sites class within the 1,204-image multiclass dataset
+Mosquitoes, Swarms, Breeding Sites
+Provides additional breeding-site imagery and broader scene variation
+Breeding Sites is too coarse for direct class definition
+Single broad breeding-site label
+VisText-Mosquito
+Breeding-place detection subset (1,828 images; 3,752 annotations)
+Coconut-Exocarp, Vase, Tire, Drain-Inlet, Bottle
+Provides container-level labels that can support the retained taxonomy
+Includes labels outside the intended Kuala Lumpur urban scope
+Multiple container-level labels
+
+Note. Synthesised by the author based on Sayeedi et al. (2024) and Islam et al. (2025).
+Taken together, Table 3.2 indicates that VisText-Mosquito can support preliminary class mapping more directly, whereas MosquitoFusion is more suitable as a supplementary source of breeding-site imagery (Islam et al., 2025; Sayeedi et al., 2024).
+Local justification for the retained habitat categories was drawn primarily from Kuala Lumpur outbreak-locality studies. Rahim et al. (2021) reported positive containers in Kepong including plastic containers, water drums, drains, and flowerpots. Mahmud et al. (2018) likewise found artificial containers to be important breeding sites in Cheras outbreak localities. These studies support beginning with a container-oriented set of candidate categories for the present project. They do not, however, determine the retained classes on their own, because each candidate category still has to be checked against the labels available in the selected public datasets.
+The selected datasets do not support all locally relevant categories equally. Islam et al. (2025) provide direct label support for Tire and Drain-Inlet in VisText-Mosquito and indirect support for a broader artificial-container category through Bottle and Vase. By contrast, neither VisText-Mosquito nor MosquitoFusion provides a direct Water Drum label, and neither source provides a direct Flowerpot label. Sayeedi et al. (2024) also do not separate breeding sites in MosquitoFusion into container-level classes, so MosquitoFusion cannot by itself determine the retained taxonomy.
+On that basis, Drain / Drain Inlet was retained because it is locally relevant and directly supported by the Drain-Inlet label in VisText-Mosquito (Rahim et al., 2021; Islam et al., 2025). Artificial Container was retained as a merged class because the Kuala Lumpur studies support recurring man-made containers, while VisText-Mosquito provides Bottle and Vase as proxy source labels that can be consolidated during later curation (Mahmud et al., 2018; Rahim et al., 2021; Islam et al., 2025). Tire was also retained because VisText-Mosquito provides a direct Tire label and tyres were present among the positive containers reported in Kepong, although not among the dominant categories highlighted in that study (Rahim et al., 2021; Islam et al., 2025).
+The remaining candidate categories were not retained as independent classes. Water Drum was deferred because it is locally relevant but no directly mappable label is available in the selected public datasets. Flowerpot was not retained independently because the available support is only indirect through Vase. Coconut-Exocarp was excluded because, although it exists as a VisText-Mosquito label, it does not align strongly with the intended Kuala Lumpur urban reporting scope. MosquitoFusion remained a supplementary source for later image review rather than a basis for defining classes, because its Breeding Sites label is not separated into container-level categories (Sayeedi et al., 2024).
+Table 3.3. Evaluation of candidate habitat categories for the preliminary retained taxonomy
+Candidate habitat category
+VisText-Mosquito class
+MosquitoFusion class
+Outcome
+Justification
+Tire
+Tire
+Breeding Sites
+Retain
+Direct label support
+Drain / Drain Inlet
+Drain-Inlet
+Breeding Sites
+Retain
+Local relevance and direct label support
+Artificial Container
+Bottle, Vase
+Breeding Sites
+Retain as merged class
+Local relevance with merged proxy labels
+Water Drum
+None
+Breeding Sites
+Defer
+Local relevance but no direct label
+Flowerpot
+Vase
+Breeding Sites
+Do not retain as a separate class
+Only indirect proxy support
+Coconut-Exocarp
+Coconut-Exocarp
+Breeding Sites
+Exclude
+Weak local relevance to study scope
+Note. Local relevance was assessed using Kuala Lumpur outbreak-locality evidence from Abdul Rahim et al. (2021) and Mahmud et al. (2018), while class support was assessed against the available source labels reported for VisText-Mosquito and MosquitoFusion (Islam et al., 2025; Sayeedi et al., 2024). Bottle and Vase were treated as proxy source classes for the merged Artificial Container outcome. Categories without direct or defensibly mergeable label support were deferred or excluded. VisText-Mosquito reports annotation counts for the relevant subset, but not unique per-class image counts.
+Figure 3.8 provides representative source images from the selected datasets to show the difference between VisText-Mosquito's direct container-level labels and MosquitoFusion's broader breeding-habitat imagery.
+
+Figure 3.8. Representative source images showing class labels in VisText-Mosquito and MosquitoFusion
+Note. The VisText-Mosquito examples show Tire and Drain-Inlet as directly labelled source classes, whereas the MosquitoFusion example shows a broader breeding-habitat scene without an equivalent container-level class label. Compiled by the author from Islam et al. (2025) and Sayeedi et al. (2024).
+The selection and mapping process therefore produced a preliminary retained habitat scheme consisting of Tire, Drain / Drain Inlet, and Artificial Container. The retained classes are limited to categories that are supported by both Kuala Lumpur evidence and available source labels, while the deferred and excluded categories remain explicit for later review. The subsection that follows describes how the retained public images will be screened, relabelled, and consolidated during dataset preparation.
+The selected public datasets are not treated as directly model-ready inputs. Instead, the retained images will require later screening, relabelling, merging, exclusion, and consolidation according to the preliminary class decisions established in this subsection. These preparation steps follow from the mismatch between the source labels and the retained project taxonomy, and they will be carried forward during later development.
+3.3 Data Gathering Findings
+The questionnaire was created and administered using Google Forms and distributed between 6 March 2026 and 10 March 2026. It was shared by the author across university campus networks, class groups, friend groups, family groups, and work-related groups, with additional circulation occurring through friends, classmates, and family members who further shared the form. The survey was targeted at individuals with experience of Kuala Lumpur, including those who live, study, work, or regularly spend time there. A total of 63 responses were received during the data-collection period.
+Section 1: Respondent Background
+
+Figure 3.9. Survey respondents' connection to Kuala Lumpur.
+The respondent group was dominated by individuals who study in Kuala Lumpur, accounting for 73.0% (46 of 63 responses). This was followed by those who live in Kuala Lumpur at 25.4% (16 responses), while only 1.6% (1 response) selected working in Kuala Lumpur. No respondents selected regularly spending time in Kuala Lumpur or none of the above. This shows that the respondent group was mainly composed of students with direct day-to-day exposure to Kuala Lumpur.
+
+Figure 3.10. Age distribution of survey respondents.
+The age distribution was heavily concentrated in the 18–24 group, which accounted for 82.5% (52 of 63 respondents). This was followed by Under 18 at 7.9% (5 respondents), 35–44 at 6.3% (4 respondents), and 25–34 at 3.2% (2 respondents). No responses were recorded for 45–54, 55 and above, or Prefer not to say. The age profile therefore aligns closely with the student-heavy composition of the sample
+
+Figure 3.11. Main area of activity of survey respondents within Kuala Lumpur.
+The geographic distribution was highly concentrated in Bukit Jalil, which accounted for 87.3% (55 of 63 respondents). This was followed by Cheras at 6.3% (4 respondents), while the remaining 6.4% (4 respondents) were distributed across several other Kuala Lumpur areas in very small numbers. This indicates that the findings are strongly shaped by respondents from Bukit Jalil and should therefore not be treated as equally representative of all areas of Kuala Lumpur.
+Section 2: Observation and Current Reporting Behaviour
+
+Figure 3.12. Frequency with which respondents notice containers that could collect stagnant water.
+Responses to this question indicate that noticing potential stagnant-water collection points is relatively common among the survey participants. The largest proportion selected Sometimes at 46.0% (29 of 63 respondents), followed by Rarely at 25.4% (16 respondents) and Often at 15.9% (10 respondents). Smaller proportions selected Never at 9.5% (6 respondents) and Very often at 3.2% (2 respondents). This suggests that most respondents do occasionally encounter relevant breeding-site conditions in their everyday environments, this provides great relevance to the project.
+
+Figure 3.13. Actions respondents usually take when they notice containers that could collect stagnant water.
+The most common response was Ignore it, selected by 44.4% (28 of 63 respondents). This was followed by I am not sure what to do at 23.8% (15 respondents) and Remove or empty it myself at 17.5% (11 respondents). Smaller proportions selected Report it to an authority or complaint channel at 9.5% (6 respondents) and Tell someone nearby at 4.8% (3 respondents).
+
+Figure 3.14. Prior experience reporting mosquito-related issues or environmental complaints.
+The responses show that prior formal reporting experience was very limited among the survey participants. A large majority, 93.7% (59 of 63 respondents), stated that they had not previously reported a mosquito-related issue or environmental complaint to an authority, while only 6.3% (4 respondents) indicated that they had. No respondents selected Not sure.
+
+Figure 3.15. Channels previously used to report mosquito-related issues or environmental complaints.
+Most respondents selected Not applicable, accounting for 73.0% (46 of 63 respondents), which is consistent with the earlier finding that most had never formally reported such issues before. Among the channels that had been used, WhatsApp or messaging was the most common at 9.5% (6 respondents), followed by Social media at 7.9% (5 respondents), DBKL / Adu@KL portal at 4.8% (3 respondents), Other at 3.2% (2 respondents), and Hotline / phone call at 1.6% (1 respondent). No respondents selected Email. 
+Figure 3.16. Main reason respondents have not previously reported mosquito-related issues.
+he most common reason selected was I do not know how to report, at 38.1% (24 of 63 respondents). This was followed by I am not sure what counts as a breeding site worth reporting at 19.0% (12 respondents), I am not sure the report would lead to action at 12.7% (8 respondents), and Not applicable at 11.1% (7 respondents). Smaller proportions selected I do not have enough time at 9.5% (6 respondents), The process seems too troublesome at 4.8% (3 respondents), and Other at 4.8% (3 respondents), while no respondents selected I have privacy concerns.
+Section 3: Submission Barriers, Trust, and Privacy
+
+Figure 3.17. Comfort with using a mobile website to take or upload a photo of a suspected breeding habitat.
+Responses to this question indicate a generally high level of comfort with using a mobile website to take or upload a photo of a suspected breeding habitat. The largest proportion selected 5 at 41.3% (26 of 63 respondents), followed by 4 at 28.6% (18 respondents) and 3 at 15.9% (10 respondents). Smaller proportions selected 2 at 7.9% (5 respondents) and 1 at 6.3% (4 respondents). Taken together, 69.9% (44 respondents) selected 4 or 5, suggesting that most respondents would be comfortable using a photo-based mobile reporting interface.
+
+Figure 3.18. Comfort with allowing a mobile website to use location data during report submission.
+The most common ratings were 3 and 4, each at 28.6% (18 of 63 respondents), followed by 2 and 5, each at 17.5% (11 respondents), and 1 at 7.9% (5 respondents). Taken together, 46.1% (29 respondents) selected 4 or 5, while 25.4% (16 respondents) selected 1 or 2. This suggests that, although many respondents were open to allowing location access, location sharing appears to raise more hesitation than photo upload and may therefore require clearer explanation and stronger user reassurance within the reporting interface.
+
+Figure 3.19. Main concern that could discourage submission of a report.
+The most frequently selected concern was that the reporting process may take too many steps, at 31.7% (20 of 63 respondents). This was followed by privacy concerns about location sharing at 20.6% (13 respondents), lack of trust that the report will be acted on at 17.5% (11 respondents), and not being stopped by any of these concerns at 15.9% (10 respondents). Smaller proportions selected privacy concerns about the photo at 9.5% (6 respondents), poor internet connection or technical issues at 3.2% (2 respondents), and asking for permissions as a privacy concern at 1.6% (1 respondent), while no respondents selected discomfort with a system-generated output as their main concern.
+
+Figure 3.20. Effect of anonymity on willingness to submit a report.
+A clear majority of respondents indicated that they would be more willing to submit a report if personal identity was not required. 76.2% (48 of 63 respondents) selected Yes, while 20.6% (13 respondents) stated that it does not matter to them, and only 3.2% (2 respondents) selected No. This suggests that anonymity or non-identification could play an important role in improving willingness to report, even if identity disclosure is not a major concern for every respondent.
+
+Figure 3.21. Importance of receiving feedback after report submission.
+The largest proportion selected Important at 33.3% (21 of 63 respondents), followed by Very important at 28.6% (18 respondents) and Moderately important at 27.0% (17 respondents). Smaller proportions selected Slightly important at 6.3% (4 respondents) and Not important at 4.8% (3 respondents). Taken together, 61.9% (39 respondents) rated confirmation as important or very important, suggesting that visible submission feedback should be included as part of the reporting process.
+
+Figure 3.22. Preferred type of follow-up after report submission.
+The strongest follow-up preference was knowing some action was taken, selected by 71.4% (45 of 63 respondents). Much smaller proportions selected knowing my report was reviewed at 14.3% (9 respondents) and receiving an automated acknowledgement is enough at 14.3% (9 respondents), while no respondents selected I would not expect any follow-up. This suggests residents are willing to be engaged in the platform especially if they can see that their reports are followed-up by real measures.
+Section 4: Interface Preferences
+
+Figure 3.23. Factors most likely to increase completion of a report on a mobile website.
+The two strongest factors were the report takes less than 1 minute, selected by 61.9% (39 of 63 respondents), and the report uses very few steps or screens, selected by 58.7% (37 respondents). This was followed by the report does not require much typing at 33.3% (21 respondents) and the interface is simple and easy to understand at 22.2% (14 respondents). Only 3.2% (2 respondents) selected clear explanation of why photo and location are needed as one of their top two factors. This result could also explain why respondents are not actively engaging with DBKL breeding habitat reporting channels as they feel like it is too much of a hassle.
+
+Figure 3.24. Preference for being able to adjust the detected report location manually.
+A strong majority of respondents indicated that they would want the option to adjust the report location manually if the automatically detected GPS location was inaccurate. 77.8% (49 of 63 respondents) selected Yes, while 14.3% (9 respondents) selected Not sure and 7.9% (5 respondents) selected No. This shows that participants are willing to correct inaccuracies in automatically detected location data in order to ensure data accuracy in the report.
+
+Figure 3.25. Comfort with adjusting the report location using a map-based pin.
+
+The largest proportion selected Comfortable at 39.7% (25 of 63 respondents), followed by Neutral at 31.7% (20 respondents) and Very comfortable at 12.7% (8 respondents). Smaller proportions selected Very uncomfortable at 9.5% (6 respondents) and Uncomfortable at 6.3% (4 respondents). Taken together, 52.4% (33 respondents) were comfortable or very comfortable, while only 15.8% (10 respondents) were uncomfortable or very uncomfortable.
+
+Figure 3.26. Preferred interface language for the reporting system.
+English was the clear preferred language for the reporting interface, selected by 82.5% (52 of 63 respondents). This was followed by Both English and Bahasa Malaysia at 15.9% (10 respondents), while only 1.6% (1 respondent) selected Bahasa Malaysia alone and no respondents selected No preference. This result makes sense because of the survey distribution approach used.
+Section 5: Optional Feedback
+
+
+
+
+
+
+Figure 3.27. optional open-ended feedback responses
+An AI-assisted review of the open-ended responses identified the following recurring themes from Section 5. The responses were grouped by theme to provide a concise summary of the main factors influencing willingness to use the proposed reporting prototype. As shown in Table 3.4, the most common theme was ease of use and accessibility, followed by action and follow-up, informative content, and incentives.
+Table 3.4. Summary of recurring themes identified in the Section 5 optional feedback responses
+Theme
+Number of responses
+Ease of use and accessibility
+17
+Action and follow-up
+5
+Informative content
+5
+Incentives
+4
+Other
+2
+Privacy and security
+1
+
+Note. Themes were grouped by the author through AI-assisted review of the optional open-ended responses in Section 5.
+The survey findings indicate that the proposed prototype addresses a plausible and relevant reporting need among respondents with day-to-day familiarity with Kuala Lumpur. Although many respondents stated that they notice places or containers that could collect stagnant water at least occasionally, formal reporting experience was very limited, and many reported that they would either ignore such situations or were unsure what to do. The results therefore suggest that the gap is not only the presence of potential breeding habitats in everyday environments, but also the absence of a clear, familiar, and accessible reporting pathway.
+Across the findings, the strongest recurring pattern was the importance of simplicity and low reporting effort. Respondents consistently preferred a reporting process that is quick, uses very few steps, requires little typing, and is easy to understand. At the same time, the findings show that trust and follow-up matter: respondents valued confirmation that a report was submitted successfully and showed a strong preference for knowing that some action was taken afterwards. Privacy-related concerns were present, particularly in relation to location sharing and personal identity, although photo submission itself was generally more acceptable. The results also indicate that respondents want some degree of user control, especially the ability to correct an inaccurate automatically detected GPS location. Finally, the generally positive response toward automatic photo analysis before officer review suggests that AI can be included as a supportive classification aid, provided that it is positioned within a human-reviewed reporting process rather than as a fully autonomous decision-maker.
+3.4 Implications of the Findings for Prototype Design
+This section translates the questionnaire findings and the dataset review into design direction for the proposed prototype. They are intended to guide the next stage of development.
+Implications for Interpreting the Findings
+The respondent-background findings provide useful design evidence because the sample had day-to-day familiarity with Kuala Lumpur even though it was not broadly representative of the whole city. The concentration among students and Bukit Jalil respondents means that the results are most reliable for identifying likely user-side workflow barriers, reporting uncertainties, and trust considerations. Accordingly, the implications in this section are framed as direction for the initial prototype rather than as universal claims about how all Kuala Lumpur residents would behave.
+Implications for the Resident Reporting Workflow
+Section 2 indicates that suspected breeding habitats are noticed in everyday life, but they are seldom converted into formal reports. Many respondents said they would ignore such situations or were unsure what to do, prior reporting experience was very limited, and the main non-reporting reasons included not knowing how to report and not being sure what counts as worth reporting. When these results are read together with the Section 4 preference for a report that takes less than one minute, uses very few steps, and requires little typing, the design implication is a short mobile-web submission path with a clear step flow, minimal text entry, and concise guidance on what kinds of suspected habitats are relevant to report.
+Implications for Trust and Privacy
+The Section 3 results distinguish between different kinds of perceived exposure in the reporting process. Photo submission appears comparatively acceptable, with 69.9% of respondents selecting 4 or 5 on comfort with taking or uploading a photo, whereas location access generated more hesitation, with only 46.1% selecting 4 or 5 and 25.4% selecting 1 or 2. In addition, 76.2% said they would be more willing to submit a report if personal identity was not required. These results support a design that keeps personal identification optional unless a later workflow need justifies it, handles location access carefully, and explains why location is requested, while not assuming that privacy concerns disappear entirely.
+Implications for Confirmation and Follow-up
+The Section 3 confirmation and follow-up results indicate that users do not treat submission as complete once the form is sent. Confirmation after submission was rated important or very important by 61.9% of respondents, 71.4% preferred knowing that some action was taken afterwards, and Section 5 also identified action and follow-up as a recurring open-ended theme. The design implication is that the prototype should provide visible submission confirmation and some form of visible report-status or action update. Because anonymity was also strongly preferred, this feedback should be framed as non-personalised or report-status-based wherever possible rather than depending on identity-linked follow-up.
+Implications for Submitted Evidence and Habitat Scope
+The survey findings support keeping submission compact and practical, but the final evidence bundle must also satisfy the review needs of the proposed workflow. The preference for few steps, little typing, and rapid submission supports limiting the amount of required user input, while the officer review process justifies retaining photo, location, and timestamp as the minimum evidence bundle. The photo provides visible evidence of the suspected habitat, the location identifies where follow-up may be needed, and the timestamp helps place the report in time for review and prioritisation. The habitat-class scope should likewise remain bounded by the mapping outcome in Section 3.2.3 and Table 3.3, which retained Tire, Drain / Drain Inlet, and Artificial Container because those classes are both locally relevant and directly supported by the selected public datasets. Water drums and flowerpots should not yet be treated as standalone classes because current direct dataset support for them is insufficient.
+Implications for Interface Control and Language
+The Section 4 interface findings indicate that users want control over report accuracy and can work with light-touch interaction support. A clear majority, 77.8%, wanted the option to adjust an inaccurate automatically detected location, and 52.4% were comfortable or very comfortable with using a map-based pin, so location capture should remain reviewable and correctable before submission. The same section also showed that English was the preferred interface language for 82.5% of respondents, which supports prioritising English in the initial prototype while leaving room for later bilingual extension if later evidence or implementation scope justifies it.
+Implications for AI Use and Officer Review
+The Section 4 results also indicate that automation is more acceptable when it remains clearly subordinate to human review. No respondents selected discomfort with a system-generated output as their main concern, which supports including automated photo analysis as advisory classification support before officer review rather than as autonomous confirmation that a breeding site is present. In the same way, hotspot data should be used as area-level prioritisation context rather than as proof of a specific breeding site, and officers should remain the final reviewers of submitted reports.
+Overall, the investigation supports a prototype direction centred on low-friction reporting, careful handling of trust and privacy, explicit confirmation and follow-up, a constrained initial habitat scope, and human-reviewed decision support. These implications provide a defensible basis for the next development stage without claiming that the resulting design is already final.
+Chapter 4
+CONCLUSION
+4.1 Achievements of the First Part of the Project
+The first part of the project defined the problem scope, established the system boundary, justified the development approach, gathered early user and dataset evidence, and produced evidence-based design implications for the proposed reporting prototype in Kuala Lumpur. These were the principal outputs of the investigation stage.
+One achievement of the investigation stage was the clear definition of the operational gap addressed by the project. The report identified that the issue is not the absence of dengue information in Kuala Lumpur, but the difficulty of obtaining report-level evidence that is specific enough to support verification of suspected breeding habitats. On that basis, the proposed prototype was defined as a decision-support system for structured citizen reporting, image-assisted habitat classification, and map-based officer review. The report also set clear limits by establishing that the prototype is not intended for clinical diagnosis, autonomous enforcement, or automatic operational action.
+Another achievement was the completion of a literature and technical review that justified the proposed prototype design direction. The review established the relevance of breeding habitat identification, the limitations of existing reporting and verification workflows, and the value of participatory reporting when it is supported by structured evidence and human review. It also showed that existing systems usually address only one part of the problem, such as hotspot display, complaint intake, citizen observation, or image screening. This review therefore justified a prototype that combines citizen reporting, image classification, hotspot context, and officer review within a single workflow. It also provided the technical basis for the proposed implementation approach.
+A further achievement was the selection and justification of iterative and incremental development as the project methodology. The Investigation Report established that the reporting workflow, habitat categories, and role of AI assistance still required refinement, making a rigid sequential process less suitable. On that basis, iterative and incremental development was adopted as the most appropriate method for the project. The report then gathered early evidence through a 63-response survey and a review of public image datasets. The survey findings indicated a preference for a reporting process that is fast, simple, and low in typing effort, together with visible confirmation, meaningful follow-up, and the option to correct location data manually. The findings also indicated that AI-assisted photo analysis was broadly acceptable when it remained within a human-reviewed process.
+The investigation stage also produced concrete design outputs for the next phase of work. It identified photo, timestamp, and location capture as the minimum evidence bundle for citizen reporting. It bounded the retained preliminary habitat classes to Tire, Drain / Drain Inlet, and Artificial Container on the basis of local relevance and available dataset support. It also established an officer-facing dashboard concept in which each report is reviewed together with mapped location, habitat category, and a hotspot-based urgency indicator, while human review remains the final step in interpretation. These outputs provide the working specification for subsequent implementation, dataset preparation, and model development.
+4.2 Justification of Research Adequacy in Relation to SDG 3
+The research is adequately aligned with SDG 3: Good Health and Well-Being because it addresses dengue prevention through better support for source reduction and earlier identification of suspected breeding habitats. More specifically, the project is relevant to the preventive spirit of SDG targets 3.3 and 3.d because it strengthens a reporting and review pathway for environmental conditions associated with dengue transmission rather than focusing on treatment after illness has already occurred.
+The adequacy of this alignment is further supported by the way the report framed the public-health problem. Dengue remains a significant health concern in Malaysia and in Kuala Lumpur, and the report responded by concentrating on one bounded part of prevention: helping officers receive more specific and reviewable evidence about suspected breeding habitats. The project does not claim to diagnose disease, predict individual infection, or guarantee a reduction in incidence. Instead, it supports earlier identification, clearer prioritisation, and more structured review of suspected environmental risk sites. This is a realistic contribution to preventive public-health practice.
+The prototype concept also contributes to SDG 3 in a practical way because it translates prevention logic into a usable reporting workflow. A simple mobile interface, structured evidence capture, and officer-reviewed decision support can strengthen preventive surveillance capacity by making it easier for residents to submit information that is more actionable than informal verbal or text complaints. The survey findings support this direction, as respondents showed stronger willingness to engage when reporting was quick, low-friction, and trustworthy, and when the prototype provided confirmation, meaningful follow-up, and user control over location accuracy.
+At the investigation stage, the research is already adequate because it combines multiple forms of justification into one coherent basis for implementation. The report brought together domain analysis, related-work comparison, technical research, methodology selection, local user evidence, public dataset feasibility review, and the implications of the findings for prototype design. This combination is sufficient because the purpose of the investigation report is not to demonstrate final system impact, but to establish whether the proposed project is academically justified and practically viable enough to proceed.
+4.3 Gaps and Future Improvements
+Although the investigation stage established a strong basis for the project, it also confirmed that the investigation stage is not the end of the work. Several limitations remain before the prototype can be treated as fully implemented and evaluated. These limitations define the boundaries of what has been achieved so far and identify the issues that the next phase must address through development, testing, and refinement.
+One limitation concerns the survey evidence used to inform the reporting workflow. The questionnaire produced 63 responses, which is sufficient for investigation-stage design guidance, but the respondent profile was concentrated heavily among students and respondents associated with Bukit Jalil. The findings are therefore useful for identifying workflow preferences, perceived barriers, and trust considerations, but they should not be treated as a city-wide behavioural generalisation for all Kuala Lumpur communities.
+A second limitation concerns the image datasets and the resulting habitat taxonomy. The public image sources reviewed in the report supported only a bounded class structure, which meant that some locally relevant habitat categories could not be retained as standalone classes at this stage. Water drums and flowerpots, for example, were not retained independently because direct label support in the selected datasets was weak or absent. This means that later dataset work cannot rely on the source datasets in downloaded form. Further screening, relabelling, consolidation, and class-balance review will be required before model development can proceed on a defensible basis.
+A third limitation concerns the prototype itself, which has not yet moved from investigation to completed implementation. The report justified the proposed architecture and design direction, but it has not yet delivered full prototype development, model evaluation, privacy-control testing, or real operational integration with institutional workflows. In addition, the hotspot source used in the planned design provides area-level context rather than container-level confirmation, so urgency assessment still requires cautious interpretation. Browser-based geolocation also remains useful but imperfect, so manual user correction was identified as an important requirement.
+The next phase of the project should therefore focus on turning the investigation outputs into a tested prototype. Priority work should include implementing the mobile reporting workflow, preparing and curating the retained image dataset, developing and evaluating the habitat-classification model, constructing the officer-facing dashboard, and validating the overall workflow through usability and system testing. Privacy-conscious handling of images, timestamps, and location data should be built into that work from the outset. If time and evidence later justify expansion, future improvements could include broader habitat coverage, multilingual interface support, and stronger integration with operational channels or institutional workflows.
+
+References
+AbuBakar, S., Puteh, S. E. W., Kastner, R., Oliver, L., Lim, S. H., Hanley, R., & Gallagher, E. (2022). Epidemiology (2012-2019) and costs (2009-2019) of dengue in Malaysia: A systematic literature review. International Journal of Infectious Diseases, 124, 240–247. https://doi.org/10.1016/j.ijid.2022.09.006
+Amazon Web Services. (n.d.-a). Explore AWS services with AWS Free Tier. AWS Billing. Retrieved March 10, 2026, from https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html
+Amazon Web Services. (n.d.-b). AWS Free Tier FAQs. AWS Billing. Retrieved March 10, 2026, from https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-FAQ.html
+Amazon Web Services. (n.d.-c). AWS Amplify. Retrieved March 10, 2026, from https://aws.amazon.com/amplify/
+Amazon Web Services. (n.d.-d). What is AWS App Runner? AWS App Runner Developer Guide. Retrieved March 10, 2026, from https://docs.aws.amazon.com/apprunner/latest/dg/what-is-apprunner.html
+Amazon Web Services. (n.d.-f). AWS Amplify pricing. Retrieved March 10, 2026, from https://aws.amazon.com/amplify/pricing/
+Amazon Web Services. (n.d.-g). Amazon RDS for PostgreSQL. Retrieved March 10, 2026, from https://aws.amazon.com/rds/postgresql/
+Amazon Web Services. (n.d.-h). Managing spatial data with the PostGIS extension. Amazon RDS User Guide. Retrieved March 10, 2026, from https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.PostGIS.html
+Amazon Web Services. (n.d.-i). Amazon S3 FAQs. Retrieved March 10, 2026, from https://aws.amazon.com/s3/faqs/
+Amazon Web Services. (n.d.-j). Download and upload objects with presigned URLs. Amazon S3 User Guide. Retrieved March 10, 2026, from https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html
+Amazon Web Services. (n.d.-k). AWS Lambda pricing. Retrieved March 10, 2026, from https://aws.amazon.com/lambda/pricing/
+Amazon Web Services. (n.d.-l). Amazon API Gateway pricing. Retrieved March 10, 2026, from https://aws.amazon.com/api-gateway/pricing/
+Bourque, P., & Fairley, R. E. (Eds.). (2014). Guide to the software engineering body of knowledge (SWEBOK guide V3.0). IEEE Computer Society. https://ieeecs-media.computer.org/media/education/swebok/swebok-v3.pdf
+Carney, R. M., Mapes, C., Low, R. D., Long, A., Bowser, A., Durieux, D., Rivera, K., Dekramanjian, B., Bartumeus, F., Guerrero, D., Seltzer, C. E., Azam, F., Chellappan, S., & Palmer, J. R. B. (2022). Integrating Global Citizen Science Platforms to Enable Next-Generation Surveillance of Invasive and Vector Mosquitoes. Insects, 13(8), 675. https://doi.org/10.3390/insects13080675
+Chacon, S., & Straub, B. (2014). Git - About version control. In Pro Git (2nd ed.). https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
+Cheong, Yoon Ling & Rasli, Rosilawati & Ibrahim, Mohd & Futri, Siti & Lim, K & Wasi Ahmad, Nazni & Hanlim, Lee. (2021). PesTrapp mobile app: A trap setting application for real-time entomological field and laboratory study. Tropical Biomedicine. 38. 171-179. 10.47665/tb.38.2.054.
+Department of Personal Data Protection. (n.d.). Principles of personal data protection. Retrieved March 10, 2026, from https://www.pdp.gov.my/ppdpv1/en/principles-of-personal-data-protection/
+Department of Statistics Malaysia. (2025, December 31). Environment statistics, Malaysia, 2025 (Stats Alert No. 315) [PDF]. https://v2.dosm.gov.my/uploads/release-content/file_20251231115011.pdf
+Dewan Bandaraya Kuala Lumpur. (n.d.-a). Adu@KL. Retrieved March 9, 2026, from https://www.dbkl.gov.my/en/online-services/adu-at-kl
+Dewan Bandaraya Kuala Lumpur. (n.d.-b). Hotline. Retrieved March 9, 2026, from https://www.dbkl.gov.my/en/contact-us/hotline
+Dewan Bandaraya Kuala Lumpur. (n.d.-c). Vector control or mosquito spraying. Retrieved March 9, 2026, from https://www.dbkl.gov.my/en/perkhidmatan-pembersihan-kawasan/httpsportal-dbkltestcpcollectionskawalan_vektor
+Dewan Bandaraya Kuala Lumpur. (n.d.-d). Customer service. Retrieved March 9, 2026, from https://www.dbkl.gov.my/en/lapor-aduan/khidmat-pelanggan
+Dewan Bandaraya Kuala Lumpur. (n.d.-e). Centralized call center. Retrieved March 9, 2026, from https://www.dbkl.gov.my/en/lapor-aduan/pusat-panggilan-setempat
+Django REST framework. (2016, January 27). Serializers. https://www.django-rest-framework.org/api-guide/serializers/
+Django REST framework. (n.d.-a). Django REST framework. https://www.django-rest-framework.org/
+Eritja, R., Sanpera-Calbet, I., Delacour-Estrella, S., Ruiz-Arrondo, I., Puig, M. À., Bengoa-Paulís, M., Alarcón-Elbal, P. M., Barceló, C., Mariani, S., Martínez-Barciela, Y., Bravo-Barriga, D., Polina, A., Pereira-Martínez, J. M., González, M. A., Escartin, S., Melero-Alcíbar, R., Blanco-Sierra, L., Magallanes, S., Collantes, F., ... Bartumeus, F. (2025). Integrating Citizen Science and Field Sampling into Next-Generation Early-Warning Systems for Vector Surveillance: Twenty Years of Municipal Detections of Aedes Invasive Mosquito Species in Spain. Insects, 16(9), 904. https://doi.org/10.3390/insects16090904
+Falk, M., Garriga, J., Eritja, R., Sanpera-Calbet, I., Pou, E., Richter-Boix, A., Palmer, J. R. B., & Bartumeus, F. (2025). Augmenting community-driven vector surveillance with automated image classification: Lessons from the Artificial Intelligence Mosquito Alert (AIMA) system. Epidemics, 53, 100863. https://doi.org/10.1016/j.epidem.2025.100863
+FastAPI. (n.d.-a). Features. FastAPI Documentation. Retrieved March 10, 2026, from https://fastapi.tiangolo.com/features/
+FastAPI. (n.d.-b). OpenAPI docs. FastAPI Documentation. Retrieved March 10, 2026, from https://fastapi.tiangolo.com/reference/openapi/docs/
+FastAPI. (n.d.-c). Request forms and files. FastAPI Documentation. Retrieved March 10, 2026, from https://fastapi.tiangolo.com/tutorial/request-forms-and-files/
+Firebase. (2026, March 4). Cloud Firestore. https://firebase.google.com/docs/firestore
+Flask. (n.d.). Design decisions in Flask. Flask Documentation. https://flask.palletsprojects.com/en/stable/design/
+GitHub, Inc. (n.d.). About GitHub. https://github.com/about
+Google Maps Platform. (n.d.-a). Overview | Maps JavaScript API. Google for Developers. https://developers.google.com/maps/documentation/javascript/overview
+Google Maps Platform. (n.d.-b). Set up the Maps JavaScript API. Google for Developers. https://developers.google.com/maps/documentation/javascript/get-api-key
+Haddawy, P., Wettayakorn, P., Nonthaleerak, B., Su Yin, M., Wiratsudakul, A., Schöning, J., Laosiritaworn, Y., Balla, K., Euaungkanakul, S., Quengdaeng, P., Choknitipakin, K., Traivijitkhun, S., Erawan, B., & Kraisang, T. (2019). Large scale detailed mapping of dengue vector breeding sites using street view images. PLOS Neglected Tropical Diseases, 13(7), e0007555. https://doi.org/10.1371/journal.pntd.0007555
+Hasim, M.H., Hiong, T.G., Mutalip, M.H., Mahmud, M.A., Lodz, N.A., Yoep, N., & Paiwai, F. (2018). Spatial density of dengue incidence: A case study of a dengue outbreak in Seksyen 7, Shah Alam. International Journal of Mosquito Research, 5, 09-14. https://www.dipterajournal.com/pdf/2018/vol5issue2/PartA/5-1-9-974.pdf
+He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 770-778). Computer Vision Foundation. https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html
+Howard, A., Sandler, M., Chu, G., Chen, L.-C., Chen, B., Tan, M., Wang, W., Zhu, Y., Pang, R., Vasudevan, V., Le, Q. V., & Adam, H. (2019). Searching for MobileNetV3 (arXiv:1905.02244). arXiv. https://arxiv.org/abs/1905.02244
+iDengue. (n.d.). Carian hotspot. Retrieved March 8, 2026, from https://idengue.mysa.gov.my/hotspotutama.php
+iDengue. (n.d.). iDengue 3.0. Retrieved March 8, 2026, from https://idengue.mysa.gov.my/
+Islam, M. A., Sayeedi, M. F. A., Shuvo, M. A., Bappy, S. R., Islam, M. A., & Shatabda, S. (2025). VisText-Mosquito: A Unified Multimodal Benchmark Dataset for Visual Detection, Segmentation, and Textual Reasoning on Mosquito Breeding Sites (arXiv:2506.14629). arXiv. https://doi.org/10.48550/arXiv.2506.14629
+Južnič-Zonta, Ž., Sanpera-Calbet, I., Eritja, R., Palmer, J. R. B., Escobar, A., Garriga, J., Oltra, A., Richter-Boix, A., Schaffner, F., Della Torre, A., Miranda, M. Á., Koopmans, M., Barzon, L., Bartumeus Ferre, F., Mosquito Alert Digital Entomology Network, Alarcón-Elbal, P. M., Alexander González, M., Angeles Puig, M., Bakran-Lebl, K., … Mosquito Alert Community. (2022). Mosquito alert: Leveraging citizen science to create a GBIF mosquito occurrence dataset. Gigabyte, 2022, 1–11. https://doi.org/10.46471/gigabyte.54
+Khaw, W.-F., Razali, M. F., Shamsuddin, N., Zainal Abidin, N. F., & Chan, Y. M. (2024). Ten-year mortality study of dengue in Malaysia. IJID Regions, 13, 100455. https://doi.org/10.1016/j.ijregi.2024.100455
+Knoblauch, S., Su Yin, M., Chatrinan, K., De Aragão Rocha, A. A., Haddawy, P., Biljecki, F., Lautenbach, S., Resch, B., Arifi, D., Jänisch, T., Morales, I., & Zipf, A. (2024). High-resolution mapping of urban Aedes aegypti immature abundance through breeding site detection based on satellite and street view imagery. Scientific Reports, 14(1), 18227. https://doi.org/10.1038/s41598-024-67914-w
+Kuala Lumpur City Hall. (n.d.-a). Customer service. Retrieved March 8, 2026, from https://www.dbkl.gov.my/en/lapor-aduan/khidmat-pelanggan
+Kuala Lumpur City Hall. (n.d.-b). Hotline. Retrieved March 8, 2026, from https://www.dbkl.gov.my/en/contact-us/hotline
+Kuala Lumpur City Hall. (n.d.-c). Vector control or mosquito spraying. Retrieved March 8, 2026, from https://www.dbkl.gov.my/en/perkhidmatan-pembersihan-kawasan/httpsportal-dbkltestcpcollectionskawalan_vektor
+Larman, C., & Basili, V. R. (2003). Iterative and incremental development: A brief history. Computer, 36(6), 47–56. https://doi.org/10.1109/MC.2003.1204375
+Leaflet. (n.d.). Leaflet, a JavaScript library for interactive maps. Retrieved March 10, 2026, from https://leafletjs.com/
+Lenhart, A. E., Castillo, C. E., Oviedo, M., & Villegas, E. (2006). Use of the pupal/demographic-survey technique to identify the epidemiologically important types of containers producing Aedes aegypti (L.) in a dengue-endemic area of Venezuela. Annals of tropical medicine and parasitology, 100 Suppl 1, S53–S59. https://doi.org/10.1179/136485906X105516
+Low, R. D., Schwerin, T. G., Boger, R. A., Soeffing, C., Nelson, P. V., Bartlett, D., Ingle, P., Kimura, M., & Clark, A. (2022). Building International Capacity for Citizen Scientist Engagement in Mosquito Surveillance and Mitigation: The GLOBE Program’s GLOBE Observer Mosquito Habitat Mapper. Insects, 13(7), 624. https://doi.org/10.3390/insects13070624
+Lwin, M. O., Jayasundar, K., Sheldenkar, A., Wijayamuni, R., Wimalaratne, P., Ernst, K. C., & Foo, S. (2017). Lessons From the Implementation of Mo-Buzz, a Mobile Pandemic Surveillance System for Dengue. JMIR Public Health and Surveillance, 3(4), e65. https://doi.org/10.2196/publichealth.7376
+Mahmud, M. A. F., Mutalip, M. H., Lodz, N. A., & Shahar, H. (n.d.). Study on key Aedes spp breeding containers in dengue outbreak localities in Cheras district, Kuala Lumpur. https://www.dipterajournal.com/archives/2018/5/2/A/5-1-6
+Majlis Daerah Batu Gajah. (n.d.). Kawalan vektor. Retrieved March 11, 2026, from https://www.mdbg.gov.my/index.php/informasi/soalan-lazim/kawalan-vektor
+Malaysian Space Agency, & Ministry of Health Malaysia. (n.d.-a). Introduction. Retrieved March 9, 2026, from https://idengue.mysa.gov.my/ide_v3/introduction.html
+Malaysian Space Agency, & Ministry of Health Malaysia. (n.d.-b). Definition. Retrieved March 9, 2026, from https://idengue.mysa.gov.my/ide_v3/definition.html
+Masrani, A. S., Nik Husain, N. R., Musa, K. I., & Yasin, A. S. (2022). Trends and Spatial Pattern Analysis of Dengue Cases in Northeast Malaysia. Journal of preventive medicine and public health = Yebang Uihakhoe chi, 55(1), 80–87. https://doi.org/10.3961/jpmph.21.461
+Md Iderus, N. H., Singh, S. S. L., Ghazali, S. M., Zulkifli, A. A., Ghazali, N. A. M., Lim, M. C., Ahmad, L. C. R. Q., Md Nadzri, M. N., Tan, C. V., Md Zamri, A. S. S., Lai, C. H., Nordin, N. S., Kamarudin, M. K., Wan, M. K., Mokhtar, N., Jelip, J., Gill, B. S., & Ahmad, N. A. R. (2023). The effects of the COVID-19 pandemic on dengue cases in Malaysia. Frontiers in Public Health, 11, 1213514. https://doi.org/10.3389/fpubh.2023.1213514
+Melo, C. L., Mageste, L. R., Guaraldo, L., Paula, D. P., & Wakimoto, M. D. (2024). Use of Digital Tools in Arbovirus Surveillance: Scoping Review. Journal of Medical Internet Research, 26, e57476. https://doi.org/10.2196/57476
+Ministry of Health Malaysia. (2017). Case definitions for infectious diseases in Malaysia (3rd ed.). https://jknjohor.moh.gov.my/jknj/wp-content/uploads/2024/06/Case-Definition-Of-Infectious-Disease-3rd-Edition-2017.pdf
+Mohd-Zaki, A. H., Brett, J., Ismail, E., & L’Azou, M. (2014). Epidemiology of Dengue Disease in Malaysia (2000–2012): A Systematic Literature Review. PLoS Neglected Tropical Diseases, 8(11), e3159. https://doi.org/10.1371/journal.pntd.0003159
+Montenegro-Quiñonez, C. A., Louis, V. R., Horstick, O., Velayudhan, R., Dambach, P., & Runge-Ranzinger, S. (2023). Interventions against Aedes/dengue at the household level: A systematic review and meta-analysis. eBioMedicine, 93, 104660. https://doi.org/10.1016/j.ebiom.2023.104660
+Mozilla. (2025). Client-side form validation. MDN Web Docs. https://developer.mozilla.org/en-GB/docs/Learn_web_development/Extensions/Forms/Form_validation
+Mozilla. (2025a, November 30). MediaDevices: getUserMedia() method. MDN Web Docs. Retrieved March 10, 2026, from https://developer.mozilla.org/en-GB/docs/Web/API/MediaDevices/getUserMedia
+Mozilla. (2025b, July 9). HTML attribute: capture. MDN Web Docs. Retrieved March 10, 2026, from https://developer.mozilla.org/en-GB/docs/Web/HTML/Reference/Attributes/capture
+National Environment Agency. (n.d.). Dengue clusters. Retrieved March 9, 2026, from https://www.nea.gov.sg/dengue-zika/dengue/dengue-clusters
+OpenLayers. (n.d.). OpenLayers v10.8.0 API - Index. https://openlayers.org/en/latest/apidoc/
+OpenStreetMap contributors. (n.d.). Copyright and license. OpenStreetMap. Retrieved March 10, 2026, from https://www.openstreetmap.org/copyright
+Pressman, R. S., & Maxim, B. R. (2020). Software engineering: A practitioner’s approach (9th ed.). McGraw Hill.
+Pydantic. (n.d.). Models. Pydantic Documentation. Retrieved March 10, 2026, from https://docs.pydantic.dev/latest/concepts/models/
+Python Software Foundation. (n.d.). venv - Creation of virtual environments. In Python 3 standard library. https://docs.python.org/3/library/venv.html
+Rahim, F. A. A. ., Mahmud, M. A. F. ., & Yatim, M. F. M. . . (2021). Key Breeding Containers of Dengue Vectors in Outbreak Localities in Federal Territory of Kuala Lumpur. Journal of Diseases, 8(1), 1–8. https://doi.org/10.18488/journal.99.2021.81.1.8
+React Team. (n.d.). React. Retrieved March 10, 2026, from https://react.dev/
+Rizwan, M., Dass, S. C., Asirvadam, V. S., Gill, B. S., & Sulaiman, L. H. (2018). DenMap: A Dengue Surveillance System for Malaysia. Journal of Physics: Conference Series, 1123, 012045. https://doi.org/10.1088/1742-6596/1123/1/012045
+Royce, W. W. (2021). Managing the development of large software systems (1970). In H. R. Lewis (Ed.), Ideas that created the future: Classic papers of computer science (pp. 321–332). MIT Press. https://doi.org/10.7551/mitpress/12274.003.0035
+Saleeza, S. N., Norma-Rashid, Y., & Azirun, M. S. (2013). Mosquito species and outdoor breeding places in residential areas in Malaysia. The Southeast Asian journal of tropical medicine and public health, 44(6), 963–969.
+Sayeedi, F. A., Hafiz, F., & Rahman, A. (2024). MOSQUITOFUSION: A MULTICLASS DATASET FOR REAL-TIME DETECTION OF MOSQUITOES, SWARMS, AND BREEDING SITES USING DEEP LEARNING. https://arxiv.org/pdf/2404.01501v1
+Sousa, L. B., Craig, A., Chitkara, U., Fricker, S., Webb, C., Williams, C., & Baldock, K. (2022). Methodological Diversity in Citizen Science Mosquito Surveillance: A Scoping Review. Citizen Science: Theory and Practice, 7(1), 8. https://doi.org/10.5334/cstp.469
+SQLite. (2025, May 31). Appropriate uses for SQLite. https://sqlite.org/whentouse.html
+Su Yin, M., Bicout, D. J., Haddawy, P., Schöning, J., Laosiritaworn, Y., & Sa-Angchai, P. (2021). Added-value of mosquito vector breeding sites from street view images in the risk mapping of dengue incidence in Thailand. PLoS neglected tropical diseases, 15(3), e0009122. https://doi.org/10.1371/journal.pntd.0009122
+Tan, M., & Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. In K. Chaudhuri & R. Salakhutdinov (Eds.), Proceedings of the 36th International Conference on Machine Learning (pp. 6105-6114). PMLR. https://proceedings.mlr.press/v97/tan19a.html
+The PostgreSQL Global Development Group. (n.d.). About PostgreSQL. https://www.postgresql.org/about/
+Torch Contributors. (n.d.). EfficientNet. Torchvision 0.25 documentation. https://docs.pytorch.org/vision/stable/models/efficientnet.html
+Ultralytics. (n.d.-a). Image classification. Ultralytics YOLO Docs. https://docs.ultralytics.com/tasks/classify/
+Ultralytics. (n.d.-b). Models supported by Ultralytics. Ultralytics YOLO Docs. https://docs.ultralytics.com/models/
+Ultralytics. (n.d.-c). Image classification datasets overview. Ultralytics YOLO Docs. https://docs.ultralytics.com/datasets/classify/
+Virgillito, C., Longo, E., De Marco, C. M., Serini, P., Zucchelli, M. V., Montarsi, F., Severini, F., Rosà, R., Da Re, D., Filipponi, F., Manica, M., Palmer, J., Bartumeus, F., Della Torre, A., & Caputo, B. (2024). Involving citizen scientists in monitoring arthropod vectors of human and zoonotic diseases: The case of Mosquito Alert in Italy. Science of The Total Environment, 948, 174847. https://doi.org/10.1016/j.scitotenv.2024.174847
+Vite. (n.d.). Getting started. Retrieved March 10, 2026, from https://vite.dev/guide/
+Vue Team. (n.d.). Introduction. Vue.js. https://vuejs.org/guide/introduction.html
+World Health Organization (Ed.). (2011). Comprehensive guidelines for prevention and control of dengue and dengue haemorrhagic fever (Rev. and expanded. ed). World Health Organization Regional Office for South-East Asia.
+World Health Organization. (2025a, August 21). Dengue. https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue
+World Health Organization. (2025b, December 26). Dengue: Global situation, surveillance and progress – 2024 update. Weekly Epidemiological Record. https://www.who.int/publications/i/item/who-wer10052-665-678
+World Health Organization. (n.d.). Promoting dengue vector surveillance and control. Retrieved March 8, 2026, from https://www.who.int/activities/promoting-dengue-vector-surveillance-and-control
+World Wide Web Consortium. (2018, February 1). HTML Media Capture. Retrieved March 10, 2026, from https://www.w3.org/TR/html-media-capture/
+World Wide Web Consortium. (2023, November 10). Secure Contexts. Retrieved March 10, 2026, from https://www.w3.org/TR/secure-contexts/
+World Wide Web Consortium. (2025, October 29). Geolocation. Retrieved March 10, 2026, from https://www.w3.org/TR/geolocation/
+
+Appendices
+First Meeting
+
+Figure A.1. First meeting project log sheet.
+
+Second Meeting
+
+Figure A.2. Second meeting project log sheet.
+
+Third Meeting
+
+Figure A.3. Third meeting project log sheet.
+
+Ethics Form
+
+Figure A.4. Ethics form (page 1).
+
+Figure A.5. Ethics form (page 2).
+
+
+Figure A.6. Ethics form (page 3).
+
+Figure A.7. Ethics form (page 4).
+
+Project Proposal Form
+
+Figure A.8. Project proposal form.
+
+Gantt Chart
+
+Figure A.9. Project gantt chart.
+
+Turnitin Similarity Report
+
+
+
+

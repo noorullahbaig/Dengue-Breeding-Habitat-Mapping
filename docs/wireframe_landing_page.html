@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - Landing Page (Mid-Fidelity)</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #222;
+            gap: 50px;
+        }
+
+        .device {
+            width: 320px;
+            height: 600px;
+            border: 12px solid #333;
+            border-radius: 36px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        /* iPhone Notch */
+        .device::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background-color: #333;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 1000;
+        }
+
+        .device-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Nav Bar */
+        .nav-bar {
+            padding: 40px 15px 15px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .logo-placeholder {
+            width: 100px;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 4px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 20px 15px;
+        }
+        .hero-title {
+            height: 24px;
+            width: 80%;
+            background-color: #ccc;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .hero-subtitle {
+            height: 14px;
+            width: 100%;
+            background-color: #eee;
+            margin-bottom: 6px;
+            border-radius: 4px;
+        }
+
+        /* Actions */
+        .actions-block {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px 20px 15px;
+        }
+        .btn-primary {
+            flex: 1;
+            border: 1px solid #444;
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            background-color: #444;
+            color: #fff;
+            text-align: center;
+            font-weight: 500;
+        }
+        .btn-secondary {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #444;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Image Placeholder */
+        .image-block {
+            margin: 0 15px 20px 15px;
+            height: 150px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Features */
+        .feature-list {
+            padding: 0 15px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #ddd;
+        }
+        .feature-text {
+            height: 14px;
+            width: 60%;
+            background-color: #eee;
+            border-radius: 4px;
+        }
+
+        /* Bottom Fold: Stats */
+        .stats-block {
+            display: flex;
+            gap: 10px;
+            padding: 40px 15px 20px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .stat-tile {
+            flex: 1;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 15px 10px;
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        /* Feed */
+        .feed-header {
+            padding: 20px 15px 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .feed-card {
+            display: flex;
+            gap: 12px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .feed-thumb {
+            width: 60px;
+            height: 60px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        .feed-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+        .text-line {
+            height: 12px;
+            background-color: #eee;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Screen 1: Top Fold -->
+    <div class="device-wrapper">
+        <div class="device">
+            
+            <div class="nav-bar">
+                <div class="logo-placeholder"></div>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
+            
+            <div class="hero-section">
+                <div class="hero-title" style="background:none; font-weight:bold; height:auto; margin-bottom:15px; width:100%; font-size:24px;">Community Reporting Portal</div>
+                <div class="hero-subtitle"></div>
+                <div class="hero-subtitle" style="width: 80%;"></div>
+            </div>
+
+            <div class="actions-block">
+                <div class="btn-primary">Submit New Report</div>
+                <div class="btn-secondary">Track Existing Report</div>
+            </div>
+
+            <div class="image-block">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text"></div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text" style="width: 50%;"></div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text" style="width: 70%;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Screen 2: Bottom Fold -->
+    <div class="device-wrapper">
+        <div class="device">
+            
+            <div class="stats-block">
+                <div class="stat-tile">
+                    <div class="stat-val">000</div>
+                    <div class="stat-label">Global Impact Metrics</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-val">000</div>
+                    <div class="stat-label">Global Impact Metrics</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-val">000</div>
+                    <div class="stat-label">Global Impact Metrics</div>
+                </div>
+            </div>
+
+            <div class="feed-header">Recent Community Reports</div>
+
+            <div class="feed-card">
+                <div class="feed-thumb"></div>
+                <div class="feed-content">
+                    <div class="text-line" style="width: 80%; background-color: #ddd;"></div>
+                    <div class="text-line" style="width: 50%;"></div>
+                    <div class="text-line" style="width: 30%;"></div>
+                </div>
+            </div>
+            
+            <div class="feed-card">
+                <div class="feed-thumb"></div>
+                <div class="feed-content">
+                    <div class="text-line" style="width: 70%; background-color: #ddd;"></div>
+                    <div class="text-line" style="width: 90%;"></div>
+                    <div class="text-line" style="width: 40%;"></div>
+                </div>
+            </div>
+
+            <div class="feed-card">
+                <div class="feed-thumb"></div>
+                <div class="feed-content">
+                    <div class="text-line" style="width: 85%; background-color: #ddd;"></div>
+                    <div class="text-line" style="width: 60%;"></div>
+                    <div class="text-line" style="width: 20%;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
