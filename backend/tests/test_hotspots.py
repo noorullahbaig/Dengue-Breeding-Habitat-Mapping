@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from app.hotspots import PublicHotspot, priority_from_nearest_hotspot, unavailable_hotspot_priority
+from app.serializers import public_hotspot_out
 
 
 def test_assesses_core_hotspot_priority_from_nearest_row():
@@ -26,6 +27,29 @@ def test_assesses_core_hotspot_priority_from_nearest_row():
     assert priority.nearest_hotspot_id == "hotspot-1"
     assert priority.nearest_hotspot_locality == "Demo Locality"
     assert priority.nearest_hotspot_distance_meters == 1.8
+
+
+def test_public_hotspot_contract_keeps_source_and_warning_radii_distinct():
+    snapshot = datetime(2026, 4, 20, tzinfo=timezone.utc)
+    hotspot = PublicHotspot(
+        id="hotspot-1",
+        locality="Demo Locality",
+        district="Wilayah Persekutuan",
+        latitude=3.139,
+        longitude=101.6869,
+        radius_meters=200,
+        cumulative_cases=8,
+        outbreak_duration_days=12,
+        outbreak_start_date=snapshot,
+        week_number=17,
+        year=2026,
+        snapshot_date=snapshot,
+    )
+
+    payload = public_hotspot_out(hotspot).model_dump()
+
+    assert payload["radiusMeters"] == 200
+    assert payload["warningRadiusMeters"] == 400
 
 
 def test_builds_unavailable_hotspot_priority():

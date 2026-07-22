@@ -21,7 +21,7 @@ from app.schemas import (
     OwnerReportDetailOut,
     SubmittedReportOut,
 )
-from app.hotspots import PublicHotspot
+from app.hotspots import HOTSPOT_WARNING_RADIUS_METERS, PublicHotspot
 
 
 PRIVACY_NOTE = (
@@ -286,6 +286,7 @@ def public_hotspot_out(hotspot: PublicHotspot) -> PublicHotspotOut:
             source="public",
         ),
         radiusMeters=hotspot.radius_meters,
+        warningRadiusMeters=HOTSPOT_WARNING_RADIUS_METERS,
         cumulativeCases=hotspot.cumulative_cases,
         outbreakDurationDays=hotspot.outbreak_duration_days,
         outbreakStartDate=hotspot.outbreak_start_date,

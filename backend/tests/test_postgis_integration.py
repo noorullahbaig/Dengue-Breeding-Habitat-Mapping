@@ -272,3 +272,5 @@ def test_sync_retains_latest_and_referenced_history_but_deletes_unreferenced_his
 
         assert response.status_code == 200
         assert [hotspot["id"] for hotspot in response.json()] == ["latest-current"]
+        assert response.json()[0]["radiusMeters"] == 200
+        assert response.json()[0]["warningRadiusMeters"] == 400

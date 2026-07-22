@@ -13,6 +13,7 @@ import type { PublicHotspot, PublicMapReport } from "@/types/report";
 
 interface MapHotspotSheetProps {
 	hotspot: PublicHotspot;
+	showAdvisoryBuffer: boolean;
 	onClose: () => void;
 }
 
@@ -21,7 +22,11 @@ const mapMobileSheetStyle = {
 		"calc(var(--app-mobile-bottom-clearance) + var(--space-sm))",
 } as CSSProperties;
 
-export function MapHotspotSheet({ hotspot, onClose }: MapHotspotSheetProps) {
+export function MapHotspotSheet({
+	hotspot,
+	showAdvisoryBuffer,
+	onClose,
+}: MapHotspotSheetProps) {
 	return (
 		<div
 			className="map-mobile-sheet map-mobile-sheet--hotspot"
@@ -48,6 +53,19 @@ export function MapHotspotSheet({ hotspot, onClose }: MapHotspotSheetProps) {
 					{hotspot.locality}
 				</h2>
 				<p className="map-detail-sheet__subtitle">{hotspot.district}</p>
+				{showAdvisoryBuffer ? (
+					<div className="hotspot-advisory-note">
+						<strong>400 m advisory proximity buffer</strong>
+						<p>
+							Used by DengueWatch to prioritize nearby habitat reports. This is
+							not an official hotspot boundary or an individual dengue case
+							location. Risk does not stop at the line.
+						</p>
+						<span>
+							{hotspot.sourceLabel} · {formatCalendarDate(hotspot.snapshotDate)}
+						</span>
+					</div>
+				) : null}
 				<dl className="map-detail-facts map-detail-facts--three">
 					<div>
 						<dt>Cases</dt>

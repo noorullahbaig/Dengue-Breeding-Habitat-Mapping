@@ -8,7 +8,7 @@ import {
 	PublicReportsMap,
 	type PublicReportGroupSelection,
 } from "@/pages/components/PublicReportsMap";
-import type { LocationPoint, PublicMapReport } from "@/types/report";
+import type { LocationPoint, PublicHotspot, PublicMapReport } from "@/types/report";
 
 const leafletHarness = vi.hoisted(() => ({
 	zoom: 13,
@@ -52,8 +52,24 @@ vi.mock("react-leaflet", () => {
 	};
 
 	return {
-		Circle: ({ radius }: { radius: number }) => (
-			<div data-testid="user-location-accuracy" data-radius={radius} />
+		Circle: ({
+			radius,
+			interactive,
+			pathOptions,
+		}: {
+			radius: number;
+			interactive?: boolean;
+			pathOptions?: { className?: string };
+		}) => (
+			<div
+				data-testid={
+					pathOptions?.className === "map-hotspot-advisory-buffer"
+						? "hotspot-advisory-buffer"
+						: "user-location-accuracy"
+				}
+				data-radius={radius}
+				data-interactive={String(interactive)}
+			/>
 		),
 		MapContainer: ({
 			children,
@@ -94,6 +110,7 @@ vi.mock("react-leaflet", () => {
 			</button>
 		),
 		TileLayer: () => null,
+		Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 		ZoomControl: () => null,
 		useMap: () => mockMap,
 		useMapEvents: (
@@ -135,6 +152,28 @@ function report(
 		imageUrl: "/evidence.jpg",
 		privacyNote: "Public location.",
 		...overrides,
+	};
+}
+
+function hotspot(): PublicHotspot {
+	return {
+		id: "hotspot-1",
+		locality: "Taman Melati",
+		district: "Wangsa Maju",
+		center: {
+			latitude: 3.2001,
+			longitude: 101.7182,
+			source: "public",
+		},
+		radiusMeters: 200,
+		warningRadiusMeters: 400,
+		cumulativeCases: 12,
+		outbreakDurationDays: 36,
+		outbreakStartDate: "2026-06-21T00:00:00.000Z",
+		weekNumber: 29,
+		year: 2026,
+		snapshotDate: "2026-07-20T00:00:00.000Z",
+		sourceLabel: "iDengue hotspot context",
 	};
 }
 
@@ -223,6 +262,47 @@ describe("PublicReportsMap marker grouping", () => {
 			expect.stringContaining("map-user-location-marker"),
 		);
 		expect(screen.getByTestId("user-location-accuracy")).toHaveAttribute("data-radius", "20");
+	});
+
+	it("renders one non-interactive 400 m buffer only while mobile visibility is enabled", () => {
+		const selectedHotspot = hotspot();
+		const { rerender } = render(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[selectedHotspot]}
+				showHotspots
+				selectedHotspot={selectedHotspot}
+				showSelectedHotspotBuffer
+				centerOverride={[3.2001, 101.7182]}
+			/>,
+		);
+
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-radius",
+			"400",
+		);
+		expect(screen.getByTestId("hotspot-advisory-buffer")).toHaveAttribute(
+			"data-interactive",
+			"false",
+		);
+		expect(leafletHarness.flyTo).toHaveBeenCalledWith(
+			[3.2001, 101.7182],
+			15,
+			expect.objectContaining({ duration: 0.45 }),
+		);
+
+		rerender(
+			<PublicReportsMap
+				reports={[]}
+				hotspots={[selectedHotspot]}
+				showHotspots
+				selectedHotspot={selectedHotspot}
+				showSelectedHotspotBuffer={false}
+				centerOverride={[3.2001, 101.7182]}
+			/>,
+		);
+
+		expect(screen.queryByTestId("hotspot-advisory-buffer")).not.toBeInTheDocument();
 	});
 
 	it("collapses core and warning into the same prioritized public state", () => {

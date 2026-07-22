@@ -191,6 +191,7 @@ class PublicHotspotOut(BaseModel):
     district: str
     center: LocationPoint
     radiusMeters: int
+    warningRadiusMeters: int
     cumulativeCases: int | None = None
     outbreakDurationDays: int | None = None
     outbreakStartDate: datetime

@@ -21,6 +21,7 @@ const experienceHarness = vi.hoisted(() => ({
 	listHotspots: vi.fn(),
 	centerOverride: undefined as [number, number] | undefined,
 	mapMountCount: 0,
+	isMobile: true,
 	requestCurrentLocation: vi.fn<() => Promise<LocationRequestResult>>(),
 }));
 
@@ -66,6 +67,10 @@ vi.mock("@/app/useServices", () => ({
 	}),
 }));
 
+vi.mock("@/app/useMobileViewport", () => ({
+	useMobileViewport: () => experienceHarness.isMobile,
+}));
+
 vi.mock("@/pages/components/PublicReportsMap", async () => {
 	const { useState } = await import("react");
 
@@ -76,6 +81,8 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 		centerOverride,
 		initialViewport,
 		onViewportChange,
+		selectedHotspot,
+		showSelectedHotspotBuffer,
 	}: {
 		onSelectReportGroup?: (
 			group: NonNullable<typeof experienceHarness.group>,
@@ -87,6 +94,8 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 		centerOverride?: [number, number];
 		initialViewport?: { center: [number, number]; zoom: number };
 		onViewportChange?: (viewport: { center: [number, number]; zoom: number }) => void;
+		selectedHotspot?: PublicHotspot;
+		showSelectedHotspotBuffer?: boolean;
 	}) => {
 		const [mountId] = useState(() => ++experienceHarness.mapMountCount);
 
@@ -99,6 +108,10 @@ vi.mock("@/pages/components/PublicReportsMap", async () => {
 			</div>
 			<div data-testid="legend-state">
 				{showLegend === false ? "legend hidden" : "legend visible"}
+			</div>
+			<div data-testid="selected-hotspot-id">{selectedHotspot?.id ?? "none"}</div>
+			<div data-testid="hotspot-buffer-state">
+				{showSelectedHotspotBuffer ? "buffer enabled" : "buffer disabled"}
 			</div>
 			<button
 				type="button"
@@ -180,6 +193,7 @@ describe("PublicMapExperience report stack sheet", () => {
 	beforeEach(() => {
 		experienceHarness.mapMountCount = 0;
 		experienceHarness.centerOverride = undefined;
+		experienceHarness.isMobile = true;
 		experienceHarness.group = {
 			reports,
 			center: [3.13902, 101.68692],
@@ -193,11 +207,17 @@ describe("PublicMapExperience report stack sheet", () => {
 			center: {
 				latitude: 3.2001,
 				longitude: 101.7182,
-				source: "hotspot",
+				source: "public",
 			},
+			radiusMeters: 200,
+			warningRadiusMeters: 400,
 			cumulativeCases: 12,
-			outbreakDurationDays: 6,
-			outbreakStartDate: "2026-06-21",
+			outbreakDurationDays: 36,
+			outbreakStartDate: "2026-06-21T00:00:00.000Z",
+			weekNumber: 29,
+			year: 2026,
+			snapshotDate: "2026-07-20T00:00:00.000Z",
+			sourceLabel: "iDengue hotspot context",
 		};
 		experienceHarness.listPublicReports.mockResolvedValue(reports);
 		experienceHarness.listHotspots.mockResolvedValue([
@@ -462,6 +482,12 @@ describe("PublicMapExperience report stack sheet", () => {
 			screen.getByRole("heading", { name: "Taman Melati" }),
 		).toBeInTheDocument();
 		expect(screen.getByText("Wangsa Maju")).toBeInTheDocument();
+		expect(screen.getByTestId("selected-hotspot-id")).toHaveTextContent("hotspot-1");
+		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer enabled");
+		expect(screen.getByText("400 m advisory proximity buffer")).toBeInTheDocument();
+		expect(screen.getByText(/This is not an official hotspot boundary/)).toBeInTheDocument();
+		expect(screen.getByText(/iDengue hotspot context/)).toBeInTheDocument();
+		expect(screen.getByText(/20 Jul 2026/)).toBeInTheDocument();
 
 		await user.click(
 			screen.getByRole("button", { name: "Close hotspot details" }),
@@ -472,6 +498,20 @@ describe("PublicMapExperience report stack sheet", () => {
 				screen.queryByRole("heading", { name: "Taman Melati" }),
 			).not.toBeInTheDocument();
 		});
+		expect(screen.getByTestId("selected-hotspot-id")).toHaveTextContent("none");
+		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer disabled");
+		expect(screen.queryByText("400 m advisory proximity buffer")).not.toBeInTheDocument();
+	});
+
+	it("keeps the 400 m buffer and explanation off desktop", async () => {
+		experienceHarness.isMobile = false;
+		const user = userEvent.setup();
+
+		renderExperience();
+		await user.click(await screen.findByRole("button", { name: "Select hotspot" }));
+
+		expect(screen.getByTestId("hotspot-buffer-state")).toHaveTextContent("buffer disabled");
+		expect(screen.queryByText("400 m advisory proximity buffer")).not.toBeInTheDocument();
 	});
 
 	it("opens a single report directly without cluster copy and closes on Escape", async () => {

@@ -193,6 +193,7 @@ export interface PublicHotspot {
   district: string
   center: LocationPoint
   radiusMeters: 200
+  warningRadiusMeters: 400
   cumulativeCases: number | null
   outbreakDurationDays: number | null
   outbreakStartDate: string

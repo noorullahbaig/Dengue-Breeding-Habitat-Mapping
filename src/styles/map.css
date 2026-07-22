@@ -351,6 +351,48 @@
   pointer-events: auto;
 }
 
+.map-hotspot-advisory-buffer {
+  stroke: #b45309;
+  fill: #f59e0b;
+  pointer-events: none;
+}
+
+.hotspot-advisory-note {
+  margin-top: var(--space-sm);
+  padding: 10px 12px;
+  border-left: 3px dashed #b45309;
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--color-ink);
+}
+
+.hotspot-advisory-note strong {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.hotspot-advisory-note p {
+  margin: 4px 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.38;
+}
+
+.hotspot-advisory-note span {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-ink-soft);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+@media (min-width: 761px) {
+  .map-hotspot-advisory-buffer,
+  .hotspot-advisory-note {
+    display: none;
+  }
+}
+
 .map-fullscreen-loading {
   display: flex;
   align-items: center;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LocateFixed, Plus, Minus } from "lucide-react";
 import { usePublicMapSession } from "@/app/PublicMapSessionContext";
 import { useServices } from "@/app/useServices";
+import { useMobileViewport } from "@/app/useMobileViewport";
 import { Notice } from "@/components/ui";
 import { formatHabitatLabel } from "@/lib/formatters";
 import { toLeafletPosition } from "@/lib/map";
@@ -18,6 +19,7 @@ import type { PublicHotspot, PublicMapReport } from "@/types/report";
 
 export function PublicMapExperience() {
 	const { mapService } = useServices();
+	const isMobile = useMobileViewport();
 	const { session, patchSession } = usePublicMapSession();
 	const [reports, setReports] = useState<PublicMapReport[]>([]);
 	const [hotspots, setHotspots] = useState<PublicHotspot[]>([]);
@@ -36,6 +38,10 @@ export function PublicMapExperience() {
 		session.selection?.kind === "hotspot"
 			? session.selection.hotspotId
 			: undefined;
+	const selectedHotspot = useMemo(
+		() => hotspots.find((hotspot) => hotspot.id === selectedHotspotId),
+		[hotspots, selectedHotspotId],
+	);
 	const selectedReportGroup = useMemo<PublicReportGroupSelection | undefined>(() => {
 		if (session.selection?.kind !== "report") return undefined;
 
@@ -231,6 +237,8 @@ export function PublicMapExperience() {
 						reports={reports}
 						hotspots={hotspots}
 						showHotspots={showHotspots}
+						selectedHotspot={selectedHotspot}
+						showSelectedHotspotBuffer={isMobile && Boolean(selectedHotspot)}
 						centerOverride={centerOverride}
 						initialViewport={session.viewport}
 						userLocationFix={session.userLocationFix}
@@ -343,19 +351,13 @@ export function PublicMapExperience() {
 
 			{locationError ? <div className="map-location-error" role="status">{locationError}</div> : null}
 
-			{selectedHotspotId
-				? (() => {
-						const hotspot = hotspots.find(
-							(item) => item.id === selectedHotspotId,
-						);
-						return hotspot ? (
-							<MapHotspotSheet
-								hotspot={hotspot}
-								onClose={() => patchSession({ selection: undefined })}
-							/>
-						) : null;
-					})()
-				: null}
+			{selectedHotspot ? (
+				<MapHotspotSheet
+					hotspot={selectedHotspot}
+					showAdvisoryBuffer={isMobile}
+					onClose={() => patchSession({ selection: undefined })}
+				/>
+			) : null}
 
 			{selectedReportGroup ? (
 				<MapReportSheet

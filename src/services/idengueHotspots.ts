@@ -147,6 +147,7 @@ function toPublicHotspot(row: ParsedHotspotRow): PublicHotspot {
       source: 'public',
     },
     radiusMeters: 200,
+    warningRadiusMeters: 400,
     cumulativeCases: row.cumulativeCases,
     outbreakDurationDays: row.outbreakDurationDays,
     outbreakStartDate: new Date(row.outbreakStartDate).toISOString(),

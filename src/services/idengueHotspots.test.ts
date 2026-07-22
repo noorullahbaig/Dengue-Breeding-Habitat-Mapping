@@ -115,6 +115,7 @@ describe('fetchCurrentIdengueHotspots', () => {
 
     expect(hotspots).toHaveLength(2)
     expect(hotspots[0]?.radiusMeters).toBe(200)
+    expect(hotspots[0]?.warningRadiusMeters).toBe(400)
     expect(hotspots[0]?.outbreakStartDate).toBe(new Date(olderOutbreakDate).toISOString())
     expect(hotspots[0]?.weekNumber).toBe(16)
     expect(hotspots[0]?.year).toBe(2026)

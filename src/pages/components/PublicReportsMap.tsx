@@ -13,7 +13,7 @@ import type {
 	MapViewport,
 	UserLocationFix,
 } from "@/app/PublicMapSessionContext";
-import { DEFAULT_MAP_ZOOM, KL_CENTER } from "@/lib/constants";
+import { DEFAULT_MAP_ZOOM, KL_CENTER, REVIEW_MAP_ZOOM } from "@/lib/constants";
 import { hotspotMarkerIcon, toLeafletPosition } from "@/lib/map";
 import type {
 	HotspotPriority,
@@ -25,6 +25,8 @@ interface PublicReportsMapProps {
 	reports: PublicMapReport[];
 	hotspots: PublicHotspot[];
 	showHotspots: boolean;
+	selectedHotspot?: PublicHotspot;
+	showSelectedHotspotBuffer?: boolean;
 	hotspotError?: string;
 	centerOverride?: [number, number];
 	initialViewport?: MapViewport;
@@ -255,19 +257,21 @@ export function buildPublicReportMarkerGroups(
 
 function MapCenterSync({
 	centerOverride,
+	minimumZoom = DEFAULT_MAP_ZOOM,
 }: {
 	centerOverride?: [number, number];
+	minimumZoom?: number;
 }) {
 	const map = useMap();
 
 	useEffect(() => {
 		if (!centerOverride) return;
 
-		map.flyTo(centerOverride, Math.max(map.getZoom(), DEFAULT_MAP_ZOOM), {
+		map.flyTo(centerOverride, Math.max(map.getZoom(), minimumZoom), {
 			duration: 0.45,
 			easeLinearity: 0.2,
 		});
-	}, [centerOverride, map]);
+	}, [centerOverride, map, minimumZoom]);
 
 	return null;
 }
@@ -416,6 +420,8 @@ export function PublicReportsMap({
 	reports,
 	hotspots,
 	showHotspots,
+	selectedHotspot,
+	showSelectedHotspotBuffer = false,
 	hotspotError,
 	centerOverride,
 	initialViewport,
@@ -483,7 +489,14 @@ export function PublicReportsMap({
 				attributionControl={false}
 				className="map-frame__canvas"
 			>
-				<MapCenterSync centerOverride={centerOverride} />
+				<MapCenterSync
+					centerOverride={centerOverride}
+					minimumZoom={
+						showSelectedHotspotBuffer && selectedHotspot
+							? REVIEW_MAP_ZOOM
+							: DEFAULT_MAP_ZOOM
+					}
+				/>
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -502,6 +515,21 @@ export function PublicReportsMap({
 						},
 					}}
 				/>
+
+				{showHotspots && showSelectedHotspotBuffer && selectedHotspot ? (
+					<Circle
+						center={toLeafletPosition(selectedHotspot.center)}
+						radius={selectedHotspot.warningRadiusMeters}
+						interactive={false}
+						pathOptions={{
+							className: "map-hotspot-advisory-buffer",
+							dashArray: "8 7",
+							fillOpacity: 0.06,
+							opacity: 0.72,
+							weight: 2,
+						}}
+					/>
+				) : null}
 
 				{showHotspots
 					? hotspots.map((hotspot) => (
