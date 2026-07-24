@@ -185,7 +185,7 @@ describe('ReportPage mobile photo review', () => {
     await user.click(continueButton)
 
     const warning = await screen.findByRole('dialog', {
-      name: 'Our AI couldn\'t confirm a habitat',
+      name: 'No target habitat detected',
     })
     await user.click(
       within(warning).getByRole('button', { name: 'Retake photo' }),
@@ -196,7 +196,7 @@ describe('ReportPage mobile photo review', () => {
       expect(screen.getByRole('heading', { name: 'Take image' })).toBeInTheDocument()
     })
     expect(screen.queryByText('Prediction panel')).not.toBeInTheDocument()
-    expect(screen.queryByRole('dialog', { name: 'Our AI couldn\'t confirm a habitat' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'No target habitat detected' })).not.toBeInTheDocument()
   })
 
   it('allows an unclassified result to continue through Submit anyway', async () => {
@@ -229,7 +229,7 @@ describe('ReportPage mobile photo review', () => {
     await user.click(continueButton)
 
     const warning = await screen.findByRole('dialog', {
-      name: 'Our AI couldn\'t confirm a habitat',
+      name: 'No target habitat detected',
     })
     await user.click(
       within(warning).getByRole('button', { name: 'Submit anyway' }),
@@ -237,6 +237,39 @@ describe('ReportPage mobile photo review', () => {
 
     expect(await screen.findByRole('heading', { name: 'Final confirmation' })).toBeVisible()
     expect(resetDraft).not.toHaveBeenCalled()
+  })
+
+  it('proceeds directly to final confirmation for a low-confidence classified result without showing warning sheet', async () => {
+    const user = userEvent.setup()
+    draft.wizardStep = 3
+    draft.hasConfirmedPin = true
+    draft.hasPublicConsent = true
+    precheckReport.mockResolvedValue({
+      prediction: {
+        label: 'tire',
+        confidence: 0.60,
+        confidenceBand: 'low',
+        detections: [],
+        advisoryText: 'The model produced uncertain evidence; human verification is required.',
+      },
+      candidates: [],
+      imageUrl: null,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/report']}>
+        <ReportPage />
+      </MemoryRouter>,
+    )
+
+    const continueButton = await screen.findByRole('button', {
+      name: 'Continue to submit',
+    })
+    await waitFor(() => expect(continueButton).toBeEnabled())
+    await user.click(continueButton)
+
+    expect(await screen.findByRole('heading', { name: 'Final confirmation' })).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: "No target habitat detected" })).not.toBeInTheDocument()
   })
 
   it('resolves a nearby match as separate when the phone review is closed', async () => {

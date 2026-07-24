@@ -102,7 +102,14 @@ def summarize_detections(detections: list[Detection]) -> PredictionSummary:
         if (public_label := RAW_TO_PUBLIC_LABEL.get(detection.raw_label)) is not None
         and detection.confidence >= CLASS_REVIEW_FLOORS[public_label]
     ]
-    top_retained = max(retained, key=lambda item: item.confidence, default=None)
+    def normalized_score(item: Detection) -> float:
+        public_label = RAW_TO_PUBLIC_LABEL.get(item.raw_label)
+        if not public_label:
+            return 0.0
+        threshold = CLASS_STRONG_EVIDENCE_THRESHOLDS.get(public_label, 1.0)
+        return item.confidence / threshold
+
+    top_retained = max(retained, key=normalized_score, default=None)
 
     if top_retained is None:
         return PredictionSummary(

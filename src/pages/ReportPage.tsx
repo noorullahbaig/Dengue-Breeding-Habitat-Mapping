@@ -230,10 +230,10 @@ export function ReportPage({
 			: precheckError
 				? "error"
 				: "idle";
-	const isLowAiConfidence =
+	const isUnclassifiedAiResult =
 		precheckReady &&
 		precheck !== null &&
-		precheck.prediction.confidenceBand === "low";
+		precheck.prediction.label === "unclassified";
 	const selectedStack = nearbyCandidates.find(
 		(candidate) => candidate.reference === selectedStackReference,
 	);
@@ -658,7 +658,7 @@ export function ReportPage({
 	}
 
 	function handleContinueFromAiReview() {
-		if (isLowAiConfidence) {
+		if (isUnclassifiedAiResult) {
 			setIsLowConfirmOpen(true);
 		} else {
 			setCurrentStep(4);

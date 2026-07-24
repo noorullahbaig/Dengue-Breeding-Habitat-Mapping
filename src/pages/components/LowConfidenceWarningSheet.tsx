@@ -85,11 +85,10 @@ export function LowConfidenceWarningSheet({
 
 				{/* Copy */}
 				<h2 id="lc-sheet-heading" className="lc-sheet__heading">
-					Our AI couldn't confirm a habitat
+					No target habitat detected
 				</h2>
 				<p className="lc-sheet__body">
-					Your report can still be submitted to the public evidence map. Add a
-					brief optional note to explain what you observed.
+					No known breeding habitat was recognized in this photo. You can still submit your report to the public evidence map by adding a brief optional note about what you observed.
 				</p>
 
 				{/* Optional note */}
